@@ -43,13 +43,19 @@ get_ssh_parts() {
 import sys, json
 data = json.load(sys.stdin)
 pod = data if isinstance(data, dict) else data[0]
-runtime = pod.get('runtime', {})
-if runtime:
-    ports = runtime.get('ports', [])
-    for p in ports:
-        if p.get('privatePort') == 22:
-            print(f\"{p.get('ip')} {p.get('publicPort')}\")
-            break
+# Try new API format (ssh field)
+ssh = pod.get('ssh', {})
+if ssh.get('ip') and ssh.get('port'):
+    print(f\"{ssh['ip']} {ssh['port']}\")
+else:
+    # Fall back to runtime.ports format
+    runtime = pod.get('runtime', {})
+    if runtime:
+        ports = runtime.get('ports', [])
+        for p in ports:
+            if p.get('privatePort') == 22:
+                print(f\"{p.get('ip')} {p.get('publicPort')}\")
+                break
 " 2>/dev/null
 }
 
