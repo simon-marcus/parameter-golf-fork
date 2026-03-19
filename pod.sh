@@ -178,28 +178,48 @@ if runtime:
         ;;
 
     pull)
-        PARTS=$(get_ssh_parts)
-        if [ -z "$PARTS" ]; then
-            echo "Pod not ready. Check './pod.sh status'"
+        # Pull from all known pods (original + lane pods)
+        # Format: "host:port:label"
+        PODS=""
+
+        # Original pod (from .pod_id)
+        PARTS=$(get_ssh_parts 2>/dev/null)
+        if [ -n "$PARTS" ]; then
+            HOST=$(echo "$PARTS" | cut -d' ' -f1)
+            PORT=$(echo "$PARTS" | cut -d' ' -f2)
+            PODS="$HOST:$PORT:original"
+        fi
+
+        # Lane pods — add any known lane pods here
+        LANE_PODS_FILE="$SCRIPT_DIR/.lane_pods"
+        if [ -f "$LANE_PODS_FILE" ]; then
+            while IFS= read -r line; do
+                [ -n "$line" ] && PODS="$PODS $line"
+            done < "$LANE_PODS_FILE"
+        fi
+
+        if [ -z "$PODS" ]; then
+            echo "No pods configured. Check .pod_id or .lane_pods"
             exit 1
         fi
-        HOST=$(echo "$PARTS" | cut -d' ' -f1)
-        PORT=$(echo "$PARTS" | cut -d' ' -f2)
 
-        echo "Pulling experiment results from pod..."
-        rsync -avz --progress \
-            -e "ssh -p $PORT -o StrictHostKeyChecking=no" \
-            "root@$HOST:$REMOTE_DIR/autoresearch/experiments/" \
-            "$SCRIPT_DIR/autoresearch/experiments/"
-        rsync -avz \
-            -e "ssh -p $PORT -o StrictHostKeyChecking=no" \
-            "root@$HOST:$REMOTE_DIR/autoresearch/history.jsonl" \
-            "$SCRIPT_DIR/autoresearch/history.jsonl"
-        rsync -avz \
-            -e "ssh -p $PORT -o StrictHostKeyChecking=no" \
-            "root@$HOST:$REMOTE_DIR/autoresearch/train_gpt.best.py" \
-            "$SCRIPT_DIR/autoresearch/train_gpt.best.py" 2>/dev/null || true
-        echo "Done. Results in autoresearch/experiments/"
+        for POD in $PODS; do
+            HOST=$(echo "$POD" | cut -d: -f1)
+            PORT=$(echo "$POD" | cut -d: -f2)
+            LABEL=$(echo "$POD" | cut -d: -f3)
+            echo "=== Pulling from $LABEL ($HOST:$PORT) ==="
+
+            # Pull the entire autoresearch/ tree (experiments, namespaced lanes, etc.)
+            # Exclude large training logs
+            rsync -avz \
+                -e "ssh -p $PORT -o StrictHostKeyChecking=no" \
+                --exclude '*.log' \
+                --exclude 'autoresearch.out' \
+                "root@$HOST:$REMOTE_DIR/autoresearch/" \
+                "$SCRIPT_DIR/autoresearch/"
+            echo ""
+        done
+        echo "Done. Results in autoresearch/"
         ;;
 
     stop)
@@ -233,7 +253,7 @@ if runtime:
         echo "  ssh            — connect to pod"
         echo "  sync           — rsync project files to pod"
         echo "  run            — sync + start autoresearch in background"
-        echo "  pull           — pull experiment results from pod"
+        echo "  pull           — pull experiment results from all pods"
         echo "  stop           — pause pod (keeps volume/data)"
         echo "  destroy        — terminate pod completely"
         ;;

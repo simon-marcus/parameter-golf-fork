@@ -444,7 +444,8 @@ Experiment time budget: {EXPERIMENT_SECONDS}s on {GPUS} GPU(s)
 1. Read train_gpt.py to understand the current state
 2. Decide on ONE specific change to try (guided by the research program and history)
 3. Edit train_gpt.py to make that change — use surgical edits, not full rewrites
-4. Print a single line starting with "DESCRIPTION:" summarizing what you changed and why
+4. After editing, read the changed lines back to VERIFY your edit was actually applied
+5. Print a single line starting with "DESCRIPTION:" summarizing what you changed and why
 
 Guidelines:
 - Make exactly ONE conceptual change per experiment so we can isolate what helps
@@ -473,7 +474,6 @@ def run_claude_proposal(prompt: str) -> str | None:
                 "--effort", CLAUDE_EFFORT,
                 "--allowedTools", "Read,Edit,Glob,Grep",
                 "--output-format", "text",
-                "--max-turns", "10",
             ],
             capture_output=True,
             text=True,

@@ -11,6 +11,7 @@ data/docs_selected.jsonl
 logs/
 .env.local
 .pod_id
+.lane_pods
 autoresearch/logs/
 autoresearch/history.jsonl
 autoresearch/*.best.py
