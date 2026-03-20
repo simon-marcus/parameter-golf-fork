@@ -99,6 +99,15 @@ LANE_CONFIGS: dict[str, dict[str, str | int]] = {
         "seconds": 180,
         "max_experiments": 20,
     },
+    "core_record_discovery_b": {
+        "lane": "core",
+        "stage": "discovery",
+        "namespace": "core_record_discovery_b",
+        "program_file": "program_record.md",
+        "gpus": 1,
+        "seconds": 180,
+        "max_experiments": 20,
+    },
     "eval_time_discovery": {
         "lane": "eval_time",
         "stage": "discovery",
@@ -108,10 +117,28 @@ LANE_CONFIGS: dict[str, dict[str, str | int]] = {
         "seconds": 180,
         "max_experiments": 12,
     },
+    "eval_time_discovery_b": {
+        "lane": "eval_time",
+        "stage": "discovery",
+        "namespace": "eval_time_discovery_b",
+        "program_file": "program_eval.md",
+        "gpus": 1,
+        "seconds": 180,
+        "max_experiments": 12,
+    },
     "eval_window_discovery": {
         "lane": "eval_time",
         "stage": "discovery",
         "namespace": "eval_window_discovery",
+        "program_file": "program_eval_window.md",
+        "gpus": 1,
+        "seconds": 180,
+        "max_experiments": 8,
+    },
+    "eval_window_discovery_b": {
+        "lane": "eval_time",
+        "stage": "discovery",
+        "namespace": "eval_window_discovery_b",
         "program_file": "program_eval_window.md",
         "gpus": 1,
         "seconds": 180,
@@ -130,6 +157,15 @@ LANE_CONFIGS: dict[str, dict[str, str | int]] = {
         "lane": "storage",
         "stage": "discovery",
         "namespace": "storage_export_discovery",
+        "program_file": "program_storage_export.md",
+        "gpus": 1,
+        "seconds": 180,
+        "max_experiments": 8,
+    },
+    "storage_export_discovery_b": {
+        "lane": "storage",
+        "stage": "discovery",
+        "namespace": "storage_export_discovery_b",
         "program_file": "program_storage_export.md",
         "gpus": 1,
         "seconds": 180,
@@ -258,7 +294,7 @@ def run_lane_job(
             "VAL_LOSS_EVERY": "0",
             "PYTHONUNBUFFERED": "1",
             "AUTORESEARCH_MODEL": env.get("AUTORESEARCH_MODEL", "opus"),
-            "CLAUDE_EFFORT": env.get("CLAUDE_EFFORT", "high"),
+            "CLAUDE_EFFORT": env.get("CLAUDE_EFFORT", "medium"),
         }
     )
     if "ANTHROPIC_API_KEY" in env:
@@ -321,15 +357,24 @@ def resolve_seed(lane_key: str) -> tuple[str | None, str | None]:
     if lane_key == "core_record_discovery":
         best_text, _ = read_seed("core_promotion")
         return best_text, None
+    if lane_key == "core_record_discovery_b":
+        best_text, _ = read_seed("core_promotion")
+        return best_text, None
     if lane_key == "core_nonrecord_promotion":
         return read_seed("core_promotion")
     if lane_key == "eval_time_discovery":
         return read_seed("eval_time_discovery")
+    if lane_key == "eval_time_discovery_b":
+        return read_seed("eval_time_discovery")
     if lane_key == "eval_window_discovery":
+        return read_seed("eval_time_discovery")
+    if lane_key == "eval_window_discovery_b":
         return read_seed("eval_time_discovery")
     if lane_key == "storage_discovery":
         return read_seed("storage_discovery")
     if lane_key == "storage_export_discovery":
+        return read_seed("storage_discovery")
+    if lane_key == "storage_export_discovery_b":
         return read_seed("storage_discovery")
     return read_seed("autoresearch")
 

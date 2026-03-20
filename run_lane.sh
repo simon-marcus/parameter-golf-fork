@@ -2,7 +2,7 @@
 set -euo pipefail
 
 if [ $# -lt 1 ]; then
-  echo "Usage: $0 {core_discovery|core_record_discovery|core_promotion|core_nonrecord_promotion|eval_time_discovery|eval_window_discovery|storage_discovery|storage_export_discovery|representation_discovery}"
+  echo "Usage: $0 {core_discovery|core_record_discovery|core_record_discovery_b|core_promotion|core_nonrecord_promotion|eval_time_discovery|eval_time_discovery_b|eval_window_discovery|eval_window_discovery_b|storage_discovery|storage_export_discovery|storage_export_discovery_b|representation_discovery}"
   exit 1
 fi
 
@@ -18,7 +18,7 @@ COMMON_ENV=(
   "GPUS=1"
   "VAL_LOSS_EVERY=0"
   "AUTORESEARCH_MODEL=${AUTORESEARCH_MODEL:-opus}"
-  "CLAUDE_EFFORT=${CLAUDE_EFFORT:-high}"
+  "CLAUDE_EFFORT=${CLAUDE_EFFORT:-medium}"
   "PROPOSAL_TIMEOUT_SECONDS=${PROPOSAL_TIMEOUT_SECONDS:-240}"
   "TRAIN_TIMEOUT_PADDING_SECONDS=${TRAIN_TIMEOUT_PADDING_SECONDS:-300}"
 )
@@ -38,6 +38,15 @@ case "$LANE_KEY" in
       "AUTORESEARCH_LANE=${AUTORESEARCH_LANE:-core}"
       "AUTORESEARCH_STAGE=${AUTORESEARCH_STAGE:-discovery}"
       "AUTORESEARCH_NAMESPACE=${AUTORESEARCH_NAMESPACE:-core_record_discovery}"
+      "EXPERIMENT_SECONDS=${EXPERIMENT_SECONDS:-180}"
+      "MAX_EXPERIMENTS=${MAX_EXPERIMENTS:-20}"
+    )
+    ;;
+  core_record_discovery_b)
+    ENV_VARS=(
+      "AUTORESEARCH_LANE=${AUTORESEARCH_LANE:-core}"
+      "AUTORESEARCH_STAGE=${AUTORESEARCH_STAGE:-discovery}"
+      "AUTORESEARCH_NAMESPACE=${AUTORESEARCH_NAMESPACE:-core_record_discovery_b}"
       "EXPERIMENT_SECONDS=${EXPERIMENT_SECONDS:-180}"
       "MAX_EXPERIMENTS=${MAX_EXPERIMENTS:-20}"
     )
@@ -75,11 +84,33 @@ case "$LANE_KEY" in
       "TRAIN_TIMEOUT_PADDING_SECONDS=${TRAIN_TIMEOUT_PADDING_SECONDS:-420}"
     )
     ;;
+  eval_time_discovery_b)
+    ENV_VARS=(
+      "AUTORESEARCH_LANE=${AUTORESEARCH_LANE:-eval_time}"
+      "AUTORESEARCH_STAGE=${AUTORESEARCH_STAGE:-discovery}"
+      "AUTORESEARCH_NAMESPACE=${AUTORESEARCH_NAMESPACE:-eval_time_discovery_b}"
+      "EXPERIMENT_SECONDS=${EXPERIMENT_SECONDS:-180}"
+      "MAX_EXPERIMENTS=${MAX_EXPERIMENTS:-12}"
+      "MAX_EVAL_TIME_MS=${MAX_EVAL_TIME_MS:-60000}"
+      "TRAIN_TIMEOUT_PADDING_SECONDS=${TRAIN_TIMEOUT_PADDING_SECONDS:-420}"
+    )
+    ;;
   eval_window_discovery)
     ENV_VARS=(
       "AUTORESEARCH_LANE=${AUTORESEARCH_LANE:-eval_time}"
       "AUTORESEARCH_STAGE=${AUTORESEARCH_STAGE:-discovery}"
       "AUTORESEARCH_NAMESPACE=${AUTORESEARCH_NAMESPACE:-eval_window_discovery}"
+      "EXPERIMENT_SECONDS=${EXPERIMENT_SECONDS:-180}"
+      "MAX_EXPERIMENTS=${MAX_EXPERIMENTS:-8}"
+      "MAX_EVAL_TIME_MS=${MAX_EVAL_TIME_MS:-90000}"
+      "TRAIN_TIMEOUT_PADDING_SECONDS=${TRAIN_TIMEOUT_PADDING_SECONDS:-420}"
+    )
+    ;;
+  eval_window_discovery_b)
+    ENV_VARS=(
+      "AUTORESEARCH_LANE=${AUTORESEARCH_LANE:-eval_time}"
+      "AUTORESEARCH_STAGE=${AUTORESEARCH_STAGE:-discovery}"
+      "AUTORESEARCH_NAMESPACE=${AUTORESEARCH_NAMESPACE:-eval_window_discovery_b}"
       "EXPERIMENT_SECONDS=${EXPERIMENT_SECONDS:-180}"
       "MAX_EXPERIMENTS=${MAX_EXPERIMENTS:-8}"
       "MAX_EVAL_TIME_MS=${MAX_EVAL_TIME_MS:-90000}"
@@ -103,6 +134,18 @@ case "$LANE_KEY" in
       "AUTORESEARCH_LANE=${AUTORESEARCH_LANE:-storage}"
       "AUTORESEARCH_STAGE=${AUTORESEARCH_STAGE:-discovery}"
       "AUTORESEARCH_NAMESPACE=${AUTORESEARCH_NAMESPACE:-storage_export_discovery}"
+      "EXPERIMENT_SECONDS=${EXPERIMENT_SECONDS:-180}"
+      "MAX_EXPERIMENTS=${MAX_EXPERIMENTS:-8}"
+      "MAX_QUANTIZATION_GAP=${MAX_QUANTIZATION_GAP:-0.08}"
+      "STORAGE_MAX_REGRESSION=${STORAGE_MAX_REGRESSION:-0.004}"
+      "STORAGE_MIN_SIZE_IMPROVEMENT=${STORAGE_MIN_SIZE_IMPROVEMENT:-100000}"
+    )
+    ;;
+  storage_export_discovery_b)
+    ENV_VARS=(
+      "AUTORESEARCH_LANE=${AUTORESEARCH_LANE:-storage}"
+      "AUTORESEARCH_STAGE=${AUTORESEARCH_STAGE:-discovery}"
+      "AUTORESEARCH_NAMESPACE=${AUTORESEARCH_NAMESPACE:-storage_export_discovery_b}"
       "EXPERIMENT_SECONDS=${EXPERIMENT_SECONDS:-180}"
       "MAX_EXPERIMENTS=${MAX_EXPERIMENTS:-8}"
       "MAX_QUANTIZATION_GAP=${MAX_QUANTIZATION_GAP:-0.08}"
