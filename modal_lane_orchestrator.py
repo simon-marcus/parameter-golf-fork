@@ -170,6 +170,45 @@ def best_bpb_from_history(history_text: str | None) -> str | None:
     return None if best is None else str(best)
 
 
+def sync_namespace_snapshot(
+    local_ns: Path,
+    out_root: Path,
+    log_text: str,
+    copied_meta: dict[str, tuple[int, int]],
+) -> int:
+    out_root.mkdir(parents=True, exist_ok=True)
+    (out_root / "autoresearch.out").write_text(log_text)
+
+    copied = 0
+
+    def copy_if_changed(src: Path, dst: Path):
+        nonlocal copied
+        if not src.exists() or not src.is_file():
+            return
+        stat = src.stat()
+        key = str(src.relative_to(local_ns))
+        meta = (stat.st_mtime_ns, stat.st_size)
+        if copied_meta.get(key) == meta:
+            return
+        dst.parent.mkdir(parents=True, exist_ok=True)
+        dst.write_bytes(src.read_bytes())
+        copied_meta[key] = meta
+        copied += 1
+
+    for rel in ("history.jsonl", "train_gpt.best.py"):
+        src = local_ns / rel
+        copy_if_changed(src, out_root / rel)
+
+    experiments_dir = local_ns / "experiments"
+    if experiments_dir.exists():
+        for src in experiments_dir.rglob("*"):
+            if src.is_file():
+                rel = src.relative_to(local_ns)
+                copy_if_changed(src, out_root / rel)
+
+    return copied
+
+
 @app.function(
     gpu="H100",
     timeout=6 * 60 * 60,
@@ -191,7 +230,9 @@ def run_lane_job(
     workdir = WORKDIR
     namespace = str(cfg["namespace"])
     ns_dir = Path(workdir) / "autoresearch" / namespace
+    out_root = Path(REMOTE_OUT) / namespace
     ns_dir.mkdir(parents=True, exist_ok=True)
+    out_root.mkdir(parents=True, exist_ok=True)
 
     if seed_best:
         (ns_dir / "train_gpt.best.py").write_text(seed_best)
@@ -231,35 +272,31 @@ def run_lane_job(
         text=True,
     )
     lines: list[str] = []
+    copied_meta: dict[str, tuple[int, int]] = {}
+    last_sync = time.time()
     assert process.stdout is not None
     for line in process.stdout:
         print(line.rstrip())
         lines.append(line)
+        now = time.time()
+        checkpoint_hint = (
+            "EXPERIMENT " in line
+            or "Training took" in line
+            or "Current best:" in line
+            or "KEPT by lane policy" in line
+            or "Reverting by lane policy" in line
+            or "Training..." in line
+        )
+        if checkpoint_hint or (now - last_sync) >= 30:
+            changed = sync_namespace_snapshot(ns_dir, out_root, "".join(lines), copied_meta)
+            if changed or checkpoint_hint:
+                volume.commit()
+            last_sync = now
     process.wait()
     elapsed = time.time() - start
 
-    out_root = Path(REMOTE_OUT) / namespace
-    out_root.mkdir(parents=True, exist_ok=True)
-    (out_root / "autoresearch.out").write_text("".join(lines))
-
     local_ns = Path(workdir) / "autoresearch" / namespace
-    for rel in ("history.jsonl", "train_gpt.best.py"):
-        src = local_ns / rel
-        if src.exists():
-            (out_root / rel).write_text(src.read_text())
-
-    experiments_dir = local_ns / "experiments"
-    if experiments_dir.exists():
-        target = out_root / "experiments"
-        target.mkdir(exist_ok=True)
-        for item in experiments_dir.glob("*"):
-            if item.is_dir():
-                dst_dir = target / item.name
-                dst_dir.mkdir(exist_ok=True)
-                for child in item.iterdir():
-                    if child.is_file():
-                        (dst_dir / child.name).write_text(child.read_text())
-
+    sync_namespace_snapshot(local_ns, out_root, "".join(lines), copied_meta)
     volume.commit()
     return {
         "lane_key": lane_key,

@@ -23,6 +23,7 @@ Move autoresearch orchestration from RunPod-heavy operation to Modal, keep multi
 - Fixed remote log buffering so Modal apps stream real autoresearch progress.
 - Fixed namespace override handling so Modal lanes can resume from intended seed histories.
 - Fixed `core_record_discovery` seeding so it uses promoted code as a starting point without inheriting an impossible `600s` BPB gate for `180s` proxy runs.
+- Fixed Modal checkpointing so lane namespaces are synced into the Modal volume incrementally during a run, not only at batch end. This is intended to preserve `experiments/<id>/train_gpt.py` and related files even if a detached app is interrupted mid-batch.
 
 ### Strategy split
 - `core_record_discovery`: fast-core record-track proxy search
