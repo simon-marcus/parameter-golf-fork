@@ -91,7 +91,10 @@ LANE_POLICIES: dict[str, LanePolicy] = {
         prompt_guidance=(
             "This lane is for core model, optimizer, and schedule changes close to the current training stack.",
             "Prefer changes that improve early convergence in the first ~300 steps and do not materially slow step time.",
-            "Avoid large parameter-count increases unless there is clear size headroom or a concrete compression hypothesis.",
+            "The validated frontier is 12×448 dim, mlp_mult=2, matrix_lr=0.08, warmdown_iters=600 at 1.3508 BPB (15.8MB). Refine LOCALLY around this base.",
+            "PRIORITY ORDER: (1) warmdown sweep around 600 (try 500/550/700), (2) narrow matrix_lr sweep around 0.08, (3) width nudges around 448, (4) KV-head reduction, (5) depth/width rebalance only if under cap.",
+            "DO NOT TRY: scalar_lr changes, matrix_lr>=0.09, generic activation swaps, large multi-change jumps, or naive depth increases without size-recovery plan.",
+            "Artifact headroom is very tight (~0.2MB). Any param increase risks going over 16MB. Prefer zero-size-risk schedule changes first.",
         ),
     ),
     "eval_time": LanePolicy(
@@ -99,9 +102,11 @@ LANE_POLICIES: dict[str, LanePolicy] = {
         objective="Trade evaluation compute for lower val_bpb while staying within a strict evaluation-time budget.",
         stage_desc="Treat evaluation latency and memory as first-class constraints, not just the training metric.",
         prompt_guidance=(
-            "This lane is for cache, copy/pointer, dynamic evaluation, and online adaptation ideas.",
-            "Changes must improve compression without creating runaway eval-time or memory costs.",
-            "Prefer narrow, measurable evaluation logic over large architecture changes.",
+            "Post-quantization calibration is the TOP PRIORITY. Softcap calibration gave a 0.068 BPB win — this is the strongest eval-time lever found so far.",
+            "PRIORITY ORDER: (1) skip_weight scale calibration, (2) per-head temperature or attention scaling, (3) LM-head / final-logit calibration variants, (4) confirm reproducibility with a control run.",
+            "Track which calibration gains are ADDITIVE vs OVERLAPPING. If two calibrations target the same distortion, do not assume they stack.",
+            "Do NOT make core-model architecture changes in this lane. Focus exclusively on eval-time compensation and calibration.",
+            "Keep eval time well under the gate. Current best uses ~44.5s of 60s budget.",
         ),
     ),
     "representation": LanePolicy(
@@ -679,6 +684,12 @@ def main():
 
     if not TRAIN_SCRIPT_BEST.exists():
         shutil.copy2(TRAIN_SCRIPT, TRAIN_SCRIPT_BEST)
+    else:
+        # On restarts, resume from the seeded/best code rather than whatever
+        # happens to be at repo root. Claude always edits TRAIN_SCRIPT.
+        best_code = TRAIN_SCRIPT_BEST.read_text()
+        if TRAIN_SCRIPT.read_text() != best_code:
+            TRAIN_SCRIPT.write_text(best_code)
 
     best = best_entry_for_lane(history)
     best_bpb: float | None = best["val_bpb"] if best is not None else None
