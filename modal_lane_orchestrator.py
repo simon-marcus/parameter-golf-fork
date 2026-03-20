@@ -46,10 +46,7 @@ def load_env_local() -> dict[str, str]:
 
 ENV_LOCAL_VALUES = load_env_local()
 ANTHROPIC_API_KEY = os.environ.get("ANTHROPIC_API_KEY") or ENV_LOCAL_VALUES.get("ANTHROPIC_API_KEY")
-if not ANTHROPIC_API_KEY:
-    raise RuntimeError("Missing ANTHROPIC_API_KEY in environment or .env.local")
-
-anthropic_secret = modal.Secret.from_dict({"ANTHROPIC_API_KEY": ANTHROPIC_API_KEY})
+anthropic_secret = modal.Secret.from_dict({"ANTHROPIC_API_KEY": ANTHROPIC_API_KEY}) if ANTHROPIC_API_KEY else None
 volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
 auth_volume = modal.Volume.from_name(AUTH_VOLUME_NAME, create_if_missing=True)
 
@@ -212,13 +209,17 @@ def sync_namespace_snapshot(
     return copied
 
 
-@app.function(
+lane_function_kwargs = dict(
     gpu="H100",
     timeout=6 * 60 * 60,
     memory=65536,
     volumes={REMOTE_OUT: volume, REMOTE_CLAUDE_CONFIG: auth_volume},
-    secrets=[anthropic_secret],
 )
+if anthropic_secret is not None:
+    lane_function_kwargs["secrets"] = [anthropic_secret]
+
+
+@app.function(**lane_function_kwargs)
 def run_lane_job(
     lane_key: str,
     seed_best: str | None,
@@ -258,9 +259,10 @@ def run_lane_job(
             "PYTHONUNBUFFERED": "1",
             "AUTORESEARCH_MODEL": env.get("AUTORESEARCH_MODEL", "opus"),
             "CLAUDE_EFFORT": env.get("CLAUDE_EFFORT", "high"),
-            "ANTHROPIC_API_KEY": env["ANTHROPIC_API_KEY"],
         }
     )
+    if "ANTHROPIC_API_KEY" in env:
+        env["ANTHROPIC_API_KEY"] = env["ANTHROPIC_API_KEY"]
     env.update(extra_env)
 
     start = time.time()
