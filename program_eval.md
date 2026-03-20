@@ -27,8 +27,13 @@ Use evaluation to recover information the model already contains or to score tok
 - Tokenizer or dataset changes
 - Expensive eval-time logic that blows the eval budget
 - Overlapping calibration tricks that likely do the same thing
+- Coordinate-descent or iterative re-search loops
+- Proposals that add many extra eval passes
+- Any idea that needs more than one new calibration axis at once
 
 ## Guidance
 - Make one conceptual change at a time
 - Keep evaluation time measurable and visible
 - Prioritize gains that transfer to strong fast core models
+- Prefer cheap one-axis tests over clever joint optimization
+- If recent runs timed out, simplify the proposal until it is obviously cheaper

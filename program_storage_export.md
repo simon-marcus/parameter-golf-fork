@@ -38,9 +38,14 @@ Some matrices are much more sensitive than others. Do not assume one export form
 - Large architecture changes
 - Ideas that only improve pre-quant loss
 - Complicated compression schemes with high code overhead
+- High-concept proposals without a concrete file-level change
+- Anything that requires inventing a new codec tonight
+- Multi-part changes that touch training, export, and eval simultaneously
 
 ## Guidance
 - Make one conceptual change at a time
 - Judge success by post-export `val_bpb` and artifact bytes together
 - It is acceptable to spend some byte budget if the post-export BPB gain is clearly worth it
 - Focus especially on the embedding / output projection path
+- Prefer simple selective-precision edits over abstract compression plans
+- If Claude cannot clearly name the exact tensors or export path being changed, the proposal is too vague

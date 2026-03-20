@@ -31,6 +31,9 @@ The leaderboard now shows that overlapping-window evaluation is a major lever. T
 - Tokenizer or dataset changes
 - Eval methods that explode runtime or memory
 - Pure calibration-only ideas unless they are directly supporting overlap
+- Multi-phase or iterative calibration loops
+- Adding many extra eval passes to an already expensive run
+- Changes that require recompiling or restructuring the forward path
 
 ## Guidance
 - Make one conceptual change at a time
@@ -38,3 +41,6 @@ The leaderboard now shows that overlapping-window evaluation is a major lever. T
 - Keep `eval_time_ms` visible and bounded
 - Optimize for something that could plausibly transfer to an 8xH100 record submission
 - The single most actionable question in this lane is whether `stride=256` beats `64` for our current stack
+- Prefer tiny code diffs that change a constant, a scoring mask, or a windowing loop
+- If a proposal would add more than a few eval passes, do not do it
+- If the last few experiments timed out, become more conservative, not more ambitious
