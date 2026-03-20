@@ -496,14 +496,25 @@ def run_claude_proposal(prompt: str) -> str | None:
     output = result.stdout + "\n" + result.stderr
 
     desc_match = re.search(r"DESCRIPTION:\s*(.+)", output)
-    if desc_match:
-        return desc_match.group(1).strip()
+    if not desc_match:
+        return None
 
-    lines = [l.strip() for l in output.strip().split("\n") if l.strip()]
-    if lines:
-        return lines[-1][:200]
-
-    return None
+    desc = desc_match.group(1).strip()
+    lowered = desc.lower()
+    banned_fragments = [
+        "manually restore",
+        "/root/.claude",
+        "backup",
+        "auth login",
+        "you can manually restore",
+        "cp \"",
+        "cp '",
+    ]
+    if any(fragment in lowered for fragment in banned_fragments):
+        return None
+    if len(desc) < 20:
+        return None
+    return desc
 
 
 def run_training(experiment_id: int) -> tuple[str, int]:
