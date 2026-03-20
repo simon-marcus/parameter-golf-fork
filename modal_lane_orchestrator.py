@@ -24,8 +24,10 @@ ENV_LOCAL = ROOT / ".env.local"
 WORKDIR = "/root/parameter-golf"
 REMOTE_DATA = f"{WORKDIR}/data"
 REMOTE_OUT = "/root/out"
+REMOTE_CLAUDE_CONFIG = "/root/.claude"
 
 VOLUME_NAME = os.environ.get("MODAL_VOLUME_NAME", "parameter-golf-autoresearch")
+AUTH_VOLUME_NAME = os.environ.get("MODAL_AUTH_VOLUME_NAME", "parameter-golf-claude-auth")
 APP_NAME = os.environ.get("MODAL_APP_NAME", "parameter-golf-autoresearch")
 
 
@@ -49,6 +51,7 @@ if not ANTHROPIC_API_KEY:
 
 anthropic_secret = modal.Secret.from_dict({"ANTHROPIC_API_KEY": ANTHROPIC_API_KEY})
 volume = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
+auth_volume = modal.Volume.from_name(AUTH_VOLUME_NAME, create_if_missing=True)
 
 
 def ignore_repo_files(path: Path) -> bool:
@@ -213,7 +216,7 @@ def sync_namespace_snapshot(
     gpu="H100",
     timeout=6 * 60 * 60,
     memory=65536,
-    volumes={REMOTE_OUT: volume},
+    volumes={REMOTE_OUT: volume, REMOTE_CLAUDE_CONFIG: auth_volume},
     secrets=[anthropic_secret],
 )
 def run_lane_job(
@@ -357,3 +360,23 @@ def main(
         else:
             result = run_lane_job.remote(lane_key, seed_best, seed_history, program_text, extra_env)
             print(json.dumps(result, indent=2))
+
+
+auth_app = modal.App("parameter-golf-claude-auth", image=image)
+
+
+@auth_app.function(
+    timeout=30 * 60,
+    volumes={REMOTE_CLAUDE_CONFIG: auth_volume},
+)
+def claude_auth_status() -> str:
+    import subprocess
+
+    result = subprocess.run(
+        ["bash", "-lc", "env -u ANTHROPIC_API_KEY claude auth status --json"],
+        capture_output=True,
+        text=True,
+    )
+    if result.returncode != 0:
+        return (result.stdout or "") + (result.stderr or "")
+    return result.stdout
