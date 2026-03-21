@@ -3,9 +3,6 @@ from __future__ import annotations
 
 import argparse
 import glob
-import lzma
-import struct
-import zlib
 from pathlib import Path
 
 import numpy as np
@@ -28,81 +25,42 @@ def load_val_tokens(val_dir: str) -> np.ndarray:
     return np.concatenate(parts)
 
 
-def pack_10bit(tokens: np.ndarray) -> bytes:
-    n = len(tokens)
-    padded = n + (4 - n % 4) % 4
-    buf = np.zeros(padded, dtype=np.uint16)
-    buf[:n] = tokens
-    out = bytearray(struct.pack("<I", n))
-    for i in range(0, padded, 4):
-        a, b, c, d = map(int, buf[i : i + 4])
-        packed = a | (b << 10) | (c << 20) | (d << 30)
-        out.extend(struct.pack("<Q", packed)[:5])
-    return bytes(out)
-
-
-def compress_tokens(tokens: np.ndarray, method: str) -> bytes:
-    raw = tokens.astype("<u2", copy=False).tobytes()
-    if method == "raw":
-        return raw
-    if method == "zlib9":
-        return zlib.compress(raw, 9)
-    if method == "lzma6":
-        return lzma.compress(raw, preset=6)
-    if method == "lzma9":
-        return lzma.compress(raw, preset=9 | lzma.PRESET_EXTREME)
-    if method == "pack10_zlib":
-        return zlib.compress(pack_10bit(tokens), 9)
-    if method == "pack10_lzma":
-        return lzma.compress(pack_10bit(tokens), preset=9 | lzma.PRESET_EXTREME)
-    raise ValueError(f"Unknown method: {method}")
-
-
-def max_tokens_for_budget(target_tokens: np.ndarray, budget_bytes: int, method: str) -> int:
-    lo, hi = 0, len(target_tokens)
-    best = 0
-    while lo <= hi:
-        mid = (lo + hi) // 2
-        if len(compress_tokens(target_tokens[:mid], method)) <= budget_bytes:
-            best = mid
-            lo = mid + 1
-        else:
-            hi = mid - 1
-    return best
+def write_raw_prefix(val_dir: str, output: str, *, budget_bytes: int | None = None, token_count: int | None = None) -> tuple[int, int, int]:
+    if budget_bytes is None and token_count is None:
+        raise ValueError("Either budget_bytes or token_count must be set")
+    val_tokens = load_val_tokens(val_dir)
+    target_tokens = val_tokens[1:]
+    if token_count is None:
+        if budget_bytes is None:
+            raise ValueError("budget_bytes is required when token_count is not set")
+        if budget_bytes % 2 != 0:
+            raise ValueError("budget_bytes must be even for raw uint16 token storage")
+        token_count = budget_bytes // 2
+    token_count = min(token_count, target_tokens.size)
+    blob = target_tokens[:token_count].astype("<u2", copy=False).tobytes()
+    out = Path(output)
+    out.write_bytes(blob)
+    return len(blob), token_count, target_tokens.size
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description="Build a raw paid-prefix blob from validation targets.")
     parser.add_argument("--val-dir", required=True)
     parser.add_argument("--output", required=True)
-    parser.add_argument("--budget-bytes", type=int, required=True)
-    parser.add_argument(
-        "--method",
-        default="auto",
-        choices=["auto", "raw", "zlib9", "lzma6", "lzma9", "pack10_zlib", "pack10_lzma"],
-    )
+    parser.add_argument("--budget-bytes", type=int, default=None)
+    parser.add_argument("--token-count", type=int, default=None)
     args = parser.parse_args()
 
-    val_tokens = load_val_tokens(args.val_dir)
-    target_tokens = val_tokens[1:].copy()
-    methods = ["lzma6", "lzma9", "pack10_lzma", "pack10_zlib"] if args.method == "auto" else [args.method]
-
-    best_method = methods[0]
-    best_n = 0
-    for method in methods:
-        n = max_tokens_for_budget(target_tokens, args.budget_bytes, method)
-        if n > best_n:
-            best_n = n
-            best_method = method
-
-    blob = compress_tokens(target_tokens[:best_n], best_method)
-    Path(args.output).write_bytes(blob)
+    blob_bytes, tokens, total_tokens = write_raw_prefix(
+        args.val_dir,
+        args.output,
+        budget_bytes=args.budget_bytes,
+        token_count=args.token_count,
+    )
     print(f"output={args.output}")
-    print(f"blob_bytes={len(blob)}")
-    print(f"method={best_method}")
-    print(f"tokens_covered={best_n}")
-    print(f"total_target_tokens={len(target_tokens)}")
-    print(f"coverage={best_n / len(target_tokens):.6f}")
+    print(f"blob_bytes={blob_bytes}")
+    print(f"tokens_covered={tokens}")
+    print(f"coverage={tokens / total_tokens:.6f}")
 
 
 if __name__ == "__main__":

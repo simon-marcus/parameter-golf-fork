@@ -29,35 +29,35 @@ export VAL_LOSS_EVERY=0
 export TRAIN_LOG_EVERY=200
 export VOCAB_SIZE=1024
 export INT8_KEEP_TOK_EMB_FP16=1
-export PAID_PREFIX_CODEC=auto
+export PAID_PREFIX_CODEC=raw
 
 case "$VARIANT" in
   base)
     export RUN_ID=leadercore10l_paidprefix_base
     OUT_DIR="$RECORD_ROOT/runpod_${DATA_ROOT_MODE}_base"
     ;;
-  prefix512k)
-    export RUN_ID=leadercore10l_paidprefix_512k
-    export PAID_PREFIX_FILE="$RECORD_ROOT/prefix_512k.xz"
-    OUT_DIR="$RECORD_ROOT/runpod_${DATA_ROOT_MODE}_prefix512k"
+  prefix680k)
+    export RUN_ID=leadercore10l_paidprefix_680k
+    export PAID_PREFIX_FILE="$RECORD_ROOT/prefix_680000.raw"
+    OUT_DIR="$RECORD_ROOT/runpod_${DATA_ROOT_MODE}_prefix680k"
+    ;;
+  prefix700k)
+    export RUN_ID=leadercore10l_paidprefix_700k
+    export PAID_PREFIX_FILE="$RECORD_ROOT/prefix_700000.raw"
+    OUT_DIR="$RECORD_ROOT/runpod_${DATA_ROOT_MODE}_prefix700k"
+    ;;
+  prefix720k)
+    export RUN_ID=leadercore10l_paidprefix_720k
+    export PAID_PREFIX_FILE="$RECORD_ROOT/prefix_720000.raw"
+    OUT_DIR="$RECORD_ROOT/runpod_${DATA_ROOT_MODE}_prefix720k"
     ;;
   prefix768k)
     export RUN_ID=leadercore10l_paidprefix_768k
-    export PAID_PREFIX_FILE="$RECORD_ROOT/prefix_768k.xz"
+    export PAID_PREFIX_FILE="$RECORD_ROOT/prefix_768000.raw"
     OUT_DIR="$RECORD_ROOT/runpod_${DATA_ROOT_MODE}_prefix768k"
     ;;
-  prefix1m)
-    export RUN_ID=leadercore10l_paidprefix_1m
-    export PAID_PREFIX_FILE="$RECORD_ROOT/prefix_1m.xz"
-    OUT_DIR="$RECORD_ROOT/runpod_${DATA_ROOT_MODE}_prefix1m"
-    ;;
-  prefix2m)
-    export RUN_ID=leadercore10l_paidprefix_2m
-    export PAID_PREFIX_FILE="$RECORD_ROOT/prefix_2m.xz"
-    OUT_DIR="$RECORD_ROOT/runpod_${DATA_ROOT_MODE}_prefix2m"
-    ;;
   *)
-    echo "Usage: $0 {base|prefix512k|prefix768k|prefix1m|prefix2m}"
+    echo "Usage: $0 {base|prefix680k|prefix700k|prefix720k|prefix768k}"
     exit 1
     ;;
 esac
