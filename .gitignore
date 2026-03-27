@@ -18,3 +18,8 @@ autoresearch/*.best.py
 autoresearch/experiments/*/train.log
 autoresearch.out
 final_model*
+*.ptz
+*.raw
+*.pid
+*.tar.gz
+.gstack/

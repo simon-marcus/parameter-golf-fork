@@ -1,0 +1,92 @@
+=== case=chunk_6_11 seed=1337 started=2026-03-25T02:40:06Z ===
+DATA_PATH=/tmp/parameter-golf-data/datasets/fineweb10B_sp1024
+EVAL_SEQ_LEN=2048
+EVAL_STRIDE=64
+ITERATIONS=1200
+MAX_WALLCLOCK_SECONDS=120
+RUN_ID=chunk_6_11_seed1337
+SEED=1337
+TOKENIZER_PATH=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+TRAIN_BATCH_TOKENS=131072
+TRAIN_SEQ_LEN=2048
+USE_COMPILE=0
+VAL_BATCH_SIZE=131072
+VAL_TOKENS_LIMIT=1048576
+=== command ===
+python3 -m torch.distributed.run --standalone --nproc_per_node=1 /workspace/parameter-golf/records/track_10min_16mb/2026-03-24_StreamingTTT_Candidate/train_gpt.py
+===============
+logs/chunk_6_11_seed1337.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=/tmp/parameter-golf-data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:1048576
+model_params:26928220
+mtp_num_heads:0 mtp_loss_weight:0.2 mtp_params:0
+XSA:last_4 active_layers:[7, 8, 9, 10]
+world_size:1 grad_accum_steps:8
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.035 head_lr:0.0 matrix_lr:0.025 scalar_lr:0.025
+activation_mode:leaky_relu_sq neg_slope:0.5 asym_init:0.25 gated_beta_init:1.0
+train_batch_tokens:131072 train_seq_len:2048 iterations:1200 warmup_steps:20 max_wallclock_seconds:120.000
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:1/1200 train_loss:6.9330 train_time:222ms step_avg:222.26ms
+step:2/1200 train_loss:8.9313 train_time:399ms step_avg:199.36ms
+step:3/1200 train_loss:8.0254 train_time:592ms step_avg:197.27ms
+step:4/1200 train_loss:7.1972 train_time:803ms step_avg:200.85ms
+step:5/1200 train_loss:7.1768 train_time:1027ms step_avg:205.39ms
+step:6/1200 train_loss:7.1458 train_time:1257ms step_avg:209.52ms
+step:7/1200 train_loss:6.9222 train_time:1504ms step_avg:214.86ms
+step:8/1200 train_loss:6.7801 train_time:1737ms step_avg:217.18ms
+step:9/1200 train_loss:6.5111 train_time:1972ms step_avg:219.07ms
+step:10/1200 train_loss:6.3753 train_time:2207ms step_avg:220.70ms
+step:100/1200 train_loss:3.6616 train_time:20938ms step_avg:209.38ms
+step:200/1200 train_loss:2.9665 train_time:41668ms step_avg:208.34ms
+step:300/1200 train_loss:2.7825 train_time:65131ms step_avg:217.10ms
+step:400/1200 train_loss:2.7081 train_time:85881ms step_avg:214.70ms
+swa:start step:450
+late_qat:enabled step:462 scale:0.1497
+step:500/1200 train_loss:2.6090 train_time:109422ms step_avg:218.84ms
+step:547/1200 val_loss:2.5387 val_bpb:1.5211 train_time:120112ms step_avg:219.58ms
+stopping_early: wallclock_cap train_time:120112ms step:547/1200
+peak memory allocated: 4164 MiB reserved: 4244 MiB
+ema:applying EMA weights
+DIAGNOSTIC post_ema val_loss:2.9076 val_bpb:1.7421 eval_time:302ms
+Serialized model: 106027446 bytes
+Code size: 101775 bytes
+Serialized model int6+lzma: 8874416 bytes
+Total submission size int6+lzma: 8976191 bytes
+final_int6_roundtrip val_loss:2.9916 val_bpb:1.7924 eval_time:3344ms
+final_int6_roundtrip_exact val_loss:2.99163626 val_bpb:1.79242908
+final_int6_sliding_window val_loss:2.9792 val_bpb:1.7859 stride:64 eval_time:11030ms
+final_int6_sliding_window_exact val_loss:2.97920919 val_bpb:1.78594877
+final_int8_zlib_roundtrip_exact val_loss:2.97920919 val_bpb:1.78594877
+ttt_setup:param_mode=block_range:6-11 unfrozen=25962536 frozen=965684
+ttt:start mode=chunk param_mode=block_range:6-11 chunks=32 chunk_tokens=32768 total_windows=16384 stride=64 ttt_lr=0.002 ttt_epochs=3
+  ttt_chunk [1/32] bpb=1.810145 time=1.1s
+  ttt_chunk [11/32] bpb=1.770377 time=11.0s
+  ttt_chunk [21/32] bpb=1.780569 time=21.0s
+  ttt_chunk [31/32] bpb=1.784565 time=31.1s
+  ttt_chunk [32/32] bpb=1.784728 time=31.9s
+ttt:done mode=chunk val_loss=2.977172 val_bpb=1.784728 scored_tokens=1050560 adapted_tokens=3047424 elapsed=31.9s
+legal_ttt val_loss:2.9772 val_bpb:1.7847 eval_time:31918ms
+legal_ttt_exact val_loss:2.97717205 val_bpb:1.78472756

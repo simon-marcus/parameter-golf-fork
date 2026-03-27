@@ -6,6 +6,8 @@ DATA_ROOT_MODE="${DATA_ROOT_MODE:-workspace}"
 
 cd /workspace/parameter-golf
 
+VERIFY_SCRIPT="/workspace/parameter-golf/verify_runpod_data_ready.sh"
+
 SCRIPT_PATH="/workspace/parameter-golf/records/track_10min_16mb/2026-03-20_LeaderCore10L_ValidEval_TempOnly_Int8Search/train_gpt.py"
 RECORD_ROOT="/workspace/parameter-golf/records/track_10min_16mb/2026-03-20_LeaderCore10L_ValidEval_TempOnly_Int8Search"
 
@@ -24,11 +26,14 @@ case "$DATA_ROOT_MODE" in
     ;;
 esac
 
+"$VERIFY_SCRIPT" "$DATA_PATH" "$TOKENIZER_PATH"
+
 export MAX_WALLCLOCK_SECONDS=600
 export VAL_LOSS_EVERY=0
 export TRAIN_LOG_EVERY=200
 export VOCAB_SIZE=1024
 export INT8_KEEP_TOK_EMB_FP16=1
+export USE_COMPILE="${USE_COMPILE:-1}"
 
 case "$VARIANT" in
   base)

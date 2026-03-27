@@ -8,7 +8,7 @@ BUILDER="${BUILDER:-python3 records/track_10min_16mb/2026-03-20_LeaderCore10L_Pa
 BUDGETS=("$@")
 
 if [ "${#BUDGETS[@]}" -eq 0 ]; then
-  BUDGETS=(680000 700000 720000)
+  BUDGETS=(680000 690000 700000 720000)
 fi
 
 mkdir -p "$OUT_DIR"

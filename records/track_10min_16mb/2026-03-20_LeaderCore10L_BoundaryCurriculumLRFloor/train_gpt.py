@@ -866,7 +866,9 @@ def main() -> None:
 
     code = Path(__file__).read_text(encoding="utf-8")
     args = Hyperparameters()
-    zeropower_via_newtonschulz5 = torch.compile(zeropower_via_newtonschulz5)
+    use_compile = int(os.environ.get("USE_COMPILE", "1")) != 0
+    if use_compile:
+        zeropower_via_newtonschulz5 = torch.compile(zeropower_via_newtonschulz5)
 
     # -----------------------------
     # DISTRIBUTED + CUDA SETUP
@@ -918,6 +920,7 @@ def main() -> None:
 
     log0(code, console=False)
     log0("=" * 100, console=False)
+    log0(f"use_compile:{int(use_compile)}")
     log0(f"Running Python {sys.version}", console=False)
     log0(f"Running PyTorch {torch.__version__}", console=False)
     log0(
@@ -976,7 +979,7 @@ def main() -> None:
     restore_low_dim_params_to_fp32(base_model)
 
     def build_runtime_model() -> nn.Module:
-        compiled = torch.compile(base_model, dynamic=False, fullgraph=True)
+        compiled = torch.compile(base_model, dynamic=False, fullgraph=True) if use_compile else base_model
         return DDP(compiled, device_ids=[local_rank], broadcast_buffers=False) if distributed else compiled
 
     curriculum_enabled = (

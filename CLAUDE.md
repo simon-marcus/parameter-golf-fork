@@ -95,14 +95,49 @@ Pods land in `/workspace/`. The repo is at `/workspace/parameter-golf/`.
 3. SSH in and set up:
    ```bash
    cd /workspace && git clone https://github.com/openai/parameter-golf.git && cd parameter-golf
-   python3 data/cached_challenge_fineweb.py --variant sp1024
    curl -fsSL https://deb.nodesource.com/setup_22.x | bash - && apt-get install -y nodejs
    npm install -g @anthropic-ai/claude-code
-   pip install --break-system-packages anthropic
+   bash ./setup_runpod.sh
    ```
 4. Auth Claude Code: copy `/root/.claude/.credentials.json` from an existing authed pod, OR run `claude` interactively and log in with Max subscription
 5. Sync local repo files: `rsync -avz -e "ssh -p PORT -o StrictHostKeyChecking=no" --exclude .git --exclude data/datasets --exclude data/tokenizers /path/to/parameter-golf/ root@HOST:/workspace/parameter-golf/`
 6. Launch a lane: `PYTHONUNBUFFERED=1 BACKGROUND=1 bash ./run_lane.sh <lane_key>`
+
+### RunPod Rules For Agents
+
+- Never launch an expensive run before preflight passes.
+  Use `./verify_runpod_data_ready.sh "$DATA_PATH" "$TOKENIZER_PATH"` or a launcher that already calls it.
+- Do not download dataset shards on an `8xH100` pod by default.
+  Preferred flow: prepare data on a cheap pod or persistent volume, then stage to `/tmp/parameter-golf-data` on the expensive pod.
+- Use `DATA_ROOT_MODE=tmp` for serious timing or record-style runs.
+  `/workspace` is acceptable for bootstrap and inspection, not for throughput-sensitive comparisons.
+- Use `USE_COMPILE=0` for `1xH100` smoke tests and debugging.
+  Full runs should normally keep `USE_COMPILE=1`.
+- If preflight fails, fix staging or data integrity first.
+  Do not blindly rerun `torchrun`.
+
+### Recommended Run Sequences
+
+Cheap `1xH100` smoke test:
+
+```bash
+bash /workspace/parameter-golf/setup_local_parity_data_runpod.sh
+USE_COMPILE=0 DATA_ROOT_MODE=tmp NPROC_PER_NODE=1 SCREEN_SECONDS=180 \
+  bash /workspace/parameter-golf/launch_leadercore_screen_runpod.sh base
+```
+
+Full `8xH100` timing or record-style run:
+
+```bash
+bash /workspace/parameter-golf/setup_local_parity_data_runpod.sh
+DATA_ROOT_MODE=tmp bash /workspace/parameter-golf/launch_leadercore_ablation_runpod.sh base
+```
+
+Optional on-pod dataset download when you intentionally want it:
+
+```bash
+RUNPOD_DOWNLOAD_DATA=1 bash /workspace/parameter-golf/setup_runpod.sh
+```
 
 ### Syncing Changes to Running Pods
 

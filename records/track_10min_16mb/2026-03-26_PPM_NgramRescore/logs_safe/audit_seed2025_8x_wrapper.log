@@ -1,0 +1,21 @@
+=== Streaming TTT RunPod Preflight ===
+Skipping setup_runpod.sh because RUNPOD_BOOTSTRAP=0
+removed_bad_shards=0
+verified train_shards=80 val_shards=1
+verified tokenizer=/workspace/parameter-golf/data/tokenizers/fineweb_1024_bpe.model
+staging dataset from /workspace/parameter-golf/data/datasets/fineweb10B_sp1024 to /tmp/parameter-golf-data/datasets/fineweb10B_sp1024
+staging tokenizer from /workspace/parameter-golf/data/tokenizers to /tmp/parameter-golf-data/tokenizers
+local parity data ready
+DATA_PATH=/tmp/parameter-golf-data/datasets/fineweb10B_sp1024
+TOKENIZER_PATH=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+dataset_files=81
+dataset_bytes=16G
+verified train_shards=80 val_shards=1
+verified tokenizer=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+workspace verification: ok
+tmp verification: ok
+No smoke variant requested.
+=== Preflight complete ===
+verified train_shards=80 val_shards=1
+verified tokenizer=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+started streamttt_chunk_full_seed2025 data_root_mode=tmp pid=1256 log=/workspace/parameter-golf/records/track_10min_16mb/2026-03-24_StreamingTTT_Candidate/runpod_tmp_chunk_full_seed2025/train.log

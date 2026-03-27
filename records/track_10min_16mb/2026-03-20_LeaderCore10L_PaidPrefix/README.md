@@ -11,6 +11,7 @@ What changed:
 
 Suggested first budgets:
 - `680000`
+- `690000`
 - `700000`
 - `720000`
 
@@ -20,10 +21,22 @@ Build fixed raw blobs offline:
 bash /workspace/parameter-golf/build_paid_prefix_raws.sh \
   /tmp/parameter-golf-data/datasets/fineweb10B_sp1024 \
   /workspace/parameter-golf/records/track_10min_16mb/2026-03-20_LeaderCore10L_PaidPrefix \
-  680000 700000 720000
+  680000 690000 700000 720000
 ```
 
 Run on `8xH100`:
+
+```bash
+DATA_ROOT_MODE=tmp bash /workspace/parameter-golf/launch_leadercore_paidprefix_runpod.sh prefix690k
+```
+
+If `700k` is the target, pair it with the token-embedding size clawback:
+
+```bash
+DATA_ROOT_MODE=tmp bash /workspace/parameter-golf/launch_leadercore_paidprefix_runpod.sh prefix700k_tokembint8
+```
+
+The unclawed `700k` run is expected to be slightly over the `16,000,000` byte cap:
 
 ```bash
 DATA_ROOT_MODE=tmp bash /workspace/parameter-golf/launch_leadercore_paidprefix_runpod.sh prefix680k
