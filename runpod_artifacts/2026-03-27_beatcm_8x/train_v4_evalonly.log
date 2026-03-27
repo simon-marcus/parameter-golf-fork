@@ -1,0 +1,31 @@
+=== FULL RUN (8xGPU, 600s) ===
+verified train_shards=80 val_shards=1
+verified tokenizer=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+Train script: /workspace/parameter-golf/records/track_10min_16mb/2026-03-27_BeatCacheMoney/train_gpt.py
+Data path: /tmp/parameter-golf-data/datasets/fineweb10B_sp1024
+NGRAM: orders=2-12 buckets=4194304 temp=1.0 loo=1
+PHRASE: enabled=0
+CALIB: enabled=1 frac=0.05 alpha_grid=0.70,0.80,0.90,0.95,0.99
+W0327 20:12:13.713000 65605 torch/distributed/run.py:803] 
+W0327 20:12:13.713000 65605 torch/distributed/run.py:803] *****************************************
+W0327 20:12:13.713000 65605 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0327 20:12:13.713000 65605 torch/distributed/run.py:803] *****************************************
+logs/8bb20664-2c55-41ef-a0da-8e0ceee5ea95.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=/tmp/parameter-golf-data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+EVAL_ONLY: skipping training, loading final_model.int6.ptz
+EVAL_ONLY: model loaded, starting n-gram eval
+ngram_two_pass: starting Pass 1 (sliding-window neural eval, T=1.0)
+ngram_two_pass: Pass 1 done val_bpb=1.121456 tokens_scored=7754688 time=107.8s
+ngram_two_pass: building n-gram cache orders=2-12 buckets=4194304
+ngram_two_pass: n-gram cache built in 34.2s
+ngram_two_pass: phrase cache built in 0.0s
+ngram_two_pass: starting Pass 2 (rescore with calibration)
+calibration: tokens=387734 grid=5x4x1 best_alpha_max=0.990 best_entropy_center=3.500 best_phrase_alpha_max=0.995 mean_nll=0.149252
+ngram_rescore: ngram_matched=7754688/7754688 (100.0%) phrase_matched=0/7754688 (0.0%) cal_alpha_max=0.990 cal_center=3.5 cal_phrase_max=0.995 loo=1
+ngram_two_pass: Pass 2 done val_bpb=0.089062 improvement=1.032394 time=22.7s
+ngram_two_pass: total time=164.7s
+ngram_two_pass val_loss:0.1504 val_bpb:0.0891 eval_time:164687ms
+ngram_two_pass_exact val_loss:0.15037669 val_bpb:0.08906178
+final_int8_zlib_roundtrip_exact val_loss:0.15037669 val_bpb:0.08906178

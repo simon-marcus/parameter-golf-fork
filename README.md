@@ -54,7 +54,7 @@ cd parameter-golf
 python3 -m venv .venv
 source .venv/bin/activate
 python -m pip install --upgrade pip
-pip install mlx numpy sentencepiece huggingface-hub datasets tqdm
+pip install -r requirements-mlx.txt
 ```
 
 Download our cached version of FineWeb with the 1024-token vocabulary:
@@ -65,6 +65,8 @@ python3 data/cached_challenge_fineweb.py --variant sp1024 --train-shards 10
 
 This populates `./data/datasets/fineweb10B_sp1024/` and `./data/tokenizers/`.
 By default this downloads the full validation split plus 80 training shards (8B tokens). For a smaller local smoke subset, pass `--train-shards 1`, for example `python3 data/cached_challenge_fineweb.py --variant sp1024 --train-shards 1`.
+
+If you're setting up a CUDA machine directly from source instead of using the prebuilt RunPod image, install the narrow competition runtime with `pip install -r requirements.txt`. Research/orchestration extras live in `requirements-research.txt`.
 
 Then run a small MLX training job:
 
@@ -119,11 +121,22 @@ VOCAB_SIZE=1024 \
 torchrun --standalone --nproc_per_node=1 train_gpt.py
 ```
 
+For fixed-tokenizer competition runs, `train_gpt.py` will look for precomputed tokenizer metadata at
+`TOKENIZER_META_PATH` or, by default, next to the model as `fineweb_1024_bpe.meta.npz`. Export it once with:
+
+```bash
+python3 data/export_sentencepiece_meta.py ./data/tokenizers/fineweb_1024_bpe.model --validate
+```
+
+When the metadata file is present, runtime evaluation no longer requires `sentencepiece`; the `.model` file is only used as a compatibility fallback if metadata is missing.
+
 By default, `train_gpt.py` keeps its ~10 minute wallclock cap. If you want a longer run, override it explicitly, for example `MAX_WALLCLOCK_SECONDS=0`.
 
 By default, this command prints `train_loss` step logs during training and prints `val_loss`, `val_bpb`, and compressed model size in the final `final_int8_zlib_roundtrip` lines at the end. If you want periodic validation logs during the run, set `VAL_LOSS_EVERY`, for example `VAL_LOSS_EVERY=200`. For the baseline config, the final `val_bpb` should land around ~1.2 with a compressed model size under 16MB.
 
 For dataset export, tokenizer export, and docs-cache rebuild instructions, see [data/README.md](data/README.md).
+
+If you want a reproducible pod substrate for repeated RunPod launches, see the pinned image and template plan in [ops/runpod_image/README.md](ops/runpod_image/README.md).
 
 
 ## FAQ

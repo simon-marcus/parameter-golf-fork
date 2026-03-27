@@ -4,7 +4,7 @@
 
 This is an entry for the [OpenAI Parameter Golf challenge](https://github.com/openai/parameter-golf): train the best language model that fits in a 16MB artifact and trains in under 10 minutes on 8×H100s. Scored by validation bits-per-byte (BPB) on FineWeb — lower is better.
 
-We use an **autoresearch loop** that runs on RunPod GPU pods: Claude Code (`claude -p`) proposes surgical edits to `train_gpt.py`, training runs, results are evaluated, and improvements are kept.
+We use an **autoresearch loop** that runs on RunPod GPU pods: Codex (`Codex -p`) proposes surgical edits to `train_gpt.py`, training runs, results are evaluated, and improvements are kept.
 
 ## Key Files
 
@@ -12,7 +12,7 @@ We use an **autoresearch loop** that runs on RunPod GPU pods: Claude Code (`clau
 |------|---------|
 | `train_gpt.py` | The training script (from OpenAI). This is what gets modified by experiments. |
 | `autoresearch.py` | The autoresearch loop — orchestrates propose→train→evaluate→keep/revert. |
-| `program.md` | High-level research directives that guide Claude's proposals. |
+| `program.md` | High-level research directives that guide Codex's proposals. |
 | `run_lane.sh` | Launches a specific research lane (core, storage, eval_time, etc). |
 | `pod.sh` | RunPod pod management: create, ssh, sync, pull, stop, destroy. |
 | `EXPERIMENTS.md` | Human-readable experiment tracker and findings log. |
@@ -25,7 +25,7 @@ We use an **autoresearch loop** that runs on RunPod GPU pods: Claude Code (`clau
 ### Autoresearch Loop (`autoresearch.py`)
 
 Each experiment cycle:
-1. **Propose**: `claude -p` reads `train_gpt.py`, makes a surgical edit, returns a description
+1. **Propose**: `Codex -p` reads `train_gpt.py`, makes a surgical edit, returns a description
 2. **Train**: `torchrun --standalone --nproc_per_node=$GPUS train_gpt.py`
 3. **Evaluate**: Parse `val_bpb` (post-int8-quantization) and artifact size from output
 4. **Keep/Revert**: If BPB improved and under 16MB, keep. Otherwise revert to previous code.
@@ -142,7 +142,7 @@ Then:
      --exclude __pycache__ \
      --exclude .DS_Store \
      --exclude .venv* \
-     --exclude .claude \
+     --exclude .Codex \
      --exclude .gstack \
      --exclude data/datasets \
      --exclude data/tokenizers \
@@ -224,7 +224,7 @@ rsync -avz -e "ssh -p PORT -o StrictHostKeyChecking=no" \
   --exclude __pycache__ \
   --exclude .DS_Store \
   --exclude .venv* \
-  --exclude .claude \
+  --exclude .Codex \
   --exclude .gstack \
   --exclude data/datasets \
   --exclude data/tokenizers \
@@ -274,7 +274,7 @@ Training logs (`*.log`) are excluded to keep git clean.
 |----------|---------|---------|
 | `EXPERIMENT_SECONDS` | 180 | Training time budget per experiment |
 | `GPUS` | 1 | Number of GPUs for training |
-| `AUTORESEARCH_MODEL` | opus | Claude model for proposals |
+| `AUTORESEARCH_MODEL` | opus | Codex model for proposals |
 | `CLAUDE_EFFORT` | high | Thinking effort level |
 | `MAX_EXPERIMENTS` | 100 | Max experiments before stopping |
 | `BASELINE_BPB` | 0 | Seed BPB for first comparison |

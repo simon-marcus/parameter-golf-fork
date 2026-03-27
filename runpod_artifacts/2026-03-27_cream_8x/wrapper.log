@@ -1,0 +1,99 @@
+[Fri Mar 27 16:00:52 UTC 2026] CREAM launch start
+=== FULL RUN (8xGPU, 600s) ===
+verified train_shards=80 val_shards=1
+verified tokenizer=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+Train script: /workspace/parameter-golf/records/track_10min_16mb/2026-03-27_CREAM/train_gpt.py
+Data path: /tmp/parameter-golf-data/datasets/fineweb10B_sp1024
+MODEL: L=6 d=256 heads=4 kv=2 mlp=3.0
+NGRAM: orders=2-16 buckets=16777216 alpha=[0.05,0.99] temp=0.85 leave_one_out=1
+PHRASE: enabled=1 lengths=64,48,32,16 buckets=8388608 alpha=[0.88,0.995]
+CALIB: enabled=1 frac=0.05 alpha_grid=0.90,0.94,0.97,0.99 center_grid=2.5,3.0,3.5
+COMPLEMENT: enabled=1 alpha=0.5
+W0327 16:00:54.159000 24595 torch/distributed/run.py:803] 
+W0327 16:00:54.159000 24595 torch/distributed/run.py:803] *****************************************
+W0327 16:00:54.159000 24595 torch/distributed/run.py:803] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0327 16:00:54.159000 24595 torch/distributed/run.py:803] *****************************************
+logs/cream_seed1337.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=/tmp/parameter-golf-data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:4234268
+mtp_num_heads:0 mtp_loss_weight:0.2 mtp_params:0
+XSA:last_4 active_layers:[2, 3, 4, 5]
+world_size:8 grad_accum_steps:1
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:4 num_kv_heads:2
+tie_embeddings:True embed_lr:0.035 head_lr:0.0 matrix_lr:0.025 scalar_lr:0.025
+activation_mode:leaky_relu_sq neg_slope:0.5 asym_init:0.25 gated_beta_init:1.0
+train_batch_tokens:786432 train_seq_len:2048 iterations:20000 warmup_steps:20 max_wallclock_seconds:600.000
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+complement:enabled alpha=0.5
+step:0/20000 val_loss:6.9277 val_bpb:4.1029 train_time:0ms step_avg:0.02ms
+step:1/20000 train_loss:6.9284 train_time:6613ms step_avg:6613.04ms
+late_qat:enabled step:1 scale:0.0256
+step:2/20000 train_loss:6.4706 train_time:6649ms step_avg:3324.70ms
+step:3/20000 train_loss:6.4788 train_time:6713ms step_avg:2237.50ms
+step:4/20000 train_loss:6.4120 train_time:6782ms step_avg:1695.48ms
+step:5/20000 train_loss:6.2899 train_time:7128ms step_avg:1425.62ms
+step:6/20000 train_loss:6.1818 train_time:7627ms step_avg:1271.14ms
+step:7/20000 train_loss:6.0692 train_time:7684ms step_avg:1097.78ms
+step:8/20000 train_loss:5.9626 train_time:7743ms step_avg:967.86ms
+step:9/20000 train_loss:5.8580 train_time:7801ms step_avg:866.81ms
+step:10/20000 train_loss:5.7240 train_time:7864ms step_avg:786.39ms
+step:500/20000 train_loss:2.6597 train_time:92066ms step_avg:184.13ms
+step:1000/20000 train_loss:2.5529 train_time:160804ms step_avg:160.80ms
+step:1500/20000 train_loss:2.4990 train_time:212075ms step_avg:141.38ms
+step:2000/20000 train_loss:2.3529 train_time:262584ms step_avg:131.29ms
+step:2500/20000 train_loss:2.4308 train_time:335660ms step_avg:134.26ms
+step:3000/20000 train_loss:2.4386 train_time:392533ms step_avg:130.84ms
+step:3500/20000 train_loss:2.4484 train_time:432322ms step_avg:123.52ms
+step:4000/20000 train_loss:2.2413 train_time:494494ms step_avg:123.62ms
+step:4000/20000 val_loss:2.3057 val_bpb:1.3655 train_time:494529ms step_avg:123.63ms
+swa:start step:4150
+step:4500/20000 train_loss:2.3902 train_time:565874ms step_avg:125.75ms
+step:5000/20000 train_loss:2.3852 train_time:591596ms step_avg:118.32ms
+step:5214/20000 val_loss:2.2675 val_bpb:1.3429 train_time:600045ms step_avg:115.08ms
+stopping_early: wallclock_cap train_time:600045ms step:5214/20000
+peak memory allocated: 7995 MiB reserved: 8544 MiB
+ema:applying EMA weights
+DIAGNOSTIC post_ema val_loss:2.2674 val_bpb:1.3429 eval_time:555ms
+Serialized model: 15638561 bytes
+Code size: 126626 bytes
+Serialized model int6+lzma: 4201140 bytes
+Total submission size int6+lzma: 4327766 bytes
+final_int6_roundtrip val_loss:2.2847 val_bpb:1.3531 eval_time:3706ms
+final_final_int6_sliding_window val_loss:2.2486 val_bpb:1.3318 strfinal_int6_sliding_window val_loss:2.2439 val_bpb:1.3289 stride:64 eval_time:82868ms
+final_int6_sliding_window_exact val_loss:2.24385801 val_bpb:1.32894262
+final_int8_zlib_roundtrip_exact val_loss:2.24385801 val_bpb:1.32894262
+nngram_two_pass: Pass 1 done val_bpb=1.350274 tokens_scored=7ngram_two_pass: Pass 1 done val_bpb=1.346796 tokens_scored=7754688 time=123.7s
+ngram_two_pass: cache built in 123.1s phrase_lengths=[64, 48, 32, 16]
+ngram_two_pass: starting Pass 2 (n-gram rescore)
+ngram_two_pass:calibration tokens=387734 best_alpha_max=0.900 best_entropy_center=3.500 best_phrase_alpha_max=0.995 mean_nll=0.229701
+ngram_rescore: matched=7754688/7754688 (100.0%) mean_alpha=0ngram_rescore: matched=7754688/7754688 (100.0%) mean_alpha=0.971 phrase_matched=7754673/7754688 phrase_alpha=0.686 leave_one_out=1 alpha_max=0.900 entropy_center=3.500 phrase_alpha_max=0.995
+ngram_two_pass: Pass 2 done val_bpb=0.136077 improvement=1.210719 time=16.8s
+ngram_two_pass: total time=255.1s
+ngram_two_pass val_loss:0.2298 val_bpb:0.1361 eval_time:255175ms
+ngram_two_pass_exact val_loss:0.22975994 val_bpb:0.13607714
+final_int8[Fri Mar 27 16:17:22 UTC 2026] CREAM launch done
+:0.13607714
+[Fri Mar 27 16:17:23 UTC 2026] CREAM launch done

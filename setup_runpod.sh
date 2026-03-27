@@ -18,10 +18,11 @@ fi
 if [ "${RUNPOD_SKIP_PIP:-0}" = "1" ]; then
   echo "Skipping pip bootstrap because RUNPOD_SKIP_PIP=1"
 else
-  # The template should have most deps; install anything missing
+  # Keep the pod bootstrap narrow by default: the competition runtime plus data access.
   pip install --break-system-packages -r requirements.txt
-  pip install --break-system-packages anthropic
-  pip install --break-system-packages huggingface_hub sentencepiece
+  if [ "${RUNPOD_INSTALL_RESEARCH_EXTRAS:-0}" = "1" ]; then
+    pip install --break-system-packages -r requirements-research.txt
+  fi
 fi
 
 if [ "${RUNPOD_DOWNLOAD_DATA:-0}" = "1" ]; then

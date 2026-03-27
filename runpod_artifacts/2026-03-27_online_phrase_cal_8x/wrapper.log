@@ -1,0 +1,451 @@
+[Fri Mar 27 13:14:37 UTC 2026] setup_runpod start
+=== Parameter Golf — RunPod Setup ===
+Requirement already satisfied: numpy in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 1)) (2.4.3)
+Requirement already satisfied: tqdm in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 2)) (4.67.3)
+Collecting torch==2.10 (from -r requirements.txt (line 3))
+  Downloading torch-2.10.0-3-cp312-cp312-manylinux_2_28_x86_64.whl.metadata (31 kB)
+Requirement already satisfied: huggingface-hub in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 4)) (1.7.2)
+Requirement already satisfied: kernels in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 5)) (0.12.3)
+Requirement already satisfied: setuptools in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 6)) (80.9.0)
+Requirement already satisfied: typing-extensions==4.15.0 in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 7)) (4.15.0)
+Requirement already satisfied: datasets in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 8)) (4.8.4)
+Requirement already satisfied: tiktoken in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 9)) (0.12.0)
+Requirement already satisfied: sentencepiece in /usr/local/lib/python3.12/dist-packages (from -r requirements.txt (line 10)) (0.2.1)
+Requirement already satisfied: filelock in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (3.20.1)
+Requirement already satisfied: sympy>=1.13.3 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (1.14.0)
+Requirement already satisfied: networkx>=2.5.1 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (3.6.1)
+Requirement already satisfied: jinja2 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (3.1.6)
+Requirement already satisfied: fsspec>=0.8.5 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (2025.12.0)
+Collecting cuda-bindings==12.9.4 (from torch==2.10->-r requirements.txt (line 3))
+  Downloading cuda_bindings-12.9.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl.metadata (2.6 kB)
+Requirement already satisfied: nvidia-cuda-nvrtc-cu12==12.8.93 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (12.8.93)
+Requirement already satisfied: nvidia-cuda-runtime-cu12==12.8.90 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (12.8.90)
+Requirement already satisfied: nvidia-cuda-cupti-cu12==12.8.90 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (12.8.90)
+Requirement already satisfied: nvidia-cudnn-cu12==9.10.2.21 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (9.10.2.21)
+Requirement already satisfied: nvidia-cublas-cu12==12.8.4.1 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (12.8.4.1)
+Requirement already satisfied: nvidia-cufft-cu12==11.3.3.83 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (11.3.3.83)
+Requirement already satisfied: nvidia-curand-cu12==10.3.9.90 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (10.3.9.90)
+Requirement already satisfied: nvidia-cusolver-cu12==11.7.3.90 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (11.7.3.90)
+Requirement already satisfied: nvidia-cusparse-cu12==12.5.8.93 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (12.5.8.93)
+Requirement already satisfied: nvidia-cusparselt-cu12==0.7.1 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (0.7.1)
+Requirement already satisfied: nvidia-nccl-cu12==2.27.5 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (2.27.5)
+Collecting nvidia-nvshmem-cu12==3.4.5 (from torch==2.10->-r requirements.txt (line 3))
+  Downloading nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl.metadata (2.1 kB)
+Requirement already satisfied: nvidia-nvtx-cu12==12.8.90 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (12.8.90)
+Requirement already satisfied: nvidia-nvjitlink-cu12==12.8.93 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (12.8.93)
+Requirement already satisfied: nvidia-cufile-cu12==1.13.1.3 in /usr/local/lib/python3.12/dist-packages (from torch==2.10->-r requirements.txt (line 3)) (1.13.1.3)
+Collecting triton==3.6.0 (from torch==2.10->-r requirements.txt (line 3))
+  Downloading triton-3.6.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl.metadata (1.7 kB)
+Collecting cuda-pathfinder~=1.1 (from cuda-bindings==12.9.4->torch==2.10->-r requirements.txt (line 3))
+  Downloading cuda_pathfinder-1.5.0-py3-none-any.whl.metadata (1.9 kB)
+Requirement already satisfied: hf-xet<2.0.0,>=1.4.2 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub->-r requirements.txt (line 4)) (1.4.2)
+Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub->-r requirements.txt (line 4)) (0.28.1)
+Requirement already satisfied: packaging>=20.9 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub->-r requirements.txt (line 4)) (25.0)
+Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.12/dist-packages (from huggingface-hub->-r requirements.txt (line 4)) (6.0.3)
+Requirement already satisfied: typer in /usr/local/lib/python3.12/dist-packages (from huggingface-hub->-r requirements.txt (line 4)) (0.24.1)
+Requirement already satisfied: anyio in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub->-r requirements.txt (line 4)) (4.12.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub->-r requirements.txt (line 4)) (2025.11.12)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub->-r requirements.txt (line 4)) (1.0.9)
+Requirement already satisfied: idna in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface-hub->-r requirements.txt (line 4)) (3.11)
+Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.12/dist-packages (from httpcore==1.*->httpx<1,>=0.23.0->huggingface-hub->-r requirements.txt (line 4)) (0.16.0)
+Requirement already satisfied: pyarrow>=21.0.0 in /usr/local/lib/python3.12/dist-packages (from datasets->-r requirements.txt (line 8)) (23.0.1)
+Requirement already satisfied: dill<0.4.2,>=0.3.0 in /usr/local/lib/python3.12/dist-packages (from datasets->-r requirements.txt (line 8)) (0.4.1)
+Requirement already satisfied: pandas in /usr/local/lib/python3.12/dist-packages (from datasets->-r requirements.txt (line 8)) (3.0.1)
+Requirement already satisfied: requests>=2.32.2 in /usr/local/lib/python3.12/dist-packages (from datasets->-r requirements.txt (line 8)) (2.32.5)
+Requirement already satisfied: xxhash in /usr/local/lib/python3.12/dist-packages (from datasets->-r requirements.txt (line 8)) (3.6.0)
+Requirement already satisfied: multiprocess<0.70.20 in /usr/local/lib/python3.12/dist-packages (from datasets->-r requirements.txt (line 8)) (0.70.19)
+Requirement already satisfied: aiohttp!=4.0.0a0,!=4.0.0a1 in /usr/local/lib/python3.12/dist-packages (from fsspec[http]<=2026.2.0,>=2023.1.0->datasets->-r requirements.txt (line 8)) (3.13.3)
+Requirement already satisfied: regex>=2022.1.18 in /usr/local/lib/python3.12/dist-packages (from tiktoken->-r requirements.txt (line 9)) (2026.2.28)
+Requirement already satisfied: aiohappyeyeballs>=2.5.0 in /usr/local/lib/python3.12/dist-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->-r requirements.txt (line 8)) (2.6.1)
+Requirement already satisfied: aiosignal>=1.4.0 in /usr/local/lib/python3.12/dist-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->-r requirements.txt (line 8)) (1.4.0)
+Requirement already satisfied: attrs>=17.3.0 in /usr/local/lib/python3.12/dist-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->-r requirements.txt (line 8)) (25.4.0)
+Requirement already satisfied: frozenlist>=1.1.1 in /usr/local/lib/python3.12/dist-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->-r requirements.txt (line 8)) (1.8.0)
+Requirement already satisfied: multidict<7.0,>=4.5 in /usr/local/lib/python3.12/dist-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->-r requirements.txt (line 8)) (6.7.1)
+Requirement already satisfied: propcache>=0.2.0 in /usr/local/lib/python3.12/dist-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->-r requirements.txt (line 8)) (0.4.1)
+Requirement already satisfied: yarl<2.0,>=1.17.0 in /usr/local/lib/python3.12/dist-packages (from aiohttp!=4.0.0a0,!=4.0.0a1->fsspec[http]<=2026.2.0,>=2023.1.0->datasets->-r requirements.txt (line 8)) (1.23.0)
+Requirement already satisfied: charset_normalizer<4,>=2 in /usr/local/lib/python3.12/dist-packages (from requests>=2.32.2->datasets->-r requirements.txt (line 8)) (3.4.4)
+Requirement already satisfied: urllib3<3,>=1.21.1 in /usr/local/lib/python3.12/dist-packages (from requests>=2.32.2->datasets->-r requirements.txt (line 8)) (2.6.2)
+Requirement already satisfied: mpmath<1.4,>=1.1.0 in /usr/local/lib/python3.12/dist-packages (from sympy>=1.13.3->torch==2.10->-r requirements.txt (line 3)) (1.3.0)
+Requirement already satisfied: MarkupSafe>=2.0 in /usr/local/lib/python3.12/dist-packages (from jinja2->torch==2.10->-r requirements.txt (line 3)) (3.0.3)
+Requirement already satisfied: python-dateutil>=2.8.2 in /usr/local/lib/python3.12/dist-packages (from pandas->datasets->-r requirements.txt (line 8)) (2.9.0.post0)
+Requirement already satisfied: six>=1.5 in /usr/lib/python3/dist-packages (from python-dateutil>=2.8.2->pandas->datasets->-r requirements.txt (line 8)) (1.16.0)
+Requirement already satisfied: click>=8.2.1 in /usr/local/lib/python3.12/dist-packages (from typer->huggingface-hub->-r requirements.txt (line 4)) (8.3.1)
+Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.12/dist-packages (from typer->huggingface-hub->-r requirements.txt (line 4)) (1.5.4)
+Requirement already satisfied: rich>=12.3.0 in /usr/local/lib/python3.12/dist-packages (from typer->huggingface-hub->-r requirements.txt (line 4)) (14.3.3)
+Requirement already satisfied: annotated-doc>=0.0.2 in /usr/local/lib/python3.12/dist-packages (from typer->huggingface-hub->-r requirements.txt (line 4)) (0.0.4)
+Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.12/dist-packages (from rich>=12.3.0->typer->huggingface-hub->-r requirements.txt (line 4)) (4.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.12/dist-packages (from rich>=12.3.0->typer->huggingface-hub->-r requirements.txt (line 4)) (2.19.2)
+Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.12/dist-packages (from markdown-it-py>=2.2.0->rich>=12.3.0->typer->huggingface-hub->-r requirements.txt (line 4)) (0.1.2)
+Downloading torch-2.10.0-3-cp312-cp312-manylinux_2_28_x86_64.whl (915.6 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 915.6/915.6 MB 165.1 MB/s  0:00:05
+Downloading cuda_bindings-12.9.4-cp312-cp312-manylinux_2_24_x86_64.manylinux_2_28_x86_64.whl (12.2 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 12.2/12.2 MB 300.0 MB/s  0:00:00
+Downloading nvidia_nvshmem_cu12-3.4.5-py3-none-manylinux2014_x86_64.manylinux_2_17_x86_64.whl (139.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 139.1/139.1 MB 280.5 MB/s  0:00:00
+Downloading triton-3.6.0-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl (188.3 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 188.3/188.3 MB 285.9 MB/s  0:00:00
+Downloading cuda_pathfinder-1.5.0-py3-none-any.whl (49 kB)
+Installing collected packages: triton, nvidia-nvshmem-cu12, cuda-pathfinder, cuda-bindings, torch
+  Attempting uninstall: triton
+    Found existing installation: triton 3.5.1
+    Uninstalling triton-3.5.1:
+      Successfully uninstalled triton-3.5.1
+  Attempting uninstall: nvidia-nvshmem-cu12
+    Found existing installation: nvidia-nvshmem-cu12 3.3.20
+    Uninstalling nvidia-nvshmem-cu12-3.3.20:
+      Successfully uninstalled nvidia-nvshmem-cu12-3.3.20
+  Attempting uninstall: torch
+    Found existing installation: torch 2.9.1+cu128
+    Uninstalling torch-2.9.1+cu128:
+      Successfully uninstalled torch-2.9.1+cu128
+
+ERROR: pip's dependency resolver does not currently take into account all the packages that are installed. This behaviour is the source of the following dependency conflicts.
+torchaudio 2.9.1+cu128 requires torch==2.9.1, but you have torch 2.10.0 which is incompatible.
+Successfully installed cuda-bindings-12.9.4 cuda-pathfinder-1.5.0 nvidia-nvshmem-cu12-3.4.5 torch-2.10.0 triton-3.6.0
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+Collecting anthropic
+  Downloading anthropic-0.86.0-py3-none-any.whl.metadata (3.0 kB)
+Requirement already satisfied: anyio<5,>=3.5.0 in /usr/local/lib/python3.12/dist-packages (from anthropic) (4.12.0)
+Requirement already satisfied: distro<2,>=1.7.0 in /usr/lib/python3/dist-packages (from anthropic) (1.9.0)
+Collecting docstring-parser<1,>=0.15 (from anthropic)
+  Downloading docstring_parser-0.17.0-py3-none-any.whl.metadata (3.5 kB)
+Requirement already satisfied: httpx<1,>=0.25.0 in /usr/local/lib/python3.12/dist-packages (from anthropic) (0.28.1)
+Collecting jiter<1,>=0.4.0 (from anthropic)
+  Downloading jiter-0.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (5.2 kB)
+Collecting pydantic<3,>=1.9.0 (from anthropic)
+  Downloading pydantic-2.12.5-py3-none-any.whl.metadata (90 kB)
+Collecting sniffio (from anthropic)
+  Downloading sniffio-1.3.1-py3-none-any.whl.metadata (3.9 kB)
+Requirement already satisfied: typing-extensions<5,>=4.14 in /usr/local/lib/python3.12/dist-packages (from anthropic) (4.15.0)
+Requirement already satisfied: idna>=2.8 in /usr/local/lib/python3.12/dist-packages (from anyio<5,>=3.5.0->anthropic) (3.11)
+Requirement already satisfied: certifi in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.25.0->anthropic) (2025.11.12)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.25.0->anthropic) (1.0.9)
+Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.12/dist-packages (from httpcore==1.*->httpx<1,>=0.25.0->anthropic) (0.16.0)
+Collecting annotated-types>=0.6.0 (from pydantic<3,>=1.9.0->anthropic)
+  Downloading annotated_types-0.7.0-py3-none-any.whl.metadata (15 kB)
+Collecting pydantic-core==2.41.5 (from pydantic<3,>=1.9.0->anthropic)
+  Downloading pydantic_core-2.41.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl.metadata (7.3 kB)
+Collecting typing-inspection>=0.4.2 (from pydantic<3,>=1.9.0->anthropic)
+  Downloading typing_inspection-0.4.2-py3-none-any.whl.metadata (2.6 kB)
+Downloading anthropic-0.86.0-py3-none-any.whl (469 kB)
+Downloading docstring_parser-0.17.0-py3-none-any.whl (36 kB)
+Downloading jiter-0.13.0-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (360 kB)
+Downloading pydantic-2.12.5-py3-none-any.whl (463 kB)
+Downloading pydantic_core-2.41.5-cp312-cp312-manylinux_2_17_x86_64.manylinux2014_x86_64.whl (2.1 MB)
+   ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 2.1/2.1 MB 61.5 MB/s  0:00:00
+Downloading annotated_types-0.7.0-py3-none-any.whl (13 kB)
+Downloading typing_inspection-0.4.2-py3-none-any.whl (14 kB)
+Downloading sniffio-1.3.1-py3-none-any.whl (10 kB)
+Installing collected packages: typing-inspection, sniffio, pydantic-core, jiter, docstring-parser, annotated-types, pydantic, anthropic
+
+Successfully installed annotated-types-0.7.0 anthropic-0.86.0 docstring-parser-0.17.0 jiter-0.13.0 pydantic-2.12.5 pydantic-core-2.41.5 sniffio-1.3.1 typing-inspection-0.4.2
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+Requirement already satisfied: huggingface_hub in /usr/local/lib/python3.12/dist-packages (1.7.2)
+Requirement already satisfied: sentencepiece in /usr/local/lib/python3.12/dist-packages (0.2.1)
+Requirement already satisfied: filelock>=3.10.0 in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (3.20.1)
+Requirement already satisfied: fsspec>=2023.5.0 in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (2025.12.0)
+Requirement already satisfied: hf-xet<2.0.0,>=1.4.2 in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (1.4.2)
+Requirement already satisfied: httpx<1,>=0.23.0 in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (0.28.1)
+Requirement already satisfied: packaging>=20.9 in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (25.0)
+Requirement already satisfied: pyyaml>=5.1 in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (6.0.3)
+Requirement already satisfied: tqdm>=4.42.1 in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (4.67.3)
+Requirement already satisfied: typer in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (0.24.1)
+Requirement already satisfied: typing-extensions>=4.1.0 in /usr/local/lib/python3.12/dist-packages (from huggingface_hub) (4.15.0)
+Requirement already satisfied: anyio in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface_hub) (4.12.0)
+Requirement already satisfied: certifi in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface_hub) (2025.11.12)
+Requirement already satisfied: httpcore==1.* in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface_hub) (1.0.9)
+Requirement already satisfied: idna in /usr/local/lib/python3.12/dist-packages (from httpx<1,>=0.23.0->huggingface_hub) (3.11)
+Requirement already satisfied: h11>=0.16 in /usr/local/lib/python3.12/dist-packages (from httpcore==1.*->httpx<1,>=0.23.0->huggingface_hub) (0.16.0)
+Requirement already satisfied: click>=8.2.1 in /usr/local/lib/python3.12/dist-packages (from typer->huggingface_hub) (8.3.1)
+Requirement already satisfied: shellingham>=1.3.0 in /usr/local/lib/python3.12/dist-packages (from typer->huggingface_hub) (1.5.4)
+Requirement already satisfied: rich>=12.3.0 in /usr/local/lib/python3.12/dist-packages (from typer->huggingface_hub) (14.3.3)
+Requirement already satisfied: annotated-doc>=0.0.2 in /usr/local/lib/python3.12/dist-packages (from typer->huggingface_hub) (0.0.4)
+Requirement already satisfied: markdown-it-py>=2.2.0 in /usr/local/lib/python3.12/dist-packages (from rich>=12.3.0->typer->huggingface_hub) (4.0.0)
+Requirement already satisfied: pygments<3.0.0,>=2.13.0 in /usr/local/lib/python3.12/dist-packages (from rich>=12.3.0->typer->huggingface_hub) (2.19.2)
+Requirement already satisfied: mdurl~=0.1 in /usr/local/lib/python3.12/dist-packages (from markdown-it-py>=2.2.0->rich>=12.3.0->typer->huggingface_hub) (0.1.2)
+WARNING: Running pip as the 'root' user can result in broken permissions and conflicting behaviour with the system package manager, possibly rendering your system unusable. It is recommended to use a virtual environment instead: https://pip.pypa.io/warnings/venv. Use the --root-user-action option if you know what you are doing and want to suppress this warning.
+Downloading dataset...
+verified train_shards=80 val_shards=1
+verified tokenizer=/workspace/parameter-golf/data/tokenizers/fineweb_1024_bpe.model
+
+=== Setup complete ===
+
+To run autoresearch:
+  export ANTHROPIC_API_KEY=sk-ant-...
+
+  # Single GPU, 3-min experiments (for fast iteration):
+  python3 autoresearch.py
+
+  # Single GPU, custom time:
+  EXPERIMENT_SECONDS=120 python3 autoresearch.py
+
+  # 8×GPU, full 10-min runs (for final validation):
+  GPUS=8 EXPERIMENT_SECONDS=600 python3 autoresearch.py
+[Fri Mar 27 13:18:30 UTC 2026] staging tmp data
+staging dataset from /workspace/parameter-golf/data/datasets/fineweb10B_sp1024 to /tmp/parameter-golf-data/datasets/fineweb10B_sp1024
+staging tokenizer from /workspace/parameter-golf/data/tokenizers to /tmp/parameter-golf-data/tokenizers
+local parity data ready
+DATA_PATH=/tmp/parameter-golf-data/datasets/fineweb10B_sp1024
+TOKENIZER_PATH=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+dataset_files=81
+dataset_bytes=16G
+[Fri Mar 27 13:18:34 UTC 2026] launch start
+=== FULL RUN (8xGPU, 600s) ===
+verified train_shards=80 val_shards=1
+verified tokenizer=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+Train script: /workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py
+Data path: /tmp/parameter-golf-data/datasets/fineweb10B_sp1024
+NGRAM: mode=online orders=2-12 buckets=8388608 alpha=[0.05,0.80] chunk=8192
+PHRASE: enabled=1 lengths=64,56,48,36,28,20,16 buckets=4194304 alpha=[0.88,0.995] temp=0.85
+CALIB: enabled=1 tokens=[131072,524288] alpha_grid=0.90,0.94,0.97,0.99 center_grid=2.5,3.0,3.5
+COMPLEMENT: enabled=1 alpha=0.5
+W0327 13:18:35.978000 1473 torch/distributed/run.py:852] 
+W0327 13:18:35.978000 1473 torch/distributed/run.py:852] *****************************************
+W0327 13:18:35.978000 1473 torch/distributed/run.py:852] Setting OMP_NUM_THREADS environment variable for each process to be 1 in default, to avoid your system being overloaded, please further tune the variable for optimal performance in your application as needed. 
+W0327 13:18:35.978000 1473 torch/distributed/run.py:852] *****************************************
+logs/online_phrase_cal_seed1337.txt
+val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model
+train_loader:dataset:fineweb10B_sp1024 train_shards:80
+val_loader:shards pattern=/tmp/parameter-golf-data/datasets/fineweb10B_sp1024/fineweb_val_*.bin tokens:62021632
+model_params:26993756
+mtp_num_heads:0 mtp_loss_weight:0.2 mtp_params:0
+XSA:last_4 active_layers:[7, 8, 9, 10]
+world_size:8 grad_accum_steps:1
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.035 head_lr:0.0 matrix_lr:0.025 scalar_lr:0.025
+activation_mode:leaky_relu_sq neg_slope:0.5 asym_init:0.25 gated_beta_init:1.0
+train_batch_tokens:786432 train_seq_len:2048 iterations:20000 warmup_steps:20 max_wallclock_seconds:600.000
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+complement:enabled alpha=0.5
+step:0/20000 val_loss:6.9309 val_bpb:4.1049 train_time:0ms step_avg:0.01ms
+step:1/20000 train_loss:6.9317 train_time:28857ms step_avg:28857.48ms
+late_qat:enabled step:1 scale:0.0057
+step:2/20000 train_loss:8.6769 train_time:28892ms step_avg:14445.91ms
+step:3/20000 train_loss:8.6949 train_time:28974ms step_avg:9658.03ms
+step:4/20000 train_loss:8.6623 train_time:29056ms step_avg:7263.99ms
+step:5/20000 train_loss:8.5896 train_time:29139ms step_avg:5827.74ms
+step:6/20000 train_loss:8.5157 train_time:29221ms step_avg:4870.17ms
+step:7/20000 train_loss:8.3297 train_time:29303ms step_avg:4186.19ms
+step:8/20000 train_loss:8.2081 train_time:29386ms step_avg:3673.29ms
+step:9/20000 train_loss:7.8939 train_time:29470ms step_avg:3274.39ms
+step:10/20000 train_loss:7.6972 train_time:29554ms step_avg:2955.41ms
+step:500/20000 train_loss:2.4763 train_time:70887ms step_avg:141.77ms
+step:1000/20000 train_loss:2.3112 train_time:113454ms step_avg:113.45ms
+step:1500/20000 train_loss:2.2520 train_time:156043ms step_avg:104.03ms
+step:2000/20000 train_loss:2.0922 train_time:198606ms step_avg:99.30ms
+step:2500/20000 train_loss:2.1918 train_time:241135ms step_avg:96.45ms
+step:3000/20000 train_loss:2.1834 train_time:283635ms step_avg:94.54ms
+step:3500/20000 train_loss:2.1944 train_time:326094ms step_avg:93.17ms
+step:4000/20000 train_loss:1.9804 train_time:368580ms step_avg:92.14ms
+step:4000/20000 val_loss:2.0463 val_bpb:1.2120 train_time:368628ms step_avg:92.16ms
+step:4500/20000 train_loss:2.1347 train_time:411048ms step_avg:91.34ms
+step:5000/20000 train_loss:2.1149 train_time:453502ms step_avg:90.70ms
+step:5500/20000 train_loss:2.0267 train_time:495960ms step_avg:90.17ms
+swa:start step:6000
+step:6000/20000 train_loss:1.9500 train_time:538390ms step_avg:89.73ms
+step:6500/20000 train_loss:2.0904 train_time:581638ms step_avg:89.48ms
+step:6714/20000 val_loss:1.9286 val_bpb:1.1422 train_time:600129ms step_avg:89.38ms
+stopping_early: wallclock_cap train_time:600129ms step:6714/20000
+peak memory allocated: 23214 MiB reserved: 23762 MiB
+ema:applying EMA weights
+DIAGNOSTIC post_ema val_loss:1.9269 val_bpb:1.1412 eval_time:1996ms
+Serialized model: 106158518 bytes
+Code size: 135752 bytes
+Serialized model int6+lzma: 15723004 bytes
+Total submission size int6+lzma: 15858756 bytes
+final_int6_roundtrip val_loss:1.9435 val_bpb:1.1511 eval_time:18311ms
+final_int6_roundtrip_exact val_loss:1.94353932 val_bpb:1.15107346
+final_int6_sliding_window val_loss:1.9043 val_bpb:1.1278 stride:64 eval_time:99308ms
+final_int6_sliding_window_exact val_loss:1.90430457 val_bpb:1.12783941
+final_int8_zlib_roundtrip_exact val_loss:1.90430457 val_bpb:1.12783941
+ngram_online:start chunks=7571 chunk_tokens=8192 orders=2-12 phrase_lengths=[64, 56, 48, 36, 28, 20, 16] temp=0.850
+[rank0]: Traceback (most recent call last):
+[rank0]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2874, in <module>
+[rank0]:     main()
+[rank0]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2853, in main
+[rank0]:     ng_val_loss, ng_val_bpb = eval_ngram_online(
+[rank0]:                               ^^^^^^^^^^^^^^^^^^
+[rank0]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2030, in eval_ngram_online
+[rank0]:     ngram_prob, matched_order = ngram_cache.score_positions(
+[rank0]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank0]: AttributeError: 'NgramCache' object has no attribute 'score_positions'
+[rank7]: Traceback (most recent call last):
+[rank7]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2874, in <module>
+[rank7]:     main()
+[rank7]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2853, in main
+[rank7]:     ng_val_loss, ng_val_bpb = eval_ngram_online(
+[rank7]:                               ^^^^^^^^^^^^^^^^^^
+[rank7]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2030, in eval_ngram_online
+[rank7]:     ngram_prob, matched_order = ngram_cache.score_positions(
+[rank7]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank7]: AttributeError: 'NgramCache' object has no attribute 'score_positions'
+[rank1]: Traceback (most recent call last):
+[rank1]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2874, in <module>
+[rank1]:     main()
+[rank1]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2853, in main
+[rank1]:     ng_val_loss, ng_val_bpb = eval_ngram_online(
+[rank1]:                               ^^^^^^^^^^^^^^^^^^
+[rank1]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2030, in eval_ngram_online
+[rank1]:     ngram_prob, matched_order = ngram_cache.score_positions(
+[rank1]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank1]: AttributeError: 'NgramCache' object has no attribute 'score_positions'
+[rank6]: Traceback (most recent call last):
+[rank6]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2874, in <module>
+[rank6]:     main()
+[rank6]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2853, in main
+[rank6]:     ng_val_loss, ng_val_bpb = eval_ngram_online(
+[rank6]:                               ^^^^^^^^^^^^^^^^^^
+[rank6]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2030, in eval_ngram_online
+[rank6]:     ngram_prob, matched_order = ngram_cache.score_positions(
+[rank6]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank6]: AttributeError: 'NgramCache' object has no attribute 'score_positions'
+[rank3]: Traceback (most recent call last):
+[rank3]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2874, in <module>
+[rank3]:     main()
+[rank3]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2853, in main
+[rank3]:     ng_val_loss, ng_val_bpb = eval_ngram_online(
+[rank3]:                               ^^^^^^^^^^^^^^^^^^
+[rank3]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2030, in eval_ngram_online
+[rank3]:     ngram_prob, matched_order = ngram_cache.score_positions(
+[rank3]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank3]: AttributeError: 'NgramCache' object has no attribute 'score_positions'
+[rank5]: Traceback (most recent call last):
+[rank5]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2874, in <module>
+[rank5]:     main()
+[rank5]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2853, in main
+[rank5]:     ng_val_loss, ng_val_bpb = eval_ngram_online(
+[rank5]:                               ^^^^^^^^^^^^^^^^^^
+[rank5]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2030, in eval_ngram_online
+[rank5]:     ngram_prob, matched_order = ngram_cache.score_positions(
+[rank5]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank5]: AttributeError: 'NgramCache' object has no attribute 'score_positions'
+[rank4]: Traceback (most recent call last):
+[rank4]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2874, in <module>
+[rank4]:     main()
+[rank4]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2853, in main
+[rank4]:     ng_val_loss, ng_val_bpb = eval_ngram_online(
+[rank4]:                               ^^^^^^^^^^^^^^^^^^
+[rank4]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2030, in eval_ngram_online
+[rank4]:     ngram_prob, matched_order = ngram_cache.score_positions(
+[rank4]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank4]: AttributeError: 'NgramCache' object has no attribute 'score_positions'
+[rank2]: Traceback (most recent call last):
+[rank2]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2874, in <module>
+[rank2]:     main()
+[rank2]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2853, in main
+[rank2]:     ng_val_loss, ng_val_bpb = eval_ngram_online(
+[rank2]:                               ^^^^^^^^^^^^^^^^^^
+[rank2]:   File "/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py", line 2030, in eval_ngram_online
+[rank2]:     ngram_prob, matched_order = ngram_cache.score_positions(
+[rank2]:                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[rank2]: AttributeError: 'NgramCache' object has no attribute 'score_positions'
+[rank0]:[W327 13:33:10.421758729 ProcessGroupNCCL.cpp:1553] Warning: WARNING: destroy_process_group() was not called before program exit, which can leak resources. For more info, please see https://pytorch.org/docs/stable/distributed.html#shutdown (function operator())
+W0327 13:33:11.917000 1473 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1542 closing signal SIGTERM
+W0327 13:33:11.920000 1473 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1543 closing signal SIGTERM
+W0327 13:33:11.921000 1473 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1544 closing signal SIGTERM
+W0327 13:33:11.922000 1473 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1545 closing signal SIGTERM
+W0327 13:33:11.924000 1473 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1546 closing signal SIGTERM
+W0327 13:33:11.925000 1473 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1547 closing signal SIGTERM
+W0327 13:33:11.926000 1473 torch/distributed/elastic/multiprocessing/api.py:1010] Sending process 1548 closing signal SIGTERM
+E0327 13:33:13.106000 1473 torch/distributed/elastic/multiprocessing/api.py:984] failed (exitcode: 1) local_rank: 0 (pid: 1541) of binary: /usr/bin/python3.12
+Traceback (most recent call last):
+  File "/usr/local/bin/torchrun", line 7, in <module>
+    sys.exit(main())
+             ^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/elastic/multiprocessing/errors/__init__.py", line 362, in wrapper
+    return f(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 991, in main
+    run(args)
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/run.py", line 982, in run
+    elastic_launch(
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 170, in __call__
+    return launch_agent(self._config, self._entrypoint, list(args))
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/dist-packages/torch/distributed/launcher/api.py", line 317, in launch_agent
+    raise ChildFailedError(
+torch.distributed.elastic.multiprocessing.errors.ChildFailedError: 
+============================================================
+/workspace/parameter-golf/records/track_10min_16mb/2026-03-27_OnlinePhraseCacheCalibrated/train_gpt.py FAILED
+------------------------------------------------------------
+Failures:
+[1]:
+  time      : 2026-03-27_13:33:13
+  host      : 847d0eb897c9
+  rank      : 1 (local_rank: 1)
+  exitcode  : 1 (pid: 1542)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[2]:
+  time      : 2026-03-27_13:33:13
+  host      : 847d0eb897c9
+  rank      : 2 (local_rank: 2)
+  exitcode  : -15 (pid: 1543)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 1543
+[3]:
+  time      : 2026-03-27_13:33:13
+  host      : 847d0eb897c9
+  rank      : 3 (local_rank: 3)
+  exitcode  : -15 (pid: 1544)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 1544
+[4]:
+  time      : 2026-03-27_13:33:13
+  host      : 847d0eb897c9
+  rank      : 4 (local_rank: 4)
+  exitcode  : -15 (pid: 1545)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 1545
+[5]:
+  time      : 2026-03-27_13:33:13
+  host      : 847d0eb897c9
+  rank      : 5 (local_rank: 5)
+  exitcode  : -15 (pid: 1546)
+  error_file: <N/A>
+  traceback : Signal 15 (SIGTERM) received by PID 1546
+[6]:
+  time      : 2026-03-27_13:33:13
+  host      : 847d0eb897c9
+  rank      : 6 (local_rank: 6)
+  exitcode  : 1 (pid: 1547)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+[7]:
+  time      : 2026-03-27_13:33:13
+  host      : 847d0eb897c9
+  rank      : 7 (local_rank: 7)
+  exitcode  : 1 (pid: 1548)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+------------------------------------------------------------
+Root Cause (first observed failure):
+[0]:
+  time      : 2026-03-27_13:33:11
+  host      : 847d0eb897c9
+  rank      : 0 (local_rank: 0)
+  exitcode  : 1 (pid: 1541)
+  error_file: <N/A>
+  traceback : To enable traceback see: https://pytorch.org/docs/stable/elastic/errors.html
+============================================================
