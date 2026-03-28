@@ -62,7 +62,7 @@ BEST_CONFIG_FILE = AUTORESEARCH_DIR / "best_config.json"
 TUNABLE_PARAMS = {
     "ngram_min_order": {"type": "int", "default": 2, "range": [2, 2], "desc": "Minimum n-gram order"},
     "ngram_max_order": {"type": "int", "default": 12, "range": [6, 24], "desc": "Maximum n-gram order"},
-    "ngram_num_buckets": {"type": "int", "default": 4_194_304, "range": [1_048_576, 67_108_864], "desc": "N-gram hash table buckets (power of 2)"},
+    "ngram_num_buckets": {"type": "int", "default": 4_194_304, "range": [2_097_152, 67_108_864], "desc": "N-gram hash table buckets (power of 2, min 2M to avoid collision exploit)"},
     "ngram_min_count": {"type": "int", "default": 2, "range": [1, 10], "desc": "Minimum context count for n-gram match"},
     "ngram_alpha_min": {"type": "float", "default": 0.05, "range": [0.0, 0.3], "desc": "Minimum blend alpha"},
     "ngram_alpha_max": {"type": "float", "default": 0.80, "range": [0.3, 1.0], "desc": "Maximum blend alpha (before order mult)"},
@@ -362,13 +362,22 @@ def main():
             print("  No changes proposed, skipping")
             continue
 
-        # Apply changes
+        # Apply changes with bounds enforcement
         test_config = dict(config)
+        clamped = False
         for k, v in changes.items():
-            if k in TUNABLE_PARAMS:
-                test_config[k] = v
-            else:
+            if k not in TUNABLE_PARAMS:
                 print(f"  WARNING: Unknown param {k}, ignoring")
+                continue
+            spec = TUNABLE_PARAMS[k]
+            if "range" in spec and spec["type"] in ("int", "float"):
+                lo, hi = spec["range"]
+                orig_v = v
+                v = max(lo, min(hi, type(lo)(v)))
+                if v != orig_v:
+                    print(f"  CLAMPED {k}: {orig_v} -> {v} (range [{lo}, {hi}])")
+                    clamped = True
+            test_config[k] = v
 
         # Evaluate
         t_eval = time.perf_counter()
