@@ -1,0 +1,18 @@
+{
+  "best_label": "experiment_0054",
+  "best_score": 4.073924293980907,
+  "best_metrics": {
+    "family": "tokenmonster",
+    "model_path": "/Users/simon/Code/parameter-golf/autoresearch/tokenmonster_discovery/experiments/0054/candidate.vocab",
+    "vocab_size": 998,
+    "chunks": 9770,
+    "total_tokens": 19701137,
+    "total_bytes": 48592425,
+    "tokens_per_byte": 0.40543638231679113,
+    "bytes_per_token": 2.466478203770676,
+    "unique_tokens_used": 978,
+    "dead_vocab_frac": 0.02004008016032064
+  },
+  "headline": "resize 998 beats prior best 4.082 \u2192 4.074, downward trend continues",
+  "next_direction": "bracket the optimum: try resize 990 and 1006 to find where the improvement plateaus between 998 and 1014"
+}

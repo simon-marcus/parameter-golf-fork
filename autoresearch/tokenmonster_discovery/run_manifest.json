@@ -1,0 +1,18 @@
+{
+  "dataset_dir": "/Users/simon/Code/parameter-golf-local/data/datasets/fineweb10B_sp1024",
+  "tokenizer_path": "/Users/simon/Code/parameter-golf-local/data/tokenizers/fineweb_1024_bpe.model",
+  "text_sample_tokens": 20000000,
+  "text_sample_max_shards": 10,
+  "text_sample_tokens_per_shard": 2000000,
+  "text_sample_offset_mode": "staggered",
+  "text_sample_chunk_tokens": 2048,
+  "proxy_aggregate_path": "/Users/simon/Code/parameter-golf/modal_logs/proxy_confirm_long_aggregate.json",
+  "tokenmonster_vocabs": [
+    "english-1024-balanced-v1",
+    "english-1024-clean-v1",
+    "english-1024-consistent-v1",
+    "english-2048-clean-v1"
+  ],
+  "program_file": "/Users/simon/Code/parameter-golf/program_tokenmonster.md",
+  "config_hash": "3ee2c8f29b71"
+}
