@@ -1,0 +1,32 @@
+{
+  "best_label": "experiment_0001",
+  "best_score": 4.138639330857862,
+  "best_metrics": {
+    "family": "tokenmonster",
+    "model_path": "english-1024-balanced-v1",
+    "vocab_size": 1024,
+    "chunks": 9770,
+    "total_tokens": 19834351,
+    "total_bytes": 48592425,
+    "tokens_per_byte": 0.4081778384182308,
+    "bytes_per_token": 2.44991252801768,
+    "unique_tokens_used": 977,
+    "dead_vocab_frac": 0.0458984375,
+    "estimated_vocab_linked_params": 524288,
+    "estimated_vocab_artifact_bytes": 145752.064,
+    "estimated_artifact_budget_frac": 0.009109504000000001,
+    "is_tokenmonster": 1,
+    "estimated_vocab_linked_params_delta": 0,
+    "estimated_vocab_artifact_bytes_delta": 0.0,
+    "tokens_per_byte_delta": -0.0031041052180458273,
+    "dead_vocab_frac_delta": -0.095703125,
+    "artifact_budget_frac_delta": 0.0,
+    "budget_aware_score": 0.4182053111682308
+  },
+  "best_experiment_id": 1,
+  "headline": "TokenMonster balanced-v1 beats baseline by 0.23 calibrated BPB",
+  "frontier_update": "New frontier is english-1024-balanced-v1 at 4.139. TokenMonster 1024-vocab family clearly dominates sentencepiece 1024. The clean-v1 and consistent-v1 variants are close behind and worth evaluating for confirmation, but balanced-v1 is the candidate to beat.",
+  "next_direction": "Evaluate english-1024-clean-v1 and english-1024-consistent-v1 to confirm balanced-v1 is the best TokenMonster 1024 variant before integrating into train_gpt.py",
+  "strategy_experiment_id": 1,
+  "strategy_score": 4.138639330857862
+}

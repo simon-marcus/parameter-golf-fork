@@ -1,0 +1,12 @@
+{
+  "family": "sentencepiece",
+  "model_path": "/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/experiments/0022/tokenizer.model",
+  "vocab_size": 6400,
+  "chunks": 9770,
+  "total_tokens": 14155993,
+  "total_bytes": 48592425,
+  "tokens_per_byte": 0.29132098264287076,
+  "bytes_per_token": 3.432639801390125,
+  "unique_tokens_used": 6380,
+  "dead_vocab_frac": 0.003125
+}

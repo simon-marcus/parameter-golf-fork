@@ -1,0 +1,12 @@
+{
+  "family": "tokenmonster",
+  "model_path": "english-8000-clean-v1",
+  "vocab_size": 8000,
+  "chunks": 9770,
+  "total_tokens": 11843875,
+  "total_bytes": 48592425,
+  "tokens_per_byte": 0.24373912188988303,
+  "bytes_per_token": 4.10274720055725,
+  "unique_tokens_used": 7449,
+  "dead_vocab_frac": 0.068875
+}

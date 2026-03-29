@@ -1,0 +1,31 @@
+Traceback (most recent call last):
+  File "/root/parameter-golf/proxy_validate_tokenizers.py", line 352, in <module>
+    main()
+  File "/root/parameter-golf/proxy_validate_tokenizers.py", line 280, in main
+    meta_path = export_sentencepiece_meta(Path(tokenizer_ref))
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/parameter-golf/proxy_validate_tokenizers.py", line 83, in export_sentencepiece_meta
+    run_cmd(cmd)
+  File "/root/parameter-golf/proxy_validate_tokenizers.py", line 37, in run_cmd
+    raise RuntimeError(f"Command failed: {' '.join(cmd)}\n{result.stdout}\n{result.stderr}")
+RuntimeError: Command failed: /usr/local/bin/python3 /root/parameter-golf/data/export_sentencepiece_meta.py /root/parameter-golf/tokenizer_candidates/0036/tokenizer.model --validate
+
+Traceback (most recent call last):
+  File "/root/parameter-golf/data/export_sentencepiece_meta.py", line 159, in <module>
+    main()
+  File "/root/parameter-golf/data/export_sentencepiece_meta.py", line 151, in main
+    export_info = export_meta(model_path, output_path)
+                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/root/parameter-golf/data/export_sentencepiece_meta.py", line 77, in export_meta
+    sp = spm.SentencePieceProcessor(model_file=str(model_path))
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/sentencepiece/__init__.py", line 468, in Init
+    self.Load(model_file=model_file, model_proto=model_proto)
+  File "/usr/local/lib/python3.12/site-packages/sentencepiece/__init__.py", line 961, in Load
+    return self.LoadFromFile(model_file)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/usr/local/lib/python3.12/site-packages/sentencepiece/__init__.py", line 316, in LoadFromFile
+    return _sentencepiece.SentencePieceProcessor_LoadFromFile(self, arg)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+OSError: Not found: "/root/parameter-golf/tokenizer_candidates/0036/tokenizer.model": No such file or directory Error #2
+

@@ -1,0 +1,28 @@
+[
+  {
+    "name": "baseline_sp1024",
+    "tokenizer_path": "/root/parameter-golf/mounted_data/tokenizers/fineweb_1024_bpe.model",
+    "tokenizer_meta_path": "/root/parameter-golf/mounted_data/tokenizers/fineweb_1024_bpe.meta.npz",
+    "proxy_dataset": "/root/parameter-golf/proxy_validation/datasets/baseline_sp1024",
+    "vocab_size": 1024,
+    "train_python": "python3",
+    "model_params": 2101776,
+    "prequant_val_bpb": 3.2826,
+    "postquant_val_bpb": 3.28785798,
+    "artifact_bytes": 2002439,
+    "log_path": "/root/parameter-golf/proxy_validation/runs/baseline_sp1024/train.log"
+  },
+  {
+    "name": "0018_tokenizer",
+    "tokenizer_path": "/root/parameter-golf/tokenizer_candidates/0018/tokenizer.model",
+    "tokenizer_meta_path": "/root/parameter-golf/tokenizer_candidates/0018/tokenizer.meta.npz",
+    "proxy_dataset": "/root/parameter-golf/proxy_validation/datasets/0018_tokenizer",
+    "vocab_size": 3840,
+    "train_python": "python3",
+    "model_params": 2822672,
+    "prequant_val_bpb": 3.2561,
+    "postquant_val_bpb": 3.2637929,
+    "artifact_bytes": 2403029,
+    "log_path": "/root/parameter-golf/proxy_validation/runs/0018_tokenizer/train.log"
+  }
+]
