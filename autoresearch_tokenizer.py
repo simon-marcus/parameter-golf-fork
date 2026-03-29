@@ -32,6 +32,7 @@ CLAUDE_EFFORT = os.environ.get("CLAUDE_EFFORT", "medium")
 MAX_EXPERIMENTS = int(os.environ.get("MAX_EXPERIMENTS", "8"))
 PROPOSAL_TIMEOUT = int(os.environ.get("PROPOSAL_TIMEOUT", "180"))
 REVIEW_TIMEOUT = int(os.environ.get("REVIEW_TIMEOUT", "180"))
+CLAUDE_RETRIES = int(os.environ.get("CLAUDE_RETRIES", "3"))
 
 DATASET_DIR = os.environ.get("DATASET_DIR", "")
 TOKENIZER_PATH = os.environ.get("TOKENIZER_PATH", "")
@@ -42,6 +43,13 @@ TEXT_SAMPLE_TOKENS_PER_SHARD = int(os.environ.get("TEXT_SAMPLE_TOKENS_PER_SHARD"
 TEXT_SAMPLE_OFFSET_MODE = os.environ.get("TEXT_SAMPLE_OFFSET_MODE", "staggered")
 TEXT_SAMPLE_CHUNK_TOKENS = int(os.environ.get("TEXT_SAMPLE_CHUNK_TOKENS", "2048"))
 EVAL_MAX_CHUNKS = int(os.environ.get("EVAL_MAX_CHUNKS", "0"))
+
+SCORE_MODEL_DIM = int(os.environ.get("TOKENIZER_SCORE_MODEL_DIM", os.environ.get("MODEL_DIM", "512")))
+SCORE_TIE_EMBEDDINGS = bool(int(os.environ.get("TOKENIZER_SCORE_TIE_EMBEDDINGS", os.environ.get("TIE_EMBEDDINGS", "1"))))
+SCORE_DEAD_VOCAB_WEIGHT = float(os.environ.get("TOKENIZER_SCORE_DEAD_VOCAB_WEIGHT", "0.02"))
+SCORE_ARTIFACT_BUDGET_BYTES = int(os.environ.get("TOKENIZER_SCORE_ARTIFACT_BUDGET_BYTES", "16000000"))
+SCORE_VOCAB_ARTIFACT_BYTES_PER_PARAM = float(os.environ.get("TOKENIZER_SCORE_VOCAB_ARTIFACT_BYTES_PER_PARAM", "0.278"))
+SCORE_ARTIFACT_WEIGHT = float(os.environ.get("TOKENIZER_SCORE_ARTIFACT_WEIGHT", "1.0"))
 
 ROOT = Path(__file__).resolve().parent
 PROGRAM_FILE = ROOT / "program_tokenizer.md"
@@ -77,6 +85,36 @@ def run_cmd(cmd: list[str], *, timeout: int | None = None) -> str:
     return result.stdout
 
 
+def run_claude_json(prompt: str, *, timeout: int, phase: str) -> dict:
+    cmd = [
+        "claude",
+        "-p",
+        prompt,
+        "--model",
+        CLAUDE_MODEL,
+        "--output-format",
+        "text",
+    ]
+    if CLAUDE_EFFORT:
+        cmd.extend(["--effort", CLAUDE_EFFORT])
+    last_error: Exception | None = None
+    for attempt in range(1, CLAUDE_RETRIES + 1):
+        try:
+            result = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            if result.returncode != 0:
+                raise RuntimeError(f"Claude {phase} failed:\n{result.stdout}\n{result.stderr}")
+            text = result.stdout.strip()
+            match = re.search(r"\{.*\}", text, re.DOTALL)
+            if not match:
+                raise RuntimeError(f"Could not parse {phase} JSON:\n{text}")
+            return json.loads(match.group(0))
+        except Exception as exc:
+            last_error = exc
+            log_line(f"{phase}:error attempt={attempt}/{CLAUDE_RETRIES} error={exc}")
+    assert last_error is not None
+    raise RuntimeError(f"Claude {phase} failed after {CLAUDE_RETRIES} attempts") from last_error
+
+
 def append_history(entry: dict) -> None:
     with HISTORY_FILE.open("a", encoding="utf-8") as fh:
         fh.write(json.dumps(entry) + "\n")
@@ -90,11 +128,37 @@ def load_history() -> list[dict]:
 
 def tokenizer_score(metrics: dict) -> float:
     tokens_per_byte = float(metrics["tokens_per_byte"])
-    vocab_size = int(metrics["vocab_size"])
     dead_vocab_frac = float(metrics["dead_vocab_frac"])
-    vocab_penalty = max(vocab_size - 1024, 0) / 1024.0 * 0.015
-    dead_penalty = dead_vocab_frac * 0.02
-    return tokens_per_byte + vocab_penalty + dead_penalty
+    artifact_penalty = float(metrics.get("estimated_artifact_budget_frac", 0.0)) * SCORE_ARTIFACT_WEIGHT
+    dead_penalty = dead_vocab_frac * SCORE_DEAD_VOCAB_WEIGHT
+    return tokens_per_byte + dead_penalty + artifact_penalty
+
+
+def estimate_vocab_linked_params(vocab_size: int) -> int:
+    multiplier = 1 if SCORE_TIE_EMBEDDINGS else 2
+    return int(vocab_size) * SCORE_MODEL_DIM * multiplier
+
+
+def enrich_metrics(metrics: dict, baseline: dict | None = None) -> dict[str, object]:
+    enriched = dict(metrics)
+    vocab_size = int(enriched["vocab_size"])
+    vocab_linked_params = estimate_vocab_linked_params(vocab_size)
+    enriched["estimated_vocab_linked_params"] = vocab_linked_params
+    enriched["estimated_vocab_artifact_bytes"] = vocab_linked_params * SCORE_VOCAB_ARTIFACT_BYTES_PER_PARAM
+    enriched["estimated_artifact_budget_frac"] = enriched["estimated_vocab_artifact_bytes"] / max(
+        SCORE_ARTIFACT_BUDGET_BYTES, 1
+    )
+    if baseline is not None:
+        baseline_vocab_params = int(baseline["estimated_vocab_linked_params"])
+        baseline_vocab_bytes = float(baseline["estimated_vocab_artifact_bytes"])
+        enriched["estimated_vocab_linked_params_delta"] = vocab_linked_params - baseline_vocab_params
+        enriched["estimated_vocab_artifact_bytes_delta"] = (
+            enriched["estimated_vocab_artifact_bytes"] - baseline_vocab_bytes
+        )
+    else:
+        enriched["estimated_vocab_linked_params_delta"] = 0
+        enriched["estimated_vocab_artifact_bytes_delta"] = 0.0
+    return enriched
 
 
 def canonical_params(params: dict) -> dict[str, object]:
@@ -131,6 +195,12 @@ def current_run_config() -> dict[str, object]:
         "text_sample_offset_mode": TEXT_SAMPLE_OFFSET_MODE,
         "text_sample_chunk_tokens": TEXT_SAMPLE_CHUNK_TOKENS,
         "eval_max_chunks": EVAL_MAX_CHUNKS,
+        "score_model_dim": SCORE_MODEL_DIM,
+        "score_tie_embeddings": SCORE_TIE_EMBEDDINGS,
+        "score_dead_vocab_weight": SCORE_DEAD_VOCAB_WEIGHT,
+        "score_artifact_budget_bytes": SCORE_ARTIFACT_BUDGET_BYTES,
+        "score_vocab_artifact_bytes_per_param": SCORE_VOCAB_ARTIFACT_BYTES_PER_PARAM,
+        "score_artifact_weight": SCORE_ARTIFACT_WEIGHT,
         "program_file": str(PROGRAM_FILE.resolve()),
     }
     config_json = json.dumps(config, sort_keys=True)
@@ -256,10 +326,12 @@ def ensure_baseline() -> dict:
     if BASELINE_JSON.exists():
         return json.loads(BASELINE_JSON.read_text(encoding="utf-8"))
     log_line("baseline:start")
-    baseline = eval_tokenizer(Path(TOKENIZER_PATH).expanduser().resolve(), BASELINE_JSON)
+    baseline = enrich_metrics(eval_tokenizer(Path(TOKENIZER_PATH).expanduser().resolve(), BASELINE_JSON))
+    BASELINE_JSON.write_text(json.dumps(baseline, indent=2) + "\n", encoding="utf-8")
     log_line(
         f"baseline:done tokens_per_byte={baseline['tokens_per_byte']:.6f} "
-        f"dead_vocab_frac={baseline['dead_vocab_frac']:.4f}"
+        f"dead_vocab_frac={baseline['dead_vocab_frac']:.4f} "
+        f"artifact_frac={baseline['estimated_artifact_budget_frac']:.4f}"
     )
     return baseline
 
@@ -274,6 +346,8 @@ def recent_history_summary(limit: int = 10) -> str:
         lines.append(
             f"- exp {row['experiment_id']}: type={row['type']} "
             f"tpb={metrics.get('tokens_per_byte')} dead={metrics.get('dead_vocab_frac')} "
+            f"artifact_frac={metrics.get('estimated_artifact_budget_frac')} "
+            f"artifact_delta={metrics.get('estimated_vocab_artifact_bytes_delta')} "
             f"score={row.get('score')} keep={row.get('decision', {}).get('keep')} "
             f"params={canonical_params(row.get('params', {})) if row.get('params') else row.get('params')}"
         )
@@ -319,32 +393,15 @@ Rules:
 - Search nearby vocab sizes first unless the history strongly suggests otherwise.
 - Prefer changing one primary variable at a time.
 - Do not propose any experiment you already tried.
-- Optimize the frontier score, not raw tokens_per_byte alone.
-- Larger vocabularies must earn their cost.
+- Optimize the budget-aware frontier score, not raw tokens_per_byte alone.
+- Larger vocabularies must earn their cost in estimated artifact budget.
+- Favor tokenizers that improve compression enough to justify vocab-linked model cost.
 - Output JSON only.
 """
 
 
 def propose_experiment(baseline: dict, frontier: dict) -> dict:
-    cmd = [
-        "claude",
-        "-p",
-        build_prompt(baseline, frontier),
-        "--model",
-        CLAUDE_MODEL,
-        "--output-format",
-        "text",
-    ]
-    if CLAUDE_EFFORT:
-        cmd.extend(["--effort", CLAUDE_EFFORT])
-    result = subprocess.run(cmd, capture_output=True, text=True, timeout=PROPOSAL_TIMEOUT)
-    if result.returncode != 0:
-        raise RuntimeError(f"Claude proposal failed:\n{result.stdout}\n{result.stderr}")
-    text = result.stdout.strip()
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
-        raise RuntimeError(f"Could not parse proposal JSON:\n{text}")
-    proposal = json.loads(match.group(0))
+    proposal = run_claude_json(build_prompt(baseline, frontier), timeout=PROPOSAL_TIMEOUT, phase="proposal")
     if proposal.get("type") != "sentencepiece_train":
         raise ValueError(f"Unsupported experiment type: {proposal.get('type')}")
     params = proposal.get("params")
@@ -356,7 +413,7 @@ def propose_experiment(baseline: dict, frontier: dict) -> dict:
     return proposal
 
 
-def run_experiment(experiment_id: int, proposal: dict) -> dict:
+def run_experiment(experiment_id: int, proposal: dict, baseline: dict) -> dict:
     exp_dir = EXPERIMENTS_DIR / f"{experiment_id:04d}"
     exp_dir.mkdir(exist_ok=True)
     params = proposal["params"]
@@ -381,7 +438,8 @@ def run_experiment(experiment_id: int, proposal: dict) -> dict:
         str(int(params.get("max_chunks", 0))),
     ]
     run_cmd(train_cmd)
-    metrics = eval_tokenizer(prefix.with_suffix(".model"), exp_dir / "eval.json")
+    metrics = enrich_metrics(eval_tokenizer(prefix.with_suffix(".model"), exp_dir / "eval.json"), baseline)
+    (exp_dir / "eval.json").write_text(json.dumps(metrics, indent=2) + "\n", encoding="utf-8")
     score = tokenizer_score(metrics)
     readme = exp_dir / "README.md"
     readme.write_text(
@@ -409,7 +467,10 @@ def run_experiment(experiment_id: int, proposal: dict) -> dict:
     }
     log_line(
         f"experiment:{experiment_id}:done tokens_per_byte={metrics['tokens_per_byte']:.6f} "
-        f"dead_vocab_frac={metrics['dead_vocab_frac']:.4f} score={score:.6f}"
+        f"dead_vocab_frac={metrics['dead_vocab_frac']:.4f} "
+        f"artifact_frac={metrics['estimated_artifact_budget_frac']:.4f} "
+        f"artifact_delta={metrics['estimated_vocab_artifact_bytes_delta']:.0f} "
+        f"score={score:.6f}"
     )
     return entry
 
@@ -426,7 +487,7 @@ Current frontier:
 New experiment result:
 {json.dumps(result, indent=2)}
 
-The scalar score is lower-is-better and already includes penalties for larger vocabularies and dead vocab.
+The scalar score is lower-is-better and already includes penalties for dead vocab and estimated artifact budget consumed by the tokenizer's vocab-linked parameters.
 
 Return JSON only:
 {{
@@ -441,30 +502,17 @@ Rules:
 - keep=true only if this result meaningfully improves the frontier or reveals an important strategic shift
 - do not keep tiny cosmetic changes unless they matter strategically
 - use the actual score and metrics, not vibes
+- if a tokenizer reduces tokens_per_byte but spends too much vocab budget, say so explicitly
 """
 
 
 def review_experiment(baseline: dict, frontier: dict, result: dict) -> dict:
     log_line(f"review:start experiment={result['experiment_id']}")
-    cmd = [
-        "claude",
-        "-p",
+    decision = run_claude_json(
         build_review_prompt(baseline, frontier, result),
-        "--model",
-        CLAUDE_MODEL,
-        "--output-format",
-        "text",
-    ]
-    if CLAUDE_EFFORT:
-        cmd.extend(["--effort", CLAUDE_EFFORT])
-    review = subprocess.run(cmd, capture_output=True, text=True, timeout=REVIEW_TIMEOUT)
-    if review.returncode != 0:
-        raise RuntimeError(f"Claude review failed:\n{review.stdout}\n{review.stderr}")
-    text = review.stdout.strip()
-    match = re.search(r"\{.*\}", text, re.DOTALL)
-    if not match:
-        raise RuntimeError(f"Could not parse review JSON:\n{text}")
-    decision = json.loads(match.group(0))
+        timeout=REVIEW_TIMEOUT,
+        phase="review",
+    )
     log_line(
         f"review:done experiment={result['experiment_id']} keep={decision.get('keep')} "
         f"headline={decision.get('headline', '')}"
@@ -522,7 +570,7 @@ def main() -> None:
     start_id = 1 + max((row.get("experiment_id", 0) for row in existing), default=0)
     for experiment_id in range(start_id, start_id + MAX_EXPERIMENTS):
         proposal = propose_experiment(baseline, frontier)
-        result = run_experiment(experiment_id, proposal)
+        result = run_experiment(experiment_id, proposal, baseline)
         decision = review_experiment(baseline, frontier, result)
         frontier = apply_review(frontier, result, decision)
         LATEST_REVIEW_MD.write_text(

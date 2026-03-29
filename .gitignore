@@ -16,6 +16,7 @@ autoresearch/logs/
 autoresearch/history.jsonl
 autoresearch/*.best.py
 autoresearch/experiments/*/train.log
+**/text_sample.jsonl
 autoresearch.out
 final_model*
 *.ptz

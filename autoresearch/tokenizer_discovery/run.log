@@ -1,0 +1,465 @@
+[2026-03-28T03:45:02.175241+00:00] run:start
+[2026-03-28T03:45:02.175925+00:00] text_sample:start split=train max_tokens=2000000 chunk_tokens=2048
+[2026-03-28T03:45:02.970456+00:00] text_sample:done path=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/text_sample.jsonl
+[2026-03-28T03:45:02.970861+00:00] baseline:start
+[2026-03-28T03:45:04.300801+00:00] baseline:done tokens_per_byte=0.408569 dead_vocab_frac=0.1514
+[2026-03-28T03:45:12.715191+00:00] experiment:1:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T03:45:14.203042+00:00] experiment:1:done tokens_per_byte=0.400125 dead_vocab_frac=0.0156 score=0.407938
+[2026-03-28T03:45:14.203120+00:00] review:start experiment=1
+[2026-03-28T03:45:29.348409+00:00] review:done experiment=1 keep=True headline=vocab 1536 beats baseline by 0.0037 score, dead vocab drops from 15% to 1.6%
+[2026-03-28T03:45:29.349326+00:00] frontier:update best=experiment_0001 score=0.407938
+[2026-03-28T03:45:40.314644+00:00] experiment:2:start type=sentencepiece_train params={'vocab_size': 2048, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T03:45:41.839797+00:00] experiment:2:done tokens_per_byte=0.379331 dead_vocab_frac=0.0176 score=0.394683
+[2026-03-28T03:45:41.839906+00:00] review:start experiment=2
+[2026-03-28T03:45:55.703726+00:00] review:done experiment=2 keep=True headline=vocab 2048 beats frontier by 0.0133 score, tokens_per_byte drops to 0.379 with dead vocab still low at 1.8%
+[2026-03-28T03:45:55.704584+00:00] frontier:update best=experiment_0002 score=0.394683
+[2026-03-28T03:46:03.597319+00:00] experiment:3:start type=sentencepiece_train params={'vocab_size': 3072, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T03:46:05.131336+00:00] experiment:3:done tokens_per_byte=0.360562 dead_vocab_frac=0.0273 score=0.391109
+[2026-03-28T03:46:05.131435+00:00] review:start experiment=3
+[2026-03-28T03:46:21.973973+00:00] review:done experiment=3 keep=True headline=vocab 3072 beats frontier by 0.0036 score, compression continues improving
+[2026-03-28T03:46:21.974497+00:00] frontier:update best=experiment_0003 score=0.391109
+[2026-03-28T03:46:29.775326+00:00] experiment:4:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T03:46:31.405589+00:00] experiment:4:done tokens_per_byte=0.345103 dead_vocab_frac=0.0308 score=0.390719
+[2026-03-28T03:46:31.405683+00:00] review:start experiment=4
+[2026-03-28T03:46:43.803828+00:00] review:done experiment=4 keep=True headline=vocab 4096 edges out 3072 by 0.0004 score, curve nearly flat
+[2026-03-28T03:46:43.804666+00:00] frontier:update best=experiment_0004 score=0.390719
+[2026-03-28T03:46:52.341139+00:00] experiment:5:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T03:46:53.085207+00:00] experiment:5:done tokens_per_byte=0.356343 dead_vocab_frac=0.0090 score=0.401524
+[2026-03-28T03:46:53.085300+00:00] review:start experiment=5
+[2026-03-28T03:47:03.396593+00:00] review:done experiment=5 keep=False headline=unigram model regresses score by 0.011 vs BPE at same vocab size
+[2026-03-28T03:47:12.635244+00:00] experiment:6:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T03:47:14.263985+00:00] experiment:6:done tokens_per_byte=0.345671 dead_vocab_frac=0.0312 score=0.391296
+[2026-03-28T03:47:14.264117+00:00] review:start experiment=6
+[2026-03-28T03:47:25.159024+00:00] review:done experiment=6 keep=False headline=character_coverage 0.9999 is a regression: score 0.3913 vs frontier 0.3907
+[2026-03-28T03:48:11.476588+00:00] experiment:7:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-28T03:48:13.090864+00:00] experiment:7:done tokens_per_byte=0.345103 dead_vocab_frac=0.0308 score=0.390719
+[2026-03-28T03:48:13.090961+00:00] review:start experiment=7
+[2026-03-28T03:48:23.460575+00:00] review:done experiment=7 keep=False headline=5x training data produces identical tokenizer — no improvement
+[2026-03-28T03:49:40.545225+00:00] experiment:8:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T03:49:42.175473+00:00] experiment:8:done tokens_per_byte=0.344889 dead_vocab_frac=0.0293 score=0.390475
+[2026-03-28T03:49:42.175569+00:00] review:start experiment=8
+[2026-03-28T03:49:53.117048+00:00] review:done experiment=8 keep=False headline=character_coverage=0.999 gives negligible 0.0002 score improvement over frontier
+[2026-03-28T03:51:14.793704+00:00] experiment:9:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.998, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T03:51:16.404598+00:00] experiment:9:done tokens_per_byte=0.344958 dead_vocab_frac=0.0291 score=0.390539
+[2026-03-28T03:51:16.404695+00:00] review:start experiment=9
+[2026-03-28T03:51:26.209100+00:00] review:done experiment=9 keep=False headline=character_coverage=0.998 yields negligible 0.0002 score improvement over frontier
+[2026-03-28T04:09:11.246864+00:00] experiment:10:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.99, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:09:12.928288+00:00] experiment:10:done tokens_per_byte=0.347095 dead_vocab_frac=0.0295 score=0.392686
+[2026-03-28T04:09:12.928376+00:00] review:start experiment=10
+[2026-03-28T04:09:24.723159+00:00] review:done experiment=10 keep=False headline=character_coverage=0.99 regresses score by 0.002 vs frontier
+[2026-03-28T04:10:37.272529+00:00] experiment:11:start type=sentencepiece_train params={'vocab_size': 3584, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:10:38.915094+00:00] experiment:11:done tokens_per_byte=0.352331 dead_vocab_frac=0.0248 score=0.390328
+[2026-03-28T04:10:38.915191+00:00] review:start experiment=11
+[2026-03-28T04:10:49.264695+00:00] review:done experiment=11 keep=False headline=vocab 3584 scores 0.3903 vs frontier 0.3907 — no improvement
+[2026-03-28T04:13:38.087308+00:00] experiment:12:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9993, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:13:39.716115+00:00] experiment:12:done tokens_per_byte=0.345062 dead_vocab_frac=0.0308 score=0.390677
+[2026-03-28T04:13:39.716213+00:00] review:start experiment=12
+[2026-03-28T04:13:52.499923+00:00] review:done experiment=12 keep=True headline=cc=0.9993 edges out cc=0.9995 by 0.0004 score, new best at 0.39068
+[2026-03-28T04:13:52.501202+00:00] frontier:update best=experiment_0012 score=0.390677
+[2026-03-28T04:14:26.973986+00:00] experiment:13:start type=sentencepiece_train params={'vocab_size': 3584, 'model_type': 'bpe', 'character_coverage': 0.9993, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:14:28.551355+00:00] experiment:13:done tokens_per_byte=0.352258 dead_vocab_frac=0.0248 score=0.390255
+[2026-03-28T04:14:28.551446+00:00] review:start experiment=13
+[2026-03-28T04:14:38.934855+00:00] review:done experiment=13 keep=False headline=vocab=3584 + cc=0.9993 combo scores 0.39025, worse than frontier 0.39068
+[2026-03-28T04:14:58.600769+00:00] experiment:14:start type=sentencepiece_train params={'vocab_size': 5120, 'model_type': 'bpe', 'character_coverage': 0.9993, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:15:00.226796+00:00] experiment:14:done tokens_per_byte=0.338978 dead_vocab_frac=0.0467 score=0.399911
+[2026-03-28T04:15:00.226887+00:00] review:start experiment=14
+[2026-03-28T04:15:11.568041+00:00] review:done experiment=14 keep=False headline=vocab_size=5120 scores 0.3999 vs frontier 0.3907, rejected
+[2026-03-28T04:16:22.777903+00:00] experiment:15:start type=sentencepiece_train params={'vocab_size': 3072, 'model_type': 'bpe', 'character_coverage': 0.9993, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:16:24.328802+00:00] experiment:15:done tokens_per_byte=0.360667 dead_vocab_frac=0.0273 score=0.391214
+[2026-03-28T04:16:24.328896+00:00] review:start experiment=15
+[2026-03-28T04:16:35.717030+00:00] review:done experiment=15 keep=False headline=BPE vocab=3072 scores 0.3912, worse than frontier 0.3907
+[2026-03-28T04:16:44.290408+00:00] experiment:16:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'unigram', 'character_coverage': 0.9993, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:16:45.037763+00:00] experiment:16:done tokens_per_byte=0.356189 dead_vocab_frac=0.0088 score=0.401365
+[2026-03-28T04:16:45.037854+00:00] review:start experiment=16
+[2026-03-28T04:16:58.699089+00:00] review:done experiment=16 keep=False headline=Unigram loses to BPE by 0.011 score (0.4014 vs 0.3907), confirming BPE is superior at vocab=4096
+[2026-03-28T04:17:33.504442+00:00] experiment:17:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9993, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-28T04:17:35.110507+00:00] experiment:17:done tokens_per_byte=0.345062 dead_vocab_frac=0.0308 score=0.390677
+[2026-03-28T04:17:35.110631+00:00] review:start experiment=17
+[2026-03-28T04:17:46.706667+00:00] review:done experiment=17 keep=False headline=1M sentences yields identical results to default corpus size
+[2026-03-28T04:19:01.882644+00:00] experiment:18:start type=sentencepiece_train params={'vocab_size': 3840, 'model_type': 'bpe', 'character_coverage': 0.9993, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:19:03.483333+00:00] experiment:18:done tokens_per_byte=0.348134 dead_vocab_frac=0.0255 score=0.389894
+[2026-03-28T04:19:03.483426+00:00] review:start experiment=18
+[2026-03-28T04:19:14.105168+00:00] review:done experiment=18 keep=True headline=vocab=3840 beats vocab=4096 by 0.00078 score (0.38989 vs 0.39068), new best
+[2026-03-28T04:19:14.106375+00:00] frontier:update best=experiment_0018 score=0.389894
+[2026-03-28T04:19:25.142733+00:00] experiment:19:start type=sentencepiece_train params={'vocab_size': 3712, 'model_type': 'bpe', 'character_coverage': 0.9993, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:19:26.748444+00:00] experiment:19:done tokens_per_byte=0.350716 dead_vocab_frac=0.0251 score=0.390592
+[2026-03-28T04:19:26.748542+00:00] review:start experiment=19
+[2026-03-28T04:19:37.162754+00:00] review:done experiment=19 keep=False headline=vocab=3712 scores 0.39059, worse than frontier 0.38989 at vocab=3840
+[2026-03-28T04:19:47.086993+00:00] experiment:20:start type=sentencepiece_train params={'vocab_size': 3968, 'model_type': 'bpe', 'character_coverage': 0.9993, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T04:19:48.688117+00:00] experiment:20:done tokens_per_byte=0.346709 dead_vocab_frac=0.0267 score=0.390368
+[2026-03-28T04:19:48.688214+00:00] review:start experiment=20
+[2026-03-28T04:19:58.315762+00:00] review:done experiment=20 keep=False headline=vocab=3968 scores 0.39037, worse than vocab=3840 (0.38989)
+[2026-03-28T04:19:58.317251+00:00] run:done
+[2026-03-28T13:39:45.788773+00:00] run:start
+[2026-03-28T13:39:45.789626+00:00] run:config hash=d1f0483ca3d4 split=train
+[2026-03-28T13:40:02.566683+00:00] experiment:21:start type=sentencepiece_train params={'vocab_size': 3840, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:40:04.256577+00:00] experiment:21:done tokens_per_byte=0.348079 dead_vocab_frac=0.0242 score=0.389813
+[2026-03-28T13:40:04.256676+00:00] review:start experiment=21
+[2026-03-28T13:40:17.187789+00:00] review:done experiment=21 keep=True headline=cc=0.999 beats cc=0.9993 at vocab=3840: score 0.38981 vs 0.38989, new best by 0.00008
+[2026-03-28T13:40:17.188822+00:00] frontier:update best=experiment_0021 score=0.389813
+[2026-03-28T13:40:33.082183+00:00] experiment:22:start type=sentencepiece_train params={'vocab_size': 3712, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:40:34.777776+00:00] experiment:22:done tokens_per_byte=0.350670 dead_vocab_frac=0.0234 score=0.390514
+[2026-03-28T13:40:34.777888+00:00] review:start experiment=22
+[2026-03-28T13:40:46.969096+00:00] review:done experiment=22 keep=False headline=vocab=3712 scores 0.39051 vs frontier 0.38981 — worse by 0.00070
+[2026-03-28T13:41:02.756738+00:00] experiment:23:start type=sentencepiece_train params={'vocab_size': 3840, 'model_type': 'bpe', 'character_coverage': 0.998, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:41:04.917590+00:00] experiment:23:done tokens_per_byte=0.348315 dead_vocab_frac=0.0245 score=0.390055
+[2026-03-28T13:41:04.917707+00:00] review:start experiment=23
+[2026-03-28T13:41:15.319027+00:00] review:done experiment=23 keep=False headline=cc=0.998 worse than cc=0.999 at vocab=3840: score 0.39005 vs 0.38981
+[2026-03-28T13:42:01.570348+00:00] experiment:24:start type=sentencepiece_train params={'vocab_size': 3968, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:42:03.294596+00:00] experiment:24:done tokens_per_byte=0.346494 dead_vocab_frac=0.0252 score=0.390123
+[2026-03-28T13:42:03.294724+00:00] review:start experiment=24
+[2026-03-28T13:42:15.340729+00:00] review:done experiment=24 keep=False headline=vocab=3968 cc=0.999 scores 0.39012 vs frontier 0.38981 — no improvement
+[2026-03-28T13:42:30.059033+00:00] experiment:25:start type=sentencepiece_train params={'vocab_size': 3840, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:42:31.755486+00:00] experiment:25:done tokens_per_byte=0.348112 dead_vocab_frac=0.0255 score=0.389872
+[2026-03-28T13:42:31.755589+00:00] review:start experiment=25
+[2026-03-28T13:42:43.222096+00:00] review:done experiment=25 keep=False headline=cc=0.9995 scores 0.38987, worse than cc=0.999 (0.38981) — no improvement
+[2026-03-28T13:42:59.545657+00:00] experiment:26:start type=sentencepiece_train params={'vocab_size': 3840, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 500000, 'max_chunks': 0}
+[2026-03-28T13:43:01.213574+00:00] experiment:26:done tokens_per_byte=0.348079 dead_vocab_frac=0.0242 score=0.389813
+[2026-03-28T13:43:01.213679+00:00] review:start experiment=26
+[2026-03-28T13:43:12.758674+00:00] review:done experiment=26 keep=False headline=500k training sentences produces identical tokenizer to 200k default — no improvement
+[2026-03-28T13:44:03.183763+00:00] experiment:27:start type=sentencepiece_train params={'vocab_size': 3840, 'model_type': 'unigram', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:44:04.010844+00:00] experiment:27:done tokens_per_byte=0.362013 dead_vocab_frac=0.0047 score=0.403357
+[2026-03-28T13:44:04.010954+00:00] review:start experiment=27
+[2026-03-28T13:44:14.480403+00:00] review:done experiment=27 keep=False headline=Unigram worse than BPE at vocab=3840/cc=0.999: score 0.40336 vs 0.38981
+[2026-03-28T13:45:23.240279+00:00] experiment:28:start type=sentencepiece_train params={'vocab_size': 2048, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:45:24.793929+00:00] experiment:28:done tokens_per_byte=0.379211 dead_vocab_frac=0.0151 score=0.394513
+[2026-03-28T13:45:24.794067+00:00] review:start experiment=28
+[2026-03-28T13:45:37.381801+00:00] review:done experiment=28 keep=False headline=vocab=2048 scores 0.39451 vs frontier 0.38981 — confirms 3840 is superior
+[2026-03-28T13:45:57.247990+00:00] experiment:29:start type=sentencepiece_train params={'vocab_size': 3904, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:45:58.898434+00:00] experiment:29:done tokens_per_byte=0.347834 dead_vocab_frac=0.0251 score=0.390523
+[2026-03-28T13:45:58.898526+00:00] review:start experiment=29
+[2026-03-28T13:46:10.705567+00:00] review:done experiment=29 keep=False headline=vocab=3904 scores 0.39052 vs frontier 0.38981 — worse by 0.00071
+[2026-03-28T13:46:25.822944+00:00] experiment:30:start type=sentencepiece_train params={'vocab_size': 3776, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:46:27.467985+00:00] experiment:30:done tokens_per_byte=0.349174 dead_vocab_frac=0.0236 score=0.389958
+[2026-03-28T13:46:27.468100+00:00] review:start experiment=30
+[2026-03-28T13:46:44.664967+00:00] review:done experiment=30 keep=False headline=vocab=3776 scores 0.38996, worse than frontier 0.38981 at vocab=3840
+[2026-03-28T13:47:39.526528+00:00] experiment:31:start type=sentencepiece_train params={'vocab_size': 3840, 'model_type': 'bpe', 'character_coverage': 0.995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:47:41.260537+00:00] experiment:31:done tokens_per_byte=0.348602 dead_vocab_frac=0.0237 score=0.390326
+[2026-03-28T13:47:41.260644+00:00] review:start experiment=31
+[2026-03-28T13:48:00.396612+00:00] review:done experiment=31 keep=False headline=cc=0.995 regresses vs cc=0.999 at vocab=3840: score 0.39033 vs 0.38981
+[2026-03-28T13:50:01.995612+00:00] run:start
+[2026-03-28T13:50:01.996208+00:00] run:config hash=d1f0483ca3d4 split=train
+[2026-03-28T13:50:12.642491+00:00] experiment:32:start type=sentencepiece_train params={'vocab_size': 3840, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:50:14.408970+00:00] experiment:32:done tokens_per_byte=0.348443 dead_vocab_frac=0.0242 score=0.390177
+[2026-03-28T13:50:14.409062+00:00] review:start experiment=32
+[2026-03-28T13:50:25.895896+00:00] review:done experiment=32 keep=False headline=cc=0.997 worse than cc=0.999 at vocab=3840: score 0.39018 vs 0.38981, regression of 0.00036
+[2026-03-28T13:57:45.365401+00:00] state:archived_incompatible_run archive=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/_archives/20260328T135745Z_d1f0483ca3d4 old_hash=d1f0483ca3d4 new_hash=cc5477f7f8c4
+[2026-03-28T13:57:45.365699+00:00] run:start
+[2026-03-28T13:57:45.365766+00:00] run:config hash=cc5477f7f8c4 split=train
+[2026-03-28T13:57:45.365824+00:00] text_sample:start split=train max_tokens=2000000 max_shards=10 tokens_per_shard=2000000 offset_mode=staggered chunk_tokens=2048
+[2026-03-28T13:57:52.253776+00:00] text_sample:done path=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/text_sample.jsonl
+[2026-03-28T13:57:52.254166+00:00] baseline:start
+[2026-03-28T13:58:05.345801+00:00] baseline:done tokens_per_byte=0.411282 dead_vocab_frac=0.1416
+[2026-03-28T13:58:14.693936+00:00] experiment:1:start type=sentencepiece_train params={'vocab_size': 896, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:58:27.762826+00:00] experiment:1:done tokens_per_byte=0.429639 dead_vocab_frac=0.0033 score=0.429706
+[2026-03-28T13:58:27.763350+00:00] review:start experiment=1
+[2026-03-28T13:58:42.303183+00:00] review:done experiment=1 keep=False headline=Smaller vocab 896 worse than baseline 1024
+[2026-03-28T13:59:02.801545+00:00] experiment:2:start type=sentencepiece_train params={'vocab_size': 1152, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T13:59:16.349421+00:00] experiment:2:done tokens_per_byte=0.406371 dead_vocab_frac=0.0035 score=0.408315
+[2026-03-28T13:59:16.349514+00:00] review:start experiment=2
+[2026-03-28T13:59:54.774224+00:00] review:done experiment=2 keep=True headline=vocab 1152 beats baseline by 1.4% with near-zero dead vocab
+[2026-03-28T13:59:54.775207+00:00] frontier:update best=experiment_0002 score=0.408315
+[2026-03-28T14:00:33.214877+00:00] experiment:3:start type=sentencepiece_train params={'vocab_size': 1280, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:00:46.621011+00:00] experiment:3:done tokens_per_byte=0.398023 dead_vocab_frac=0.0031 score=0.401835
+[2026-03-28T14:00:46.621399+00:00] review:start experiment=3
+[2026-03-28T14:00:56.708386+00:00] review:done experiment=3 keep=True headline=vocab 1280 beats frontier by 1.6%, new best score 0.4018
+[2026-03-28T14:00:56.710069+00:00] frontier:update best=experiment_0003 score=0.401835
+[2026-03-28T14:01:10.798921+00:00] experiment:4:start type=sentencepiece_train params={'vocab_size': 1408, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:01:24.261946+00:00] experiment:4:done tokens_per_byte=0.388978 dead_vocab_frac=0.0036 score=0.394674
+[2026-03-28T14:01:24.262332+00:00] review:start experiment=4
+[2026-03-28T14:01:35.316918+00:00] review:done experiment=4 keep=True headline=vocab 1408 beats frontier by 1.8%, new best score 0.3947
+[2026-03-28T14:01:35.318332+00:00] frontier:update best=experiment_0004 score=0.394674
+[2026-03-28T14:01:46.009345+00:00] experiment:5:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:01:59.480371+00:00] experiment:5:done tokens_per_byte=0.381695 dead_vocab_frac=0.0033 score=0.389260
+[2026-03-28T14:01:59.480459+00:00] review:start experiment=5
+[2026-03-28T14:02:12.372238+00:00] review:done experiment=5 keep=True headline=vocab 1536 beats frontier by 1.4%, new best score 0.3893
+[2026-03-28T14:02:12.373068+00:00] frontier:update best=experiment_0005 score=0.389260
+[2026-03-28T14:02:21.170846+00:00] experiment:6:start type=sentencepiece_train params={'vocab_size': 1664, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:02:34.675106+00:00] experiment:6:done tokens_per_byte=0.374732 dead_vocab_frac=0.0030 score=0.384167
+[2026-03-28T14:02:34.675190+00:00] review:start experiment=6
+[2026-03-28T14:02:48.651229+00:00] review:done experiment=6 keep=True headline=vocab 1664 beats frontier by 1.3%, new best score 0.3842
+[2026-03-28T14:02:48.652145+00:00] frontier:update best=experiment_0006 score=0.384167
+[2026-03-28T14:02:58.012319+00:00] experiment:7:start type=sentencepiece_train params={'vocab_size': 1792, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:03:11.602867+00:00] experiment:7:done tokens_per_byte=0.369291 dead_vocab_frac=0.0028 score=0.380596
+[2026-03-28T14:03:11.603008+00:00] review:start experiment=7
+[2026-03-28T14:03:21.893238+00:00] review:done experiment=7 keep=True headline=vocab 1792 beats frontier by 0.9%, new best score 0.3806
+[2026-03-28T14:03:21.894692+00:00] frontier:update best=experiment_0007 score=0.380596
+[2026-03-28T14:03:43.317202+00:00] experiment:8:start type=sentencepiece_train params={'vocab_size': 2048, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:03:57.209672+00:00] experiment:8:done tokens_per_byte=0.359758 dead_vocab_frac=0.0024 score=0.374807
+[2026-03-28T14:03:57.209782+00:00] review:start experiment=8
+[2026-03-28T14:04:08.038384+00:00] review:done experiment=8 keep=True headline=vocab 2048 beats frontier by 1.5%, new best score 0.3748
+[2026-03-28T14:04:08.038893+00:00] frontier:update best=experiment_0008 score=0.374807
+[2026-03-28T14:04:21.768405+00:00] experiment:9:start type=sentencepiece_train params={'vocab_size': 2560, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:04:35.621899+00:00] experiment:9:done tokens_per_byte=0.345095 dead_vocab_frac=0.0027 score=0.367650
+[2026-03-28T14:04:35.621991+00:00] review:start experiment=9
+[2026-03-28T14:04:46.831152+00:00] review:done experiment=9 keep=True headline=vocab 2560 beats frontier by 1.9%, new best score 0.3677
+[2026-03-28T14:04:46.831909+00:00] frontier:update best=experiment_0009 score=0.367650
+[2026-03-28T14:04:59.409788+00:00] experiment:10:start type=sentencepiece_train params={'vocab_size': 3072, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:05:13.588180+00:00] experiment:10:done tokens_per_byte=0.333248 dead_vocab_frac=0.0023 score=0.363293
+[2026-03-28T14:05:13.588266+00:00] review:start experiment=10
+[2026-03-28T14:05:26.315979+00:00] review:done experiment=10 keep=True headline=vocab 3072 beats frontier by 1.2%, new best score 0.3633
+[2026-03-28T14:05:26.317058+00:00] frontier:update best=experiment_0010 score=0.363293
+[2026-03-28T14:05:55.843958+00:00] experiment:11:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:06:10.282702+00:00] experiment:11:done tokens_per_byte=0.316014 dead_vocab_frac=0.0022 score=0.361058
+[2026-03-28T14:06:10.282802+00:00] review:start experiment=11
+[2026-03-28T14:06:27.624240+00:00] review:done experiment=11 keep=True headline=vocab 4096 beats frontier by 0.6%, new best score 0.3611
+[2026-03-28T14:06:27.625185+00:00] frontier:update best=experiment_0011 score=0.361058
+[2026-03-28T14:06:59.177955+00:00] experiment:12:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:07:05.599214+00:00] experiment:12:done tokens_per_byte=0.322976 dead_vocab_frac=0.0010 score=0.367996
+[2026-03-28T14:07:05.599306+00:00] review:start experiment=12
+[2026-03-28T14:07:20.636155+00:00] review:done experiment=12 keep=False headline=unigram at vocab 4096 loses to BPE by 1.9%
+[2026-03-28T14:07:53.255741+00:00] experiment:13:start type=sentencepiece_train params={'vocab_size': 5120, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:08:08.119804+00:00] experiment:13:done tokens_per_byte=0.303635 dead_vocab_frac=0.0023 score=0.363682
+[2026-03-28T14:08:08.119894+00:00] review:start experiment=13
+[2026-03-28T14:08:21.688615+00:00] review:done experiment=13 keep=False headline=vocab 5120 regresses score by 0.7% vs frontier (0.3637 vs 0.3611)
+[2026-03-28T14:08:42.148754+00:00] experiment:14:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 500000, 'max_chunks': 0}
+[2026-03-28T14:08:56.445610+00:00] experiment:14:done tokens_per_byte=0.316014 dead_vocab_frac=0.0022 score=0.361058
+[2026-03-28T14:08:56.445712+00:00] review:start experiment=14
+[2026-03-28T14:09:09.462645+00:00] review:done experiment=14 keep=False headline=500k training sentences produces identical result to frontier
+[2026-03-28T14:09:40.106986+00:00] experiment:15:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:09:54.514331+00:00] experiment:15:done tokens_per_byte=0.319393 dead_vocab_frac=0.0020 score=0.364432
+[2026-03-28T14:09:54.514428+00:00] review:start experiment=15
+[2026-03-28T14:10:06.230913+00:00] review:done experiment=15 keep=False headline=higher character_coverage 0.9999 worse than frontier by 0.9%
+[2026-03-28T14:10:17.537936+00:00] experiment:16:start type=sentencepiece_train params={'vocab_size': 3584, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:10:31.690831+00:00] experiment:16:done tokens_per_byte=0.324294 dead_vocab_frac=0.0022 score=0.361839
+[2026-03-28T14:10:31.690932+00:00] review:start experiment=16
+[2026-03-28T14:10:45.783561+00:00] review:done experiment=16 keep=False headline=vocab 3584 BPE scores 0.3618, worse than frontier 0.3611
+[2026-03-28T14:11:14.941908+00:00] experiment:17:start type=sentencepiece_train params={'vocab_size': 4608, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T14:11:30.529069+00:00] experiment:17:done tokens_per_byte=0.309593 dead_vocab_frac=0.0026 score=0.362145
+[2026-03-28T14:11:30.529309+00:00] review:start experiment=17
+[2026-03-28T14:11:44.293968+00:00] review:done experiment=17 keep=False headline=vocab 4608 scores 0.3621, worse than frontier 0.3611
+[2026-03-28T21:41:42.825031+00:00] state:archived_incompatible_run archive=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/_archives/20260328T214142Z_cc5477f7f8c4 old_hash=cc5477f7f8c4 new_hash=d139abf41cfb
+[2026-03-28T21:41:42.825546+00:00] run:start
+[2026-03-28T21:41:42.825598+00:00] run:config hash=d139abf41cfb split=train
+[2026-03-28T21:41:42.825647+00:00] text_sample:start split=train max_tokens=2000000 max_shards=10 tokens_per_shard=2000000 offset_mode=staggered chunk_tokens=2048
+[2026-03-28T21:41:49.475828+00:00] text_sample:done path=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/text_sample.jsonl
+[2026-03-28T21:41:49.476203+00:00] baseline:start
+[2026-03-28T21:42:02.109619+00:00] baseline:done tokens_per_byte=0.411282 dead_vocab_frac=0.1416 artifact_frac=0.0091
+[2026-03-28T21:42:10.665442+00:00] experiment:1:start type=sentencepiece_train params={'vocab_size': 896, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:42:23.868509+00:00] experiment:1:done tokens_per_byte=0.429639 dead_vocab_frac=0.0033 artifact_frac=0.0080 artifact_delta=-18219 score=0.437677
+[2026-03-28T21:42:23.868609+00:00] review:start experiment=1
+[2026-03-28T21:42:38.227458+00:00] review:done experiment=1 keep=False headline=Smaller vocab hurts compression more than it saves in artifact budget
+[2026-03-28T21:42:47.408026+00:00] experiment:2:start type=sentencepiece_train params={'vocab_size': 1152, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:43:00.989924+00:00] experiment:2:done tokens_per_byte=0.406371 dead_vocab_frac=0.0035 artifact_frac=0.0102 artifact_delta=18219 score=0.416688
+[2026-03-28T21:43:00.990033+00:00] review:start experiment=2
+[2026-03-28T21:43:13.702976+00:00] review:done experiment=2 keep=True headline=vocab 1152 beats baseline by 1.5% on composite score
+[2026-03-28T21:43:13.703742+00:00] frontier:update best=experiment_0002 score=0.416688
+[2026-03-28T21:43:23.107002+00:00] experiment:3:start type=sentencepiece_train params={'vocab_size': 1280, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:43:36.815751+00:00] experiment:3:done tokens_per_byte=0.398023 dead_vocab_frac=0.0031 artifact_frac=0.0114 artifact_delta=36438 score=0.409472
+[2026-03-28T21:43:36.815850+00:00] review:start experiment=3
+[2026-03-28T21:43:51.124923+00:00] review:done experiment=3 keep=True headline=vocab 1280 beats frontier by 1.7%, compression gains still outpacing artifact cost
+[2026-03-28T21:43:51.126415+00:00] frontier:update best=experiment_0003 score=0.409472
+[2026-03-28T21:44:00.715029+00:00] experiment:4:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:44:14.254099+00:00] experiment:4:done tokens_per_byte=0.381695 dead_vocab_frac=0.0033 artifact_frac=0.0137 artifact_delta=72876 score=0.395424
+[2026-03-28T21:44:14.254189+00:00] review:start experiment=4
+[2026-03-28T21:44:25.591840+00:00] review:done experiment=4 keep=True headline=vocab 1536 beats frontier by 3.5%, compression gains still accelerating
+[2026-03-28T21:44:25.593041+00:00] frontier:update best=experiment_0004 score=0.395424
+[2026-03-28T21:44:37.440091+00:00] experiment:5:start type=sentencepiece_train params={'vocab_size': 2048, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:44:51.278359+00:00] experiment:5:done tokens_per_byte=0.359758 dead_vocab_frac=0.0024 artifact_frac=0.0182 artifact_delta=145752 score=0.378026
+[2026-03-28T21:44:51.278520+00:00] review:start experiment=5
+[2026-03-28T21:45:05.119164+00:00] review:done experiment=5 keep=True headline=vocab 2048 beats frontier by 4.4%, compression curve still not plateauing
+[2026-03-28T21:45:05.120349+00:00] frontier:update best=experiment_0005 score=0.378026
+[2026-03-28T21:45:14.030196+00:00] experiment:6:start type=sentencepiece_train params={'vocab_size': 3072, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:45:28.212917+00:00] experiment:6:done tokens_per_byte=0.333248 dead_vocab_frac=0.0023 artifact_frac=0.0273 artifact_delta=291504 score=0.360622
+[2026-03-28T21:45:28.213005+00:00] review:start experiment=6
+[2026-03-28T21:45:41.029548+00:00] review:done experiment=6 keep=True headline=vocab 3072 beats frontier by 4.6%, compression curve still not plateauing
+[2026-03-28T21:45:41.030449+00:00] frontier:update best=experiment_0006 score=0.360622
+[2026-03-28T21:45:50.606867+00:00] experiment:7:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:46:05.377101+00:00] experiment:7:done tokens_per_byte=0.316014 dead_vocab_frac=0.0022 artifact_frac=0.0364 artifact_delta=437256 score=0.352496
+[2026-03-28T21:46:05.377199+00:00] review:start experiment=7
+[2026-03-28T21:46:18.797831+00:00] review:done experiment=7 keep=True headline=vocab 4096 beats frontier by 2.3%, but diminishing returns accelerating sharply
+[2026-03-28T21:46:18.798450+00:00] frontier:update best=experiment_0007 score=0.352496
+[2026-03-28T21:46:37.292685+00:00] experiment:8:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:46:52.869466+00:00] experiment:8:done tokens_per_byte=0.294051 dead_vocab_frac=0.0024 artifact_frac=0.0547 artifact_delta=728760 score=0.348757
+[2026-03-28T21:46:52.869618+00:00] review:start experiment=8
+[2026-03-28T21:47:07.370296+00:00] review:done experiment=8 keep=True headline=vocab 6144 beats frontier by 1.1%, but returns are diminishing fast
+[2026-03-28T21:47:07.371060+00:00] frontier:update best=experiment_0008 score=0.348757
+[2026-03-28T21:47:18.648929+00:00] experiment:9:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:47:25.054788+00:00] experiment:9:done tokens_per_byte=0.301433 dead_vocab_frac=0.0007 artifact_frac=0.0547 artifact_delta=728760 score=0.356103
+[2026-03-28T21:47:25.054884+00:00] review:start experiment=9
+[2026-03-28T21:47:40.371081+00:00] review:done experiment=9 keep=False headline=unigram loses to BPE at vocab 6144 — worse compression, same cost
+[2026-03-28T21:48:02.846642+00:00] experiment:10:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-28T21:48:18.462426+00:00] experiment:10:done tokens_per_byte=0.294051 dead_vocab_frac=0.0024 artifact_frac=0.0547 artifact_delta=728760 score=0.348757
+[2026-03-28T21:48:18.462514+00:00] review:start experiment=10
+[2026-03-28T21:48:34.536201+00:00] review:done experiment=10 keep=False headline=1M training sentences produce identical tokenizer to default — no improvement
+[2026-03-28T21:49:03.349191+00:00] experiment:11:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 1.0, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:49:19.114217+00:00] experiment:11:done tokens_per_byte=0.297321 dead_vocab_frac=0.0023 artifact_frac=0.0547 artifact_delta=728760 score=0.352024
+[2026-03-28T21:49:19.114317+00:00] review:start experiment=11
+[2026-03-28T21:49:30.187333+00:00] review:done experiment=11 keep=False headline=character_coverage=1.0 worsens score by 0.9% vs frontier
+[2026-03-28T21:50:13.356664+00:00] experiment:12:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:50:28.277468+00:00] experiment:12:done tokens_per_byte=0.293735 dead_vocab_frac=0.0024 artifact_frac=0.0547 artifact_delta=728760 score=0.348441
+[2026-03-28T21:50:28.277565+00:00] review:start experiment=12
+[2026-03-28T21:50:41.621380+00:00] review:done experiment=12 keep=False headline=character_coverage=0.999 gives negligible 0.03% score improvement, not meaningful
+[2026-03-28T21:52:19.756184+00:00] experiment:13:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:52:35.414237+00:00] experiment:13:done tokens_per_byte=0.293822 dead_vocab_frac=0.0021 artifact_frac=0.0547 artifact_delta=728760 score=0.348521
+[2026-03-28T21:52:35.414352+00:00] review:start experiment=13
+[2026-03-28T21:52:48.419598+00:00] review:done experiment=13 keep=False headline=character_coverage=0.995 gives negligible improvement over frontier
+[2026-03-28T21:53:05.662005+00:00] experiment:14:start type=sentencepiece_train params={'vocab_size': 5120, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:53:20.603077+00:00] experiment:14:done tokens_per_byte=0.303635 dead_vocab_frac=0.0023 artifact_frac=0.0455 artifact_delta=583008 score=0.349229
+[2026-03-28T21:53:20.603161+00:00] review:start experiment=14
+[2026-03-28T21:53:32.993199+00:00] review:done experiment=14 keep=False headline=vocab 5120 scores 0.3492, worse than frontier 0.3488 — interpolation finds no hidden optimum
+[2026-03-28T21:53:56.304138+00:00] experiment:15:start type=sentencepiece_train params={'vocab_size': 7168, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T21:54:11.322008+00:00] experiment:15:done tokens_per_byte=0.286659 dead_vocab_frac=0.0036 artifact_frac=0.0638 artifact_delta=874512 score=0.350498
+[2026-03-28T21:54:11.322110+00:00] review:start experiment=15
+[2026-03-28T22:24:35.202512+00:00] state:archived_incompatible_run archive=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/_archives/20260328T222435Z_d139abf41cfb old_hash=d139abf41cfb new_hash=7d8a31dfc239
+[2026-03-28T22:24:35.203142+00:00] run:start
+[2026-03-28T22:24:35.203189+00:00] run:config hash=7d8a31dfc239 split=train
+[2026-03-28T22:33:08.547532+00:00] state:archived_incompatible_run archive=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/_archives/20260328T223308Z_7d8a31dfc239 old_hash=7d8a31dfc239 new_hash=d139abf41cfb
+[2026-03-28T22:33:08.547871+00:00] run:start
+[2026-03-28T22:33:08.547916+00:00] run:config hash=d139abf41cfb split=train
+[2026-03-28T22:33:08.547960+00:00] text_sample:start split=train max_tokens=2000000 max_shards=10 tokens_per_shard=2000000 offset_mode=staggered chunk_tokens=2048
+[2026-03-28T22:33:15.354506+00:00] text_sample:done path=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/text_sample.jsonl
+[2026-03-28T22:33:15.354955+00:00] baseline:start
+[2026-03-28T22:33:32.302535+00:00] baseline:done tokens_per_byte=0.411282 dead_vocab_frac=0.1416 artifact_frac=0.0091
+[2026-03-28T22:33:42.356881+00:00] experiment:1:start type=sentencepiece_train params={'vocab_size': 896, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:33:56.013793+00:00] experiment:1:done tokens_per_byte=0.429639 dead_vocab_frac=0.0033 artifact_frac=0.0080 artifact_delta=-18219 score=0.437677
+[2026-03-28T22:33:56.014034+00:00] review:start experiment=1
+[2026-03-28T22:34:07.728277+00:00] review:done experiment=1 keep=False headline=Vocab 896 worse: compression loss outweighs savings
+[2026-03-28T22:34:15.833495+00:00] experiment:2:start type=sentencepiece_train params={'vocab_size': 1152, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:34:29.418307+00:00] experiment:2:done tokens_per_byte=0.406371 dead_vocab_frac=0.0035 artifact_frac=0.0102 artifact_delta=18219 score=0.416688
+[2026-03-28T22:34:29.418404+00:00] review:start experiment=2
+[2026-03-28T22:34:41.685419+00:00] review:done experiment=2 keep=True headline=vocab 1152 beats baseline by 1.5% on composite score
+[2026-03-28T22:34:41.687084+00:00] frontier:update best=experiment_0002 score=0.416688
+[2026-03-28T22:34:48.359111+00:00] experiment:3:start type=sentencepiece_train params={'vocab_size': 1280, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:35:01.514397+00:00] experiment:3:done tokens_per_byte=0.398023 dead_vocab_frac=0.0031 artifact_frac=0.0114 artifact_delta=36438 score=0.409472
+[2026-03-28T22:35:01.514471+00:00] review:start experiment=3
+[2026-03-28T22:35:12.903027+00:00] review:done experiment=3 keep=True headline=vocab 1280 beats frontier by 1.7%, new best composite score
+[2026-03-28T22:35:12.905988+00:00] frontier:update best=experiment_0003 score=0.409472
+[2026-03-28T22:35:22.618154+00:00] experiment:4:start type=sentencepiece_train params={'vocab_size': 1408, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:35:37.283387+00:00] experiment:4:done tokens_per_byte=0.388978 dead_vocab_frac=0.0036 artifact_frac=0.0125 artifact_delta=54657 score=0.401574
+[2026-03-28T22:35:37.283497+00:00] review:start experiment=4
+[2026-03-28T22:35:49.570897+00:00] review:done experiment=4 keep=True headline=vocab 1408 beats frontier by 1.9%, compression gains still outpacing embedding cost
+[2026-03-28T22:35:49.572150+00:00] frontier:update best=experiment_0004 score=0.401574
+[2026-03-28T22:36:05.388855+00:00] experiment:5:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:36:19.872608+00:00] experiment:5:done tokens_per_byte=0.381695 dead_vocab_frac=0.0033 artifact_frac=0.0137 artifact_delta=72876 score=0.395424
+[2026-03-28T22:36:19.872708+00:00] review:start experiment=5
+[2026-03-28T22:36:32.402274+00:00] review:done experiment=5 keep=True headline=vocab 1536 beats frontier by 1.5%, compression gains still outpacing embedding cost
+[2026-03-28T22:36:32.403297+00:00] frontier:update best=experiment_0005 score=0.395424
+[2026-03-28T22:36:44.475813+00:00] experiment:6:start type=sentencepiece_train params={'vocab_size': 1792, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:36:58.677116+00:00] experiment:6:done tokens_per_byte=0.369291 dead_vocab_frac=0.0028 artifact_frac=0.0159 artifact_delta=109314 score=0.385288
+[2026-03-28T22:36:58.677215+00:00] review:start experiment=6
+[2026-03-28T22:37:10.275634+00:00] review:done experiment=6 keep=True headline=vocab 1792 beats frontier by 2.6%, compression gains still outpacing embedding cost
+[2026-03-28T22:37:10.276931+00:00] frontier:update best=experiment_0006 score=0.385288
+[2026-03-28T22:37:20.054160+00:00] experiment:7:start type=sentencepiece_train params={'vocab_size': 2304, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:37:34.777770+00:00] experiment:7:done tokens_per_byte=0.351624 dead_vocab_frac=0.0030 artifact_frac=0.0205 artifact_delta=182190 score=0.372181
+[2026-03-28T22:37:34.777882+00:00] review:start experiment=7
+[2026-03-28T22:37:45.988702+00:00] review:done experiment=7 keep=True headline=vocab 2304 beats frontier by 3.4%, compression still outpacing embedding cost
+[2026-03-28T22:37:45.989533+00:00] frontier:update best=experiment_0007 score=0.372181
+[2026-03-28T22:37:56.286837+00:00] experiment:8:start type=sentencepiece_train params={'vocab_size': 3072, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:38:10.836602+00:00] experiment:8:done tokens_per_byte=0.333248 dead_vocab_frac=0.0023 artifact_frac=0.0273 artifact_delta=291504 score=0.360622
+[2026-03-28T22:38:10.836730+00:00] review:start experiment=8
+[2026-03-28T22:38:23.241715+00:00] review:done experiment=8 keep=True headline=vocab 3072 beats frontier by 3.1%, compression gains still outpacing embedding cost
+[2026-03-28T22:38:23.242694+00:00] frontier:update best=experiment_0008 score=0.360622
+[2026-03-28T22:38:32.273989+00:00] experiment:9:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:38:46.841091+00:00] experiment:9:done tokens_per_byte=0.316014 dead_vocab_frac=0.0022 artifact_frac=0.0364 artifact_delta=437256 score=0.352496
+[2026-03-28T22:38:46.841750+00:00] review:start experiment=9
+[2026-03-28T22:39:00.759972+00:00] review:done experiment=9 keep=True headline=vocab 4096 beats frontier by 2.3%, but marginal returns are clearly decelerating
+[2026-03-28T22:39:00.761770+00:00] frontier:update best=experiment_0009 score=0.352496
+[2026-03-28T22:39:10.169566+00:00] experiment:10:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:39:25.132587+00:00] experiment:10:done tokens_per_byte=0.294051 dead_vocab_frac=0.0024 artifact_frac=0.0547 artifact_delta=728760 score=0.348757
+[2026-03-28T22:39:25.132686+00:00] review:start experiment=10
+[2026-03-28T22:39:37.668358+00:00] review:done experiment=10 keep=True headline=vocab 6144 beats frontier by 1.1%, compression gains still positive but decelerating sharply
+[2026-03-28T22:39:37.669828+00:00] frontier:update best=experiment_0010 score=0.348757
+[2026-03-28T22:39:47.018277+00:00] experiment:11:start type=sentencepiece_train params={'vocab_size': 8192, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:40:02.224282+00:00] experiment:11:done tokens_per_byte=0.280085 dead_vocab_frac=0.0045 artifact_frac=0.0729 artifact_delta=1020264 score=0.353052
+[2026-03-28T22:40:02.224366+00:00] review:start experiment=11
+[2026-03-28T22:40:17.554737+00:00] review:done experiment=11 keep=False headline=vocab 8192 regresses score to 0.3531 vs frontier 0.3488 — inflection point confirmed, artifact cost dominates
+[2026-03-28T22:40:26.682057+00:00] experiment:12:start type=sentencepiece_train params={'vocab_size': 7168, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T22:40:41.812848+00:00] experiment:12:done tokens_per_byte=0.286659 dead_vocab_frac=0.0036 artifact_frac=0.0638 artifact_delta=874512 score=0.350498
+[2026-03-28T22:40:41.812942+00:00] review:start experiment=12
+[2026-03-28T23:38:16.588775+00:00] run:start
+[2026-03-28T23:38:16.590186+00:00] run:config hash=d139abf41cfb split=train
+[2026-03-28T23:38:32.740649+00:00] experiment:12:start type=sentencepiece_train params={'vocab_size': 7168, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:38:49.528853+00:00] experiment:12:done tokens_per_byte=0.286659 dead_vocab_frac=0.0036 artifact_frac=0.0638 artifact_delta=874512 score=0.350498
+[2026-03-28T23:38:49.528956+00:00] review:start experiment=12
+[2026-03-28T23:39:01.809553+00:00] review:done experiment=12 keep=False headline=vocab 7168 confirms inflection: score 0.3505 is worse than 6144's 0.3488
+[2026-03-28T23:39:15.354159+00:00] experiment:13:start type=sentencepiece_train params={'vocab_size': 5120, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:39:31.008949+00:00] experiment:13:done tokens_per_byte=0.303635 dead_vocab_frac=0.0023 artifact_frac=0.0455 artifact_delta=583008 score=0.349229
+[2026-03-28T23:39:31.009042+00:00] review:start experiment=13
+[2026-03-28T23:39:42.937211+00:00] review:done experiment=13 keep=False headline=vocab 5120 scores 0.3492, worse than frontier 0.3488 — 6144 remains best
+[2026-03-28T23:39:58.126603+00:00] experiment:14:start type=sentencepiece_train params={'vocab_size': 5632, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:40:13.586304+00:00] experiment:14:done tokens_per_byte=0.298558 dead_vocab_frac=0.0025 artifact_frac=0.0501 artifact_delta=655884 score=0.348710
+[2026-03-28T23:40:13.586375+00:00] review:start experiment=14
+[2026-03-28T23:40:26.567366+00:00] review:done experiment=14 keep=False headline=vocab 5632 scores 0.34871, marginally worse than frontier 0.34876 — no improvement
+[2026-03-28T23:40:42.145809+00:00] experiment:15:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 500000, 'max_chunks': 0}
+[2026-03-28T23:40:57.577192+00:00] experiment:15:done tokens_per_byte=0.294051 dead_vocab_frac=0.0024 artifact_frac=0.0547 artifact_delta=728760 score=0.348757
+[2026-03-28T23:40:57.577278+00:00] review:start experiment=15
+[2026-03-28T23:41:09.164177+00:00] review:done experiment=15 keep=False headline=Larger training sample at vocab 6144 produces identical tokenizer — no improvement
+[2026-03-28T23:41:25.755274+00:00] experiment:16:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:41:32.193313+00:00] experiment:16:done tokens_per_byte=0.301433 dead_vocab_frac=0.0007 artifact_frac=0.0547 artifact_delta=728760 score=0.356103
+[2026-03-28T23:41:32.193387+00:00] review:start experiment=16
+[2026-03-28T23:41:44.818356+00:00] review:done experiment=16 keep=False headline=unigram at 6144 loses to BPE by 2.1% — BPE remains superior segmentation
+[2026-03-28T23:41:59.790588+00:00] experiment:17:start type=sentencepiece_train params={'vocab_size': 6656, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:42:15.552555+00:00] experiment:17:done tokens_per_byte=0.290232 dead_vocab_frac=0.0033 artifact_frac=0.0592 artifact_delta=801636 score=0.349510
+[2026-03-28T23:42:15.552631+00:00] review:start experiment=17
+[2026-03-28T23:42:27.586797+00:00] review:done experiment=17 keep=False headline=vocab 6656 scores 0.3495 vs frontier 0.3488 — regression, not improvement
+[2026-03-28T23:42:43.243724+00:00] experiment:18:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.9999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:42:58.938704+00:00] experiment:18:done tokens_per_byte=0.296163 dead_vocab_frac=0.0024 artifact_frac=0.0547 artifact_delta=728760 score=0.350869
+[2026-03-28T23:42:58.938787+00:00] review:start experiment=18
+[2026-03-28T23:43:11.099278+00:00] review:done experiment=18 keep=False headline=character_coverage=0.9999 regresses score by 0.6% vs frontier
+[2026-03-28T23:43:26.989873+00:00] experiment:19:start type=sentencepiece_train params={'vocab_size': 5888, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:43:43.127709+00:00] experiment:19:done tokens_per_byte=0.296545 dead_vocab_frac=0.0025 artifact_frac=0.0524 artifact_delta=692322 score=0.348976
+[2026-03-28T23:43:43.127811+00:00] review:start experiment=19
+[2026-03-28T23:43:54.129122+00:00] review:done experiment=19 keep=False headline=vocab 5888 scores 0.3490 vs frontier 0.3488 — no improvement
+[2026-03-28T23:44:09.867127+00:00] experiment:20:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:44:25.289151+00:00] experiment:20:done tokens_per_byte=0.293735 dead_vocab_frac=0.0024 artifact_frac=0.0547 artifact_delta=728760 score=0.348441
+[2026-03-28T23:44:25.289235+00:00] review:start experiment=20
+[2026-03-28T23:44:36.598605+00:00] review:done experiment=20 keep=True headline=character_coverage=0.999 edges out frontier by 0.03% at same vocab_size=6144
+[2026-03-28T23:44:36.599964+00:00] frontier:update best=experiment_0020 score=0.348441
+[2026-03-28T23:44:48.043144+00:00] experiment:21:start type=sentencepiece_train params={'vocab_size': 6144, 'model_type': 'bpe', 'character_coverage': 0.995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:45:03.403015+00:00] experiment:21:done tokens_per_byte=0.293822 dead_vocab_frac=0.0021 artifact_frac=0.0547 artifact_delta=728760 score=0.348521
+[2026-03-28T23:45:03.403142+00:00] review:start experiment=21
+[2026-03-28T23:45:14.779170+00:00] review:done experiment=21 keep=False headline=character_coverage=0.995 is worse than 0.999 by 0.008 score points
+[2026-03-28T23:45:40.970600+00:00] experiment:22:start type=sentencepiece_train params={'vocab_size': 6400, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:45:56.586845+00:00] experiment:22:done tokens_per_byte=0.291321 dead_vocab_frac=0.0031 artifact_frac=0.0569 artifact_delta=765198 score=0.348318
+[2026-03-28T23:45:56.586928+00:00] review:start experiment=22
+[2026-03-28T23:46:10.456634+00:00] review:done experiment=22 keep=True headline=vocab_size=6400 edges out 6144 frontier by 0.0001 (0.03%) with minimal extra artifact cost
+[2026-03-28T23:46:10.457774+00:00] frontier:update best=experiment_0022 score=0.348318
+[2026-03-28T23:46:24.213022+00:00] experiment:23:start type=sentencepiece_train params={'vocab_size': 6656, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:46:39.956879+00:00] experiment:23:done tokens_per_byte=0.289768 dead_vocab_frac=0.0030 artifact_frac=0.0592 artifact_delta=801636 score=0.349040
+[2026-03-28T23:46:39.957020+00:00] review:start experiment=23
+[2026-03-28T23:46:58.015598+00:00] review:done experiment=23 keep=False headline=vocab_size=6656 scores 0.3490, worse than 6400 frontier (0.3483)
+[2026-03-28T23:47:20.099950+00:00] experiment:24:start type=sentencepiece_train params={'vocab_size': 6400, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 500000, 'max_chunks': 0}
+[2026-03-28T23:47:35.698047+00:00] experiment:24:done tokens_per_byte=0.291321 dead_vocab_frac=0.0031 artifact_frac=0.0569 artifact_delta=765198 score=0.348318
+[2026-03-28T23:47:35.698132+00:00] review:start experiment=24
+[2026-03-28T23:47:47.439364+00:00] review:done experiment=24 keep=False headline=Larger training corpus produces identical tokenizer — no improvement
+[2026-03-28T23:48:07.274789+00:00] experiment:25:start type=sentencepiece_train params={'vocab_size': 7168, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:48:22.899897+00:00] experiment:25:done tokens_per_byte=0.286249 dead_vocab_frac=0.0029 artifact_frac=0.0638 artifact_delta=874512 score=0.350074
+[2026-03-28T23:48:22.899974+00:00] review:start experiment=25
+[2026-03-28T23:48:36.030021+00:00] review:done experiment=25 keep=False headline=vocab_size=7168 scores 0.3501 vs frontier 0.3483 — artifact cost overtakes compression gain
+[2026-03-28T23:48:49.148223+00:00] experiment:26:start type=sentencepiece_train params={'vocab_size': 6272, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:49:04.618961+00:00] experiment:26:done tokens_per_byte=0.292457 dead_vocab_frac=0.0026 artifact_frac=0.0558 artifact_delta=746979 score=0.348303
+[2026-03-28T23:49:04.619040+00:00] review:start experiment=26
+[2026-03-28T23:49:16.916334+00:00] review:done experiment=26 keep=False headline=vocab_size=6272 scores 0.34830, slightly worse than 6400 frontier (0.34832)
+[2026-03-28T23:49:40.409696+00:00] experiment:27:start type=sentencepiece_train params={'vocab_size': 6528, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:49:55.983000+00:00] experiment:27:done tokens_per_byte=0.290731 dead_vocab_frac=0.0031 artifact_frac=0.0581 artifact_delta=783417 score=0.348865
+[2026-03-28T23:49:55.983096+00:00] review:start experiment=27
+[2026-03-28T23:50:07.784407+00:00] review:done experiment=27 keep=False headline=vocab_size=6528 scores 0.3489 vs frontier 0.3483 — regression, not improvement
+[2026-03-28T23:50:26.707687+00:00] experiment:28:start type=sentencepiece_train params={'vocab_size': 6400, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:50:42.262956+00:00] experiment:28:done tokens_per_byte=0.291739 dead_vocab_frac=0.0028 artifact_frac=0.0569 artifact_delta=765198 score=0.348730
+[2026-03-28T23:50:42.263050+00:00] review:start experiment=28
+[2026-03-28T23:50:52.540515+00:00] review:done experiment=28 keep=False headline=character_coverage=0.9995 is worse than cc=0.999 at same vocab_size=6400
+[2026-03-28T23:51:13.381937+00:00] experiment:29:start type=sentencepiece_train params={'vocab_size': 6336, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:51:28.649045+00:00] experiment:29:done tokens_per_byte=0.291874 dead_vocab_frac=0.0028 artifact_frac=0.0564 artifact_delta=756089 score=0.348296
+[2026-03-28T23:51:28.649130+00:00] review:start experiment=29
+[2026-03-28T23:51:39.766293+00:00] review:done experiment=29 keep=False headline=vocab_size=6336 scores 0.34830, does not beat frontier 0.34832
+[2026-03-28T23:51:58.912940+00:00] experiment:30:start type=sentencepiece_train params={'vocab_size': 6464, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:52:14.031134+00:00] experiment:30:done tokens_per_byte=0.291067 dead_vocab_frac=0.0031 artifact_frac=0.0575 artifact_delta=774308 score=0.348633
+[2026-03-28T23:52:14.031371+00:00] review:start experiment=30
+[2026-03-28T23:52:25.033393+00:00] review:done experiment=30 keep=False headline=vocab_size=6464 scores 0.34863 vs frontier 0.34832 — worse by 0.00031
+[2026-03-28T23:52:45.593352+00:00] experiment:31:start type=sentencepiece_train params={'vocab_size': 6400, 'model_type': 'unigram', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:52:52.022243+00:00] experiment:31:done tokens_per_byte=0.299359 dead_vocab_frac=0.0005 artifact_frac=0.0569 artifact_delta=765198 score=0.356302
+[2026-03-28T23:52:52.022398+00:00] review:start experiment=31
+[2026-03-28T23:53:03.312423+00:00] review:done experiment=31 keep=False headline=Unigram loses to BPE at vocab_size=6400 by 2.3%
+[2026-03-28T23:53:19.919704+00:00] experiment:32:start type=sentencepiece_train params={'vocab_size': 6400, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 100000, 'max_chunks': 0}
+[2026-03-28T23:53:35.595740+00:00] experiment:32:done tokens_per_byte=0.291321 dead_vocab_frac=0.0031 artifact_frac=0.0569 artifact_delta=765198 score=0.348318
+[2026-03-28T23:53:35.595836+00:00] review:start experiment=32
+[2026-03-28T23:53:45.616756+00:00] review:done experiment=32 keep=False headline=Smaller input_sentence_size=100000 produces identical results to frontier
+[2026-03-28T23:54:15.569205+00:00] experiment:33:start type=sentencepiece_train params={'vocab_size': 6400, 'model_type': 'bpe', 'character_coverage': 0.995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-28T23:54:31.187635+00:00] experiment:33:done tokens_per_byte=0.292068 dead_vocab_frac=0.0027 artifact_frac=0.0569 artifact_delta=765198 score=0.349055
+[2026-03-28T23:54:31.187729+00:00] review:start experiment=33
+[2026-03-28T23:54:42.635313+00:00] review:done experiment=33 keep=False headline=Lower character_coverage=0.995 hurts compression vs 0.999 at same vocab_size=6400
+[2026-03-28T23:55:03.655417+00:00] experiment:34:start type=sentencepiece_train params={'vocab_size': 6400, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-28T23:55:18.574326+00:00] experiment:34:done tokens_per_byte=0.291321 dead_vocab_frac=0.0031 artifact_frac=0.0569 artifact_delta=765198 score=0.348318
+[2026-03-28T23:55:18.574433+00:00] review:start experiment=34
+[2026-03-28T23:55:29.527196+00:00] review:done experiment=34 keep=False headline=1M input sentences produces identical tokenizer to 500K baseline — no improvement

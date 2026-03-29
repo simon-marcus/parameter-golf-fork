@@ -16,6 +16,37 @@ def iter_texts(path: Path, max_chunks: int | None = None):
             yield json.loads(line)["text"]
 
 
+def evaluate_tokenmonster(vocab_ref: str, sample_path: Path, *, max_chunks: int | None) -> dict[str, object]:
+    try:
+        import tokenmonster
+    except ImportError as exc:
+        raise RuntimeError("tokenmonster is required for tokenmonster evaluation") from exc
+    vocab = tokenmonster.load(vocab_ref)
+    token_counter: Counter[int] = Counter()
+    total_bytes = 0
+    total_tokens = 0
+    total_chunks = 0
+    for text in iter_texts(sample_path, max_chunks=max_chunks):
+        ids = np.asarray(vocab.tokenize(text), dtype=np.int64).reshape(-1)
+        total_chunks += 1
+        total_tokens += int(ids.size)
+        total_bytes += len(text.encode("utf-8"))
+        token_counter.update(int(x) for x in ids.tolist())
+    unique_used = len(token_counter)
+    return {
+        "family": "tokenmonster",
+        "model_path": vocab_ref,
+        "vocab_size": int(vocab.vocab_size),
+        "chunks": total_chunks,
+        "total_tokens": total_tokens,
+        "total_bytes": total_bytes,
+        "tokens_per_byte": total_tokens / max(total_bytes, 1),
+        "bytes_per_token": total_bytes / max(total_tokens, 1),
+        "unique_tokens_used": unique_used,
+        "dead_vocab_frac": max(int(vocab.vocab_size) - unique_used, 0) / max(int(vocab.vocab_size), 1),
+    }
+
+
 def evaluate_sentencepiece(model_path: Path, sample_path: Path, *, max_chunks: int | None) -> dict[str, object]:
     try:
         import sentencepiece as spm
@@ -50,8 +81,8 @@ def evaluate_sentencepiece(model_path: Path, sample_path: Path, *, max_chunks: i
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description="Evaluate tokenizer quality on a decoded text sample")
-    parser.add_argument("--family", choices=("sentencepiece",), default="sentencepiece")
-    parser.add_argument("--model-path", required=True)
+    parser.add_argument("--family", choices=("sentencepiece", "tokenmonster"), default="sentencepiece")
+    parser.add_argument("--model-path", required=True, help="SentencePiece model path or TokenMonster vocab ref")
     parser.add_argument("--sample-path", required=True)
     parser.add_argument("--max-chunks", type=int, default=0)
     parser.add_argument("--output-json", default="")
@@ -63,9 +94,12 @@ def main() -> None:
     sample_path = Path(args.sample_path).expanduser().resolve()
     model_path = Path(args.model_path).expanduser().resolve()
     max_chunks = None if args.max_chunks <= 0 else int(args.max_chunks)
-    if args.family != "sentencepiece":
+    if args.family == "sentencepiece":
+        result = evaluate_sentencepiece(model_path, sample_path, max_chunks=max_chunks)
+    elif args.family == "tokenmonster":
+        result = evaluate_tokenmonster(args.model_path, sample_path, max_chunks=max_chunks)
+    else:
         raise ValueError(f"Unsupported tokenizer family: {args.family}")
-    result = evaluate_sentencepiece(model_path, sample_path, max_chunks=max_chunks)
     text = json.dumps(result, indent=2)
     print(text)
     if args.output_json:

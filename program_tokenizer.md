@@ -3,12 +3,14 @@
 ## Objective
 Discover tokenizer candidates that are better than the current `sp1024` baseline for this challenge.
 
-The working proxy objective is to improve tokenizer efficiency on FineWeb text while keeping vocabulary budget sane:
+The working proxy objective is to improve tokenizer efficiency on FineWeb text while respecting vocabulary budget:
 - lower `tokens_per_byte`
 - lower `dead_vocab_frac`
+- lower estimated vocab-linked artifact cost
 - reasonable `vocab_size`
 
 This is a screening lane, not the final leaderboard metric. A tokenizer only graduates if it later helps short-run and full-run BPB.
+Prefer tokenizers that win enough on compression to justify the embedding/head budget they consume.
 
 ## Baseline
 - Control tokenizer: current SentencePiece `sp1024`

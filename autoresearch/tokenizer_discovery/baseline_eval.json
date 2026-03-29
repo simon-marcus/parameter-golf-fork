@@ -1,0 +1,17 @@
+{
+  "family": "sentencepiece",
+  "model_path": "/Users/simon/Code/parameter-golf-local/data/tokenizers/fineweb_1024_bpe.model",
+  "vocab_size": 1024,
+  "chunks": 9770,
+  "total_tokens": 19985187,
+  "total_bytes": 48592425,
+  "tokens_per_byte": 0.4112819436362766,
+  "bytes_per_token": 2.4314220827656,
+  "unique_tokens_used": 879,
+  "dead_vocab_frac": 0.1416015625,
+  "estimated_vocab_linked_params": 524288,
+  "estimated_vocab_artifact_bytes": 145752.064,
+  "estimated_artifact_budget_frac": 0.009109504000000001,
+  "estimated_vocab_linked_params_delta": 0,
+  "estimated_vocab_artifact_bytes_delta": 0.0
+}
