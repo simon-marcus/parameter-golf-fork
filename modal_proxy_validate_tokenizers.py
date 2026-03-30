@@ -26,12 +26,14 @@ LOCAL_DATASET_DIR = LOCAL_DATA_ROOT / "datasets" / "fineweb10B_sp1024"
 LOCAL_TOKENIZERS_DIR = LOCAL_DATA_ROOT / "tokenizers"
 LOCAL_TOKENIZER_EXPERIMENTS_DIR = ROOT / "autoresearch" / "tokenizer_discovery" / "experiments"
 LOCAL_TOKENIZER_PROXY_EXPERIMENTS_DIR = ROOT / "autoresearch" / "tokenizer_proxy_discovery" / "experiments"
+LOCAL_TOKENMONSTER_EXPERIMENTS_DIR = ROOT / "autoresearch" / "tokenmonster_discovery" / "experiments"
 
 REMOTE_ROOT = "/root/parameter-golf"
 REMOTE_DATASET_DIR = f"{REMOTE_ROOT}/mounted_data/datasets/fineweb10B_sp1024"
 REMOTE_TOKENIZERS_DIR = f"{REMOTE_ROOT}/mounted_data/tokenizers"
 REMOTE_TOKENIZER_EXPERIMENTS_DIR = f"{REMOTE_ROOT}/tokenizer_candidates"
 REMOTE_TOKENIZER_PROXY_EXPERIMENTS_DIR = f"{REMOTE_ROOT}/tokenizer_proxy_candidates"
+REMOTE_TOKENMONSTER_EXPERIMENTS_DIR = f"{REMOTE_ROOT}/tokenmonster_candidates"
 
 
 def load_env_local() -> dict[str, str]:
@@ -65,6 +67,7 @@ image = (
         remote_path=REMOTE_TOKENIZER_PROXY_EXPERIMENTS_DIR,
         copy=True,
     )
+    .add_local_dir(LOCAL_TOKENMONSTER_EXPERIMENTS_DIR, remote_path=REMOTE_TOKENMONSTER_EXPERIMENTS_DIR, copy=True)
     .run_commands(f"mkdir -p {REMOTE_ROOT}/modal_logs {REMOTE_ROOT}/proxy_validation")
 )
 
@@ -76,6 +79,7 @@ def run_proxy_validation(
     *,
     candidate_models: list[str],
     tokenmonster_vocabs: list[str],
+    tokenmonster_models: list[str],
     top_k: int,
     train_sample_tokens: int,
     val_sample_tokens: int,
@@ -119,6 +123,8 @@ def run_proxy_validation(
         cmd.extend(["--candidate-model", candidate_model])
     for vocab_ref in tokenmonster_vocabs:
         cmd.extend(["--tokenmonster-vocab", vocab_ref])
+    for model_path in tokenmonster_models:
+        cmd.extend(["--tokenmonster-model", model_path])
     env = os.environ.copy()
     env["PROXY_TRAIN_PYTHON"] = "python3"
 
@@ -146,6 +152,7 @@ def main(
     top_k: int = 0,
     candidate_models: str = "",
     tokenmonster_vocabs: str = "",
+    tokenmonster_models: str = "",
     train_sample_tokens: int = 2_000_000,
     val_sample_tokens: int = 500_000,
     train_max_chunks: int = 400,
@@ -156,9 +163,11 @@ def main(
 ):
     candidate_model_list = [item for item in candidate_models.split(",") if item]
     tokenmonster_vocab_list = [item for item in tokenmonster_vocabs.split(",") if item]
+    tokenmonster_model_list = [item for item in tokenmonster_models.split(",") if item]
     result = run_proxy_validation.remote(
         candidate_models=candidate_model_list,
         tokenmonster_vocabs=tokenmonster_vocab_list,
+        tokenmonster_models=tokenmonster_model_list,
         top_k=top_k,
         train_sample_tokens=train_sample_tokens,
         val_sample_tokens=val_sample_tokens,
@@ -186,6 +195,7 @@ if __name__ == "__main__":
     parser.add_argument("--top-k", type=int, default=0)
     parser.add_argument("--candidate-model", action="append", default=[])
     parser.add_argument("--tokenmonster-vocab", action="append", default=[])
+    parser.add_argument("--tokenmonster-model", action="append", default=[])
     parser.add_argument("--train-sample-tokens", type=int, default=2_000_000)
     parser.add_argument("--val-sample-tokens", type=int, default=500_000)
     parser.add_argument("--train-max-chunks", type=int, default=400)
@@ -199,6 +209,7 @@ if __name__ == "__main__":
         top_k=args.top_k,
         candidate_models=",".join(args.candidate_model),
         tokenmonster_vocabs=",".join(args.tokenmonster_vocab),
+        tokenmonster_models=",".join(args.tokenmonster_model),
         train_sample_tokens=args.train_sample_tokens,
         val_sample_tokens=args.val_sample_tokens,
         train_max_chunks=args.train_max_chunks,

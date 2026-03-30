@@ -17,6 +17,9 @@ autoresearch/history.jsonl
 autoresearch/*.best.py
 autoresearch/experiments/*/train.log
 **/text_sample.jsonl
+**/pass1_arrays.npz
+**/final_model.pt
+**/final_model.int6.ptz
 autoresearch.out
 final_model*
 *.ptz

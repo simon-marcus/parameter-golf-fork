@@ -209,6 +209,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--top-k", type=int, default=3)
     parser.add_argument("--candidate-model", action="append", default=[])
     parser.add_argument("--tokenmonster-vocab", action="append", default=[])
+    parser.add_argument("--tokenmonster-model", action="append", default=[])
     parser.add_argument("--train-sample-tokens", type=int, default=2_000_000)
     parser.add_argument("--val-sample-tokens", type=int, default=500_000)
     parser.add_argument("--train-max-chunks", type=int, default=400)
@@ -268,6 +269,19 @@ def main() -> None:
                 "name": sanitize_name(vocab_ref),
                 "family": "tokenmonster",
                 "tokenizer_ref": vocab_ref,
+            }
+        )
+    for model_path in [Path(p).expanduser().resolve() for p in args.tokenmonster_model]:
+        key = ("tokenmonster", str(model_path))
+        if key in seen:
+            continue
+        seen.add(key)
+        label = f"{model_path.parent.name}_{model_path.stem}"
+        all_candidates.append(
+            {
+                "name": label,
+                "family": "tokenmonster",
+                "tokenizer_ref": str(model_path),
             }
         )
 
