@@ -1,0 +1,87 @@
+{
+  "baseline_vocab": 1024,
+  "model_dim": 512,
+  "tie_embeddings": true,
+  "rows": [
+    {
+      "vocab_size": 256,
+      "embedding_params": 131072,
+      "head_params": 0,
+      "total_vocab_linked_params": 131072,
+      "delta_vs_baseline": -393216,
+      "ratio_vs_baseline": 0.25
+    },
+    {
+      "vocab_size": 384,
+      "embedding_params": 196608,
+      "head_params": 0,
+      "total_vocab_linked_params": 196608,
+      "delta_vs_baseline": -327680,
+      "ratio_vs_baseline": 0.375
+    },
+    {
+      "vocab_size": 512,
+      "embedding_params": 262144,
+      "head_params": 0,
+      "total_vocab_linked_params": 262144,
+      "delta_vs_baseline": -262144,
+      "ratio_vs_baseline": 0.5
+    },
+    {
+      "vocab_size": 768,
+      "embedding_params": 393216,
+      "head_params": 0,
+      "total_vocab_linked_params": 393216,
+      "delta_vs_baseline": -131072,
+      "ratio_vs_baseline": 0.75
+    },
+    {
+      "vocab_size": 1024,
+      "embedding_params": 524288,
+      "head_params": 0,
+      "total_vocab_linked_params": 524288,
+      "delta_vs_baseline": 0,
+      "ratio_vs_baseline": 1.0
+    },
+    {
+      "vocab_size": 1536,
+      "embedding_params": 786432,
+      "head_params": 0,
+      "total_vocab_linked_params": 786432,
+      "delta_vs_baseline": 262144,
+      "ratio_vs_baseline": 1.5
+    },
+    {
+      "vocab_size": 2048,
+      "embedding_params": 1048576,
+      "head_params": 0,
+      "total_vocab_linked_params": 1048576,
+      "delta_vs_baseline": 524288,
+      "ratio_vs_baseline": 2.0
+    },
+    {
+      "vocab_size": 4096,
+      "embedding_params": 2097152,
+      "head_params": 0,
+      "total_vocab_linked_params": 2097152,
+      "delta_vs_baseline": 1572864,
+      "ratio_vs_baseline": 4.0
+    },
+    {
+      "vocab_size": 8192,
+      "embedding_params": 4194304,
+      "head_params": 0,
+      "total_vocab_linked_params": 4194304,
+      "delta_vs_baseline": 3670016,
+      "ratio_vs_baseline": 8.0
+    },
+    {
+      "vocab_size": 28416,
+      "embedding_params": 14548992,
+      "head_params": 0,
+      "total_vocab_linked_params": 14548992,
+      "delta_vs_baseline": 14024704,
+      "ratio_vs_baseline": 27.75
+    }
+  ]
+}

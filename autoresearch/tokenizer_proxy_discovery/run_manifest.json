@@ -1,0 +1,27 @@
+{
+  "dataset_dir": "/Users/simon/Code/parameter-golf-local/data/datasets/fineweb10B_sp1024",
+  "tokenizer_path": "/Users/simon/Code/parameter-golf-local/data/tokenizers/fineweb_1024_bpe.model",
+  "split": "train",
+  "text_sample_tokens": 2000000,
+  "text_sample_max_shards": 10,
+  "text_sample_tokens_per_shard": 2000000,
+  "text_sample_offset_mode": "staggered",
+  "text_sample_chunk_tokens": 2048,
+  "eval_max_chunks": 0,
+  "proxy_summary_path": "/Users/simon/Code/parameter-golf/modal_logs/proxy_validate_tokenizers_mix_20260328/summary.json",
+  "proxy_aggregate_path": "/Users/simon/Code/parameter-golf/modal_logs/proxy_confirm_long_aggregate.json",
+  "tokenmonster_vocabs": [
+    "english-1024-clean-v1",
+    "english-1024-balanced-v1",
+    "english-1024-consistent-v1",
+    "english-2048-clean-v1"
+  ],
+  "score_model_dim": 512,
+  "score_tie_embeddings": true,
+  "score_dead_vocab_weight": 0.02,
+  "score_artifact_budget_bytes": 16000000,
+  "score_vocab_artifact_bytes_per_param": 0.278,
+  "score_artifact_weight": 1.0,
+  "program_file": "/Users/simon/Code/parameter-golf/program_tokenizer_proxy.md",
+  "config_hash": "c7ce2dfe5846"
+}

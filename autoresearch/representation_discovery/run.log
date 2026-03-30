@@ -1,0 +1,16 @@
+[2026-03-28T02:37:13.949913+00:00] run:start
+[2026-03-28T02:37:13.950638+00:00] profile:start variant=sp1024 train_tokens=1000000 val_tokens=1000000 repetition_tokens=200000
+[2026-03-28T02:37:25.044340+00:00] profile:done val_bytes_per_token=2.4070 train_bytes_per_token=2.4364
+[2026-03-28T02:37:25.044564+00:00] tradeoff:start baseline_vocab=1024 model_dim=512 tied=1 vocabs=256,384,512,768,1024,1536,2048,4096,8192,28416
+[2026-03-28T02:37:25.093340+00:00] tradeoff:done rows=10
+[2026-03-28T02:37:25.094077+00:00] claude:start model=opus effort=medium
+[2026-03-28T02:38:14.186840+00:00] claude:done chars=6181
+[2026-03-28T02:38:14.189067+00:00] run:done report=/Users/simon/Code/parameter-golf/autoresearch/representation_discovery/latest_report.md
+[2026-03-28T22:26:32.504923+00:00] run:start
+[2026-03-28T22:26:32.506172+00:00] profile:start variant=sp1024 train_tokens=1000000 val_tokens=1000000 repetition_tokens=200000
+[2026-03-28T22:26:43.269346+00:00] profile:done val_bytes_per_token=2.4070 train_bytes_per_token=2.4364
+[2026-03-28T22:26:43.269596+00:00] tradeoff:start baseline_vocab=1024 model_dim=512 tied=1 vocabs=256,384,512,768,1024,1536,2048,4096,8192,28416
+[2026-03-28T22:26:43.321750+00:00] tradeoff:done rows=10
+[2026-03-28T22:26:43.322747+00:00] claude:start model=opus effort=medium
+[2026-03-28T22:27:29.563071+00:00] claude:done chars=5367
+[2026-03-28T22:27:29.565081+00:00] run:done report=/Users/simon/Code/parameter-golf/autoresearch/representation_discovery/latest_report.md

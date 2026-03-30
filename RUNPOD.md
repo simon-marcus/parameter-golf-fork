@@ -2,18 +2,18 @@
 
 This file is the canonical RunPod runbook for this repo. `CLAUDE.md` carries the same RunPod rules in shorter form, but this file is the version to follow when operating pods.
 
-## Current Preferred Image And Template
+## Current Recommended Pod Path
 
-- Image: `ghcr.io/simon-marcus/parameter-golf-runpod:cuda128-torch210`
-- Template: `vtoarnccmw`
+Use the standard template-backed RunPod flow that is already wired into [`pod.sh`](/Users/simon/Code/parameter-golf/pod.sh).
 
-Why this image:
-- pinned CUDA/Torch stack
-- `zstandard` preinstalled
-- helper tools preinstalled
-- direct TCP SSH, `scp`, and `rsync` supported
-- `PUBLIC_KEY` injected on boot
-- persistent container startup via `sshd` + keepalive
+Why:
+- it has been materially faster to start in practice
+- it has been more reliable about reaching SSH-ready state
+- the custom image/template path is currently suspended as a default because we observed repeated cold-start stalls where the pod stayed `RUNNING` but never became SSH-ready
+
+Current rule:
+- do not treat `ghcr.io/simon-marcus/parameter-golf-runpod:cuda128-torch210` / `vtoarnccmw` as the preferred default until that startup regression is resolved
+- if you intentionally test that custom image path again, treat it as experimental
 
 ## Storage Model
 
@@ -56,7 +56,7 @@ Even when using the template, pass disk and volume flags explicitly.
 ```bash
 runpodctl pod create \
   --name "pg-smoke" \
-  --template-id "vtoarnccmw" \
+  --template-id "y5cejece4j" \
   --gpu-id "NVIDIA H100 80GB HBM3" \
   --gpu-count 1 \
   --cloud-type SECURE \
@@ -71,7 +71,7 @@ runpodctl pod create \
 ```bash
 runpodctl pod create \
   --name "pg-record" \
-  --template-id "vtoarnccmw" \
+  --template-id "y5cejece4j" \
   --gpu-id "NVIDIA H100 80GB HBM3" \
   --gpu-count 8 \
   --cloud-type SECURE \
@@ -165,13 +165,12 @@ ssh root@HOST -p PORT "cd /workspace/parameter-golf && DATA_ROOT_MODE=tmp bash .
 
 ## Rules
 
-- Prefer the pinned image/template over rebuilding expensive pods from scratch.
+- Prefer the standard template-backed pod flow over the suspended custom image path.
 - Never download data on an expensive pod by default.
 - Never trust `/tmp` as persistent storage.
 - Never launch before preflight passes.
 - Always pull logs and artifacts before stopping a pod.
-- Reused pods are expected; cold starts on this custom image can be slow.
-- If direct TCP SSH or `rsync` stop working for a new image revision, do not adopt it.
+- If a new image/template repeatedly stays `RUNNING` without becoming SSH-ready, do not adopt it as the default path.
 - Use `DATA_ROOT_MODE=tmp` for serious throughput or record-style runs.
 - Use `USE_COMPILE=0` for cheap smoke/debug runs; keep compile on for real runs unless debugging compile itself.
 
@@ -185,3 +184,4 @@ ssh root@HOST -p PORT "cd /workspace/parameter-golf && DATA_ROOT_MODE=tmp bash .
 - Pulling artifacts after stopping the pod
 - Image starts but exits immediately because the container command does not stay alive
 - Direct SSH/SCP/rsync broken because `sshd` is missing from the image
+- Custom-image cold pulls that never progress to SSH-ready despite the pod showing `RUNNING`

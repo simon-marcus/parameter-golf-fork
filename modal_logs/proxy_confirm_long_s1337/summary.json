@@ -1,0 +1,72 @@
+[
+  {
+    "name": "baseline_sp1024",
+    "family": "sentencepiece",
+    "tokenizer_path": "/root/parameter-golf/mounted_data/tokenizers/fineweb_1024_bpe.model",
+    "tokenizer_meta_path": "/root/parameter-golf/mounted_data/tokenizers/fineweb_1024_bpe.meta.npz",
+    "proxy_dataset": "/root/parameter-golf/proxy_validation/datasets/baseline_sp1024",
+    "vocab_size": 1024,
+    "train_python": "python3",
+    "model_params": 2101776,
+    "prequant_val_bpb": 4.0431,
+    "postquant_val_bpb": 4.05149717,
+    "artifact_bytes": 2467302,
+    "log_path": "/root/parameter-golf/proxy_validation/runs/baseline_sp1024/train.log"
+  },
+  {
+    "name": "english-1024-clean-v1",
+    "family": "tokenmonster",
+    "tokenizer_path": "english-1024-clean-v1",
+    "tokenizer_meta_path": "/root/parameter-golf/proxy_validation/tokenizers/english-1024-clean-v1.meta.npz",
+    "proxy_dataset": "/root/parameter-golf/proxy_validation/datasets/english-1024-clean-v1",
+    "vocab_size": 1024,
+    "train_python": "python3",
+    "model_params": 2101776,
+    "prequant_val_bpb": 3.8166,
+    "postquant_val_bpb": 3.82217007,
+    "artifact_bytes": 2462283,
+    "log_path": "/root/parameter-golf/proxy_validation/runs/english-1024-clean-v1/train.log"
+  },
+  {
+    "name": "english-1024-balanced-v1",
+    "family": "tokenmonster",
+    "tokenizer_path": "english-1024-balanced-v1",
+    "tokenizer_meta_path": "/root/parameter-golf/proxy_validation/tokenizers/english-1024-balanced-v1.meta.npz",
+    "proxy_dataset": "/root/parameter-golf/proxy_validation/datasets/english-1024-balanced-v1",
+    "vocab_size": 1024,
+    "train_python": "python3",
+    "model_params": 2101776,
+    "prequant_val_bpb": 3.8938,
+    "postquant_val_bpb": 3.89668559,
+    "artifact_bytes": 2469844,
+    "log_path": "/root/parameter-golf/proxy_validation/runs/english-1024-balanced-v1/train.log"
+  },
+  {
+    "name": "english-1024-consistent-v1",
+    "family": "tokenmonster",
+    "tokenizer_path": "english-1024-consistent-v1",
+    "tokenizer_meta_path": "/root/parameter-golf/proxy_validation/tokenizers/english-1024-consistent-v1.meta.npz",
+    "proxy_dataset": "/root/parameter-golf/proxy_validation/datasets/english-1024-consistent-v1",
+    "vocab_size": 1024,
+    "train_python": "python3",
+    "model_params": 2101776,
+    "prequant_val_bpb": 3.8963,
+    "postquant_val_bpb": 3.90029226,
+    "artifact_bytes": 2477495,
+    "log_path": "/root/parameter-golf/proxy_validation/runs/english-1024-consistent-v1/train.log"
+  },
+  {
+    "name": "english-2048-clean-v1",
+    "family": "tokenmonster",
+    "tokenizer_path": "english-2048-clean-v1",
+    "tokenizer_meta_path": "/root/parameter-golf/proxy_validation/tokenizers/english-2048-clean-v1.meta.npz",
+    "proxy_dataset": "/root/parameter-golf/proxy_validation/datasets/english-2048-clean-v1",
+    "vocab_size": 2048,
+    "train_python": "python3",
+    "model_params": 2363920,
+    "prequant_val_bpb": 4.1868,
+    "postquant_val_bpb": 4.1950914,
+    "artifact_bytes": 2715560,
+    "log_path": "/root/parameter-golf/proxy_validation/runs/english-2048-clean-v1/train.log"
+  }
+]

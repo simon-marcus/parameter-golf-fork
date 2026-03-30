@@ -1,0 +1,10 @@
+{
+  "name": "baseline_modal_tmp_smoke_8x",
+  "date": "2026-03-29T21:51:28Z",
+  "source": "/Users/simon/Code/parameter-golf/records/track_10min_16mb/2026-03-17_NaiveBaseline/train_gpt.py",
+  "exit_code": 0,
+  "elapsed_seconds": 381.7033097743988,
+  "step_avg_ms": 46.91,
+  "val_loss": 2.25838323,
+  "val_bpb": 1.33754176
+}

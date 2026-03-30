@@ -1,0 +1,952 @@
+{
+  "variant": "sp1024",
+  "dataset_dir": "/Users/simon/Code/parameter-golf-local/data/datasets/fineweb10B_sp1024",
+  "tokenizer_path": "/Users/simon/Code/parameter-golf-local/data/tokenizers/fineweb_1024_bpe.model",
+  "vocab_size": 1024,
+  "train": {
+    "split": "train",
+    "token_count": 1000000,
+    "byte_count": 2436360,
+    "avg_bytes_per_token": 2.43636,
+    "unique_tokens_observed": 848,
+    "class_stats": {
+      "alpha": {
+        "tokens": 887804.0,
+        "bytes": 2303554.0,
+        "token_frac": 0.887804,
+        "byte_frac": 0.9454899932686467,
+        "avg_bytes_per_token": 2.5946650386797088,
+        "unique_tokens": 718.0
+      },
+      "punct": {
+        "tokens": 65553.0,
+        "bytes": 85691.0,
+        "token_frac": 0.065553,
+        "byte_frac": 0.0351717315995994,
+        "avg_bytes_per_token": 1.307201806172105,
+        "unique_tokens": 32.0
+      },
+      "numeric": {
+        "tokens": 24939.0,
+        "bytes": 24939.0,
+        "token_frac": 0.024939,
+        "byte_frac": 0.010236171994286558,
+        "avg_bytes_per_token": 1.0,
+        "unique_tokens": 10.0
+      },
+      "whitespace": {
+        "tokens": 11493.0,
+        "bytes": 11493.0,
+        "token_frac": 0.011493,
+        "byte_frac": 0.00471728316012412,
+        "avg_bytes_per_token": 1.0,
+        "unique_tokens": 1.0
+      },
+      "alnum": {
+        "tokens": 5763.0,
+        "bytes": 7153.0,
+        "token_frac": 0.005763,
+        "byte_frac": 0.002935937217816743,
+        "avg_bytes_per_token": 1.241193822661808,
+        "unique_tokens": 2.0
+      },
+      "byte": {
+        "tokens": 2606.0,
+        "bytes": 2606.0,
+        "token_frac": 0.002606,
+        "byte_frac": 0.001069628462132033,
+        "avg_bytes_per_token": 1.0,
+        "unique_tokens": 83.0
+      },
+      "markupish": {
+        "tokens": 924.0,
+        "bytes": 924.0,
+        "token_frac": 0.000924,
+        "byte_frac": 0.0003792542973944737,
+        "avg_bytes_per_token": 1.0,
+        "unique_tokens": 1.0
+      },
+      "special": {
+        "tokens": 918.0,
+        "bytes": 0.0,
+        "token_frac": 0.000918,
+        "byte_frac": 0.0,
+        "avg_bytes_per_token": 0.0,
+        "unique_tokens": 1.0
+      }
+    },
+    "top_tokens": {
+      "top_by_count": [
+        {
+          "id": 960,
+          "piece": ".",
+          "clean_piece": ".",
+          "class": "punct",
+          "count": 21748
+        },
+        {
+          "id": 962,
+          "piece": ",",
+          "clean_piece": ",",
+          "class": "punct",
+          "count": 21421
+        },
+        {
+          "id": 267,
+          "piece": "\u2581the",
+          "clean_piece": "the",
+          "class": "alpha",
+          "count": 19348
+        },
+        {
+          "id": 946,
+          "piece": "s",
+          "clean_piece": "s",
+          "class": "alpha",
+          "count": 17847
+        },
+        {
+          "id": 287,
+          "piece": "\u2581to",
+          "clean_piece": "to",
+          "class": "alpha",
+          "count": 12086
+        },
+        {
+          "id": 939,
+          "piece": "\u2581",
+          "clean_piece": "",
+          "class": "whitespace",
+          "count": 11493
+        },
+        {
+          "id": 280,
+          "piece": "ing",
+          "clean_piece": "ing",
+          "class": "alpha",
+          "count": 11177
+        },
+        {
+          "id": 290,
+          "piece": "\u2581and",
+          "clean_piece": "and",
+          "class": "alpha",
+          "count": 11150
+        },
+        {
+          "id": 285,
+          "piece": "ed",
+          "clean_piece": "ed",
+          "class": "alpha",
+          "count": 10653
+        },
+        {
+          "id": 292,
+          "piece": "\u2581of",
+          "clean_piece": "of",
+          "class": "alpha",
+          "count": 10425
+        },
+        {
+          "id": 261,
+          "piece": "\u2581a",
+          "clean_piece": "a",
+          "class": "alpha",
+          "count": 10403
+        },
+        {
+          "id": 957,
+          "piece": "y",
+          "clean_piece": "y",
+          "class": "alpha",
+          "count": 8020
+        },
+        {
+          "id": 291,
+          "piece": "\u2581in",
+          "clean_piece": "in",
+          "class": "alpha",
+          "count": 7892
+        },
+        {
+          "id": 940,
+          "piece": "e",
+          "clean_piece": "e",
+          "class": "alpha",
+          "count": 7711
+        },
+        {
+          "id": 941,
+          "piece": "t",
+          "clean_piece": "t",
+          "class": "alpha",
+          "count": 7490
+        },
+        {
+          "id": 942,
+          "piece": "a",
+          "clean_piece": "a",
+          "class": "alpha",
+          "count": 7296
+        },
+        {
+          "id": 266,
+          "piece": "er",
+          "clean_piece": "er",
+          "class": "alpha",
+          "count": 7008
+        },
+        {
+          "id": 276,
+          "piece": "es",
+          "clean_piece": "es",
+          "class": "alpha",
+          "count": 6980
+        },
+        {
+          "id": 268,
+          "piece": "\u2581s",
+          "clean_piece": "s",
+          "class": "alpha",
+          "count": 6864
+        },
+        {
+          "id": 274,
+          "piece": "\u2581c",
+          "clean_piece": "c",
+          "class": "alpha",
+          "count": 6562
+        },
+        {
+          "id": 286,
+          "piece": "al",
+          "clean_piece": "al",
+          "class": "alpha",
+          "count": 6394
+        },
+        {
+          "id": 282,
+          "piece": "\u2581p",
+          "clean_piece": "p",
+          "class": "alpha",
+          "count": 6349
+        },
+        {
+          "id": 943,
+          "piece": "o",
+          "clean_piece": "o",
+          "class": "alpha",
+          "count": 6077
+        },
+        {
+          "id": 947,
+          "piece": "r",
+          "clean_piece": "r",
+          "class": "alpha",
+          "count": 6030
+        },
+        {
+          "id": 944,
+          "piece": "i",
+          "clean_piece": "i",
+          "class": "alpha",
+          "count": 5998
+        }
+      ],
+      "top_by_bytes": [
+        {
+          "id": 267,
+          "piece": "\u2581the",
+          "clean_piece": "the",
+          "class": "alpha",
+          "bytes": 77392
+        },
+        {
+          "id": 290,
+          "piece": "\u2581and",
+          "clean_piece": "and",
+          "class": "alpha",
+          "bytes": 44600
+        },
+        {
+          "id": 287,
+          "piece": "\u2581to",
+          "clean_piece": "to",
+          "class": "alpha",
+          "bytes": 36258
+        },
+        {
+          "id": 280,
+          "piece": "ing",
+          "clean_piece": "ing",
+          "class": "alpha",
+          "bytes": 33531
+        },
+        {
+          "id": 292,
+          "piece": "\u2581of",
+          "clean_piece": "of",
+          "class": "alpha",
+          "bytes": 31275
+        },
+        {
+          "id": 291,
+          "piece": "\u2581in",
+          "clean_piece": "in",
+          "class": "alpha",
+          "bytes": 23676
+        },
+        {
+          "id": 960,
+          "piece": ".",
+          "clean_piece": ".",
+          "class": "punct",
+          "bytes": 21748
+        },
+        {
+          "id": 962,
+          "piece": ",",
+          "clean_piece": ",",
+          "class": "punct",
+          "bytes": 21421
+        },
+        {
+          "id": 285,
+          "piece": "ed",
+          "clean_piece": "ed",
+          "class": "alpha",
+          "bytes": 21306
+        },
+        {
+          "id": 261,
+          "piece": "\u2581a",
+          "clean_piece": "a",
+          "class": "alpha",
+          "bytes": 20806
+        },
+        {
+          "id": 346,
+          "piece": "\u2581that",
+          "clean_piece": "that",
+          "class": "alpha",
+          "bytes": 20620
+        },
+        {
+          "id": 321,
+          "piece": "\u2581for",
+          "clean_piece": "for",
+          "class": "alpha",
+          "bytes": 18424
+        },
+        {
+          "id": 946,
+          "piece": "s",
+          "clean_piece": "s",
+          "class": "alpha",
+          "bytes": 17847
+        },
+        {
+          "id": 345,
+          "piece": "\u2581with",
+          "clean_piece": "with",
+          "class": "alpha",
+          "bytes": 16690
+        },
+        {
+          "id": 266,
+          "piece": "er",
+          "clean_piece": "er",
+          "class": "alpha",
+          "bytes": 14016
+        },
+        {
+          "id": 276,
+          "piece": "es",
+          "clean_piece": "es",
+          "class": "alpha",
+          "bytes": 13960
+        },
+        {
+          "id": 323,
+          "piece": "\u2581is",
+          "clean_piece": "is",
+          "class": "alpha",
+          "bytes": 13878
+        },
+        {
+          "id": 268,
+          "piece": "\u2581s",
+          "clean_piece": "s",
+          "class": "alpha",
+          "bytes": 13728
+        },
+        {
+          "id": 274,
+          "piece": "\u2581c",
+          "clean_piece": "c",
+          "class": "alpha",
+          "bytes": 13124
+        },
+        {
+          "id": 286,
+          "piece": "al",
+          "clean_piece": "al",
+          "class": "alpha",
+          "bytes": 12788
+        },
+        {
+          "id": 282,
+          "piece": "\u2581p",
+          "clean_piece": "p",
+          "class": "alpha",
+          "bytes": 12698
+        },
+        {
+          "id": 352,
+          "piece": "\u2581The",
+          "clean_piece": "The",
+          "class": "alpha",
+          "bytes": 12520
+        },
+        {
+          "id": 288,
+          "piece": "\u2581m",
+          "clean_piece": "m",
+          "class": "alpha",
+          "bytes": 11506
+        },
+        {
+          "id": 939,
+          "piece": "\u2581",
+          "clean_piece": "",
+          "class": "whitespace",
+          "bytes": 11493
+        },
+        {
+          "id": 318,
+          "piece": "\u2581you",
+          "clean_piece": "you",
+          "class": "alpha",
+          "bytes": 11492
+        }
+      ]
+    },
+    "repetition_profile": {
+      "1": {
+        "positions": 199999,
+        "repeat_context_frac": 0.9959849799248996,
+        "avg_repeat_max_next_prob": 0.15098392836065258,
+        "avg_repeat_entropy_bits": 5.030336954815181,
+        "avg_repeat_context_support": 476.38469145966786
+      },
+      "2": {
+        "positions": 199998,
+        "repeat_context_frac": 0.7797377973779738,
+        "avg_repeat_max_next_prob": 0.4959986616894783,
+        "avg_repeat_entropy_bits": 1.929064393472266,
+        "avg_repeat_context_support": 17.898945788926937
+      },
+      "4": {
+        "positions": 199996,
+        "repeat_context_frac": 0.17267345346906937,
+        "avg_repeat_max_next_prob": 0.8055583330680899,
+        "avg_repeat_entropy_bits": 0.5630711517446229,
+        "avg_repeat_context_support": 3.416111658076099
+      },
+      "8": {
+        "positions": 199992,
+        "repeat_context_frac": 0.024660986439457577,
+        "avg_repeat_max_next_prob": 0.9551615335754632,
+        "avg_repeat_entropy_bits": 0.11405890748461493,
+        "avg_repeat_context_support": 1.665044606650446
+      },
+      "16": {
+        "positions": 199984,
+        "repeat_context_frac": 0.005535442835426834,
+        "avg_repeat_max_next_prob": 0.9757287678696897,
+        "avg_repeat_entropy_bits": 0.058034524799311545,
+        "avg_repeat_context_support": 1.3369467028003614
+      },
+      "32": {
+        "positions": 199968,
+        "repeat_context_frac": 0.001250200032005121,
+        "avg_repeat_max_next_prob": 1.0,
+        "avg_repeat_entropy_bits": 0.0,
+        "avg_repeat_context_support": 1.0
+      }
+    }
+  },
+  "val": {
+    "split": "val",
+    "token_count": 1000000,
+    "byte_count": 2406976,
+    "avg_bytes_per_token": 2.406976,
+    "unique_tokens_observed": 861,
+    "class_stats": {
+      "alpha": {
+        "tokens": 881826.0,
+        "bytes": 2267368.0,
+        "token_frac": 0.881826,
+        "byte_frac": 0.9419985907628493,
+        "avg_bytes_per_token": 2.5712192654786774,
+        "unique_tokens": 718.0
+      },
+      "punct": {
+        "tokens": 67607.0,
+        "bytes": 87935.0,
+        "token_frac": 0.067607,
+        "byte_frac": 0.03653339293786062,
+        "avg_bytes_per_token": 1.300678923780082,
+        "unique_tokens": 32.0
+      },
+      "numeric": {
+        "tokens": 26530.0,
+        "bytes": 26530.0,
+        "token_frac": 0.02653,
+        "byte_frac": 0.011022129011672738,
+        "avg_bytes_per_token": 1.0,
+        "unique_tokens": 10.0
+      },
+      "whitespace": {
+        "tokens": 12553.0,
+        "bytes": 12553.0,
+        "token_frac": 0.012553,
+        "byte_frac": 0.005215257651094153,
+        "avg_bytes_per_token": 1.0,
+        "unique_tokens": 1.0
+      },
+      "alnum": {
+        "tokens": 6535.0,
+        "bytes": 8511.0,
+        "token_frac": 0.006535,
+        "byte_frac": 0.0035359721077401684,
+        "avg_bytes_per_token": 1.302371843917368,
+        "unique_tokens": 2.0
+      },
+      "byte": {
+        "tokens": 3251.0,
+        "bytes": 3251.0,
+        "token_frac": 0.003251,
+        "byte_frac": 0.0013506574224254832,
+        "avg_bytes_per_token": 1.0,
+        "unique_tokens": 96.0
+      },
+      "markupish": {
+        "tokens": 828.0,
+        "bytes": 828.0,
+        "token_frac": 0.000828,
+        "byte_frac": 0.0003440001063575208,
+        "avg_bytes_per_token": 1.0,
+        "unique_tokens": 1.0
+      },
+      "special": {
+        "tokens": 870.0,
+        "bytes": 0.0,
+        "token_frac": 0.00087,
+        "byte_frac": 0.0,
+        "avg_bytes_per_token": 0.0,
+        "unique_tokens": 1.0
+      }
+    },
+    "top_tokens": {
+      "top_by_count": [
+        {
+          "id": 962,
+          "piece": ",",
+          "clean_piece": ",",
+          "class": "punct",
+          "count": 21661
+        },
+        {
+          "id": 960,
+          "piece": ".",
+          "clean_piece": ".",
+          "class": "punct",
+          "count": 21264
+        },
+        {
+          "id": 267,
+          "piece": "\u2581the",
+          "clean_piece": "the",
+          "class": "alpha",
+          "count": 18849
+        },
+        {
+          "id": 946,
+          "piece": "s",
+          "clean_piece": "s",
+          "class": "alpha",
+          "count": 17526
+        },
+        {
+          "id": 939,
+          "piece": "\u2581",
+          "clean_piece": "",
+          "class": "whitespace",
+          "count": 12553
+        },
+        {
+          "id": 287,
+          "piece": "\u2581to",
+          "clean_piece": "to",
+          "class": "alpha",
+          "count": 11394
+        },
+        {
+          "id": 290,
+          "piece": "\u2581and",
+          "clean_piece": "and",
+          "class": "alpha",
+          "count": 10789
+        },
+        {
+          "id": 292,
+          "piece": "\u2581of",
+          "clean_piece": "of",
+          "class": "alpha",
+          "count": 10336
+        },
+        {
+          "id": 285,
+          "piece": "ed",
+          "clean_piece": "ed",
+          "class": "alpha",
+          "count": 10324
+        },
+        {
+          "id": 280,
+          "piece": "ing",
+          "clean_piece": "ing",
+          "class": "alpha",
+          "count": 10244
+        },
+        {
+          "id": 261,
+          "piece": "\u2581a",
+          "clean_piece": "a",
+          "class": "alpha",
+          "count": 9527
+        },
+        {
+          "id": 291,
+          "piece": "\u2581in",
+          "clean_piece": "in",
+          "class": "alpha",
+          "count": 7986
+        },
+        {
+          "id": 957,
+          "piece": "y",
+          "clean_piece": "y",
+          "class": "alpha",
+          "count": 7796
+        },
+        {
+          "id": 940,
+          "piece": "e",
+          "clean_piece": "e",
+          "class": "alpha",
+          "count": 7631
+        },
+        {
+          "id": 942,
+          "piece": "a",
+          "clean_piece": "a",
+          "class": "alpha",
+          "count": 7040
+        },
+        {
+          "id": 276,
+          "piece": "es",
+          "clean_piece": "es",
+          "class": "alpha",
+          "count": 6887
+        },
+        {
+          "id": 941,
+          "piece": "t",
+          "clean_piece": "t",
+          "class": "alpha",
+          "count": 6872
+        },
+        {
+          "id": 266,
+          "piece": "er",
+          "clean_piece": "er",
+          "class": "alpha",
+          "count": 6756
+        },
+        {
+          "id": 268,
+          "piece": "\u2581s",
+          "clean_piece": "s",
+          "class": "alpha",
+          "count": 6678
+        },
+        {
+          "id": 282,
+          "piece": "\u2581p",
+          "clean_piece": "p",
+          "class": "alpha",
+          "count": 6184
+        },
+        {
+          "id": 274,
+          "piece": "\u2581c",
+          "clean_piece": "c",
+          "class": "alpha",
+          "count": 6033
+        },
+        {
+          "id": 286,
+          "piece": "al",
+          "clean_piece": "al",
+          "class": "alpha",
+          "count": 5987
+        },
+        {
+          "id": 951,
+          "piece": "c",
+          "clean_piece": "c",
+          "class": "alpha",
+          "count": 5976
+        },
+        {
+          "id": 947,
+          "piece": "r",
+          "clean_piece": "r",
+          "class": "alpha",
+          "count": 5898
+        },
+        {
+          "id": 944,
+          "piece": "i",
+          "clean_piece": "i",
+          "class": "alpha",
+          "count": 5824
+        }
+      ],
+      "top_by_bytes": [
+        {
+          "id": 267,
+          "piece": "\u2581the",
+          "clean_piece": "the",
+          "class": "alpha",
+          "bytes": 75396
+        },
+        {
+          "id": 290,
+          "piece": "\u2581and",
+          "clean_piece": "and",
+          "class": "alpha",
+          "bytes": 43156
+        },
+        {
+          "id": 287,
+          "piece": "\u2581to",
+          "clean_piece": "to",
+          "class": "alpha",
+          "bytes": 34182
+        },
+        {
+          "id": 292,
+          "piece": "\u2581of",
+          "clean_piece": "of",
+          "class": "alpha",
+          "bytes": 31008
+        },
+        {
+          "id": 280,
+          "piece": "ing",
+          "clean_piece": "ing",
+          "class": "alpha",
+          "bytes": 30732
+        },
+        {
+          "id": 291,
+          "piece": "\u2581in",
+          "clean_piece": "in",
+          "class": "alpha",
+          "bytes": 23958
+        },
+        {
+          "id": 962,
+          "piece": ",",
+          "clean_piece": ",",
+          "class": "punct",
+          "bytes": 21661
+        },
+        {
+          "id": 960,
+          "piece": ".",
+          "clean_piece": ".",
+          "class": "punct",
+          "bytes": 21264
+        },
+        {
+          "id": 285,
+          "piece": "ed",
+          "clean_piece": "ed",
+          "class": "alpha",
+          "bytes": 20648
+        },
+        {
+          "id": 346,
+          "piece": "\u2581that",
+          "clean_piece": "that",
+          "class": "alpha",
+          "bytes": 20375
+        },
+        {
+          "id": 261,
+          "piece": "\u2581a",
+          "clean_piece": "a",
+          "class": "alpha",
+          "bytes": 19054
+        },
+        {
+          "id": 321,
+          "piece": "\u2581for",
+          "clean_piece": "for",
+          "class": "alpha",
+          "bytes": 18088
+        },
+        {
+          "id": 946,
+          "piece": "s",
+          "clean_piece": "s",
+          "class": "alpha",
+          "bytes": 17526
+        },
+        {
+          "id": 345,
+          "piece": "\u2581with",
+          "clean_piece": "with",
+          "class": "alpha",
+          "bytes": 15270
+        },
+        {
+          "id": 276,
+          "piece": "es",
+          "clean_piece": "es",
+          "class": "alpha",
+          "bytes": 13774
+        },
+        {
+          "id": 323,
+          "piece": "\u2581is",
+          "clean_piece": "is",
+          "class": "alpha",
+          "bytes": 13545
+        },
+        {
+          "id": 266,
+          "piece": "er",
+          "clean_piece": "er",
+          "class": "alpha",
+          "bytes": 13512
+        },
+        {
+          "id": 268,
+          "piece": "\u2581s",
+          "clean_piece": "s",
+          "class": "alpha",
+          "bytes": 13356
+        },
+        {
+          "id": 939,
+          "piece": "\u2581",
+          "clean_piece": "",
+          "class": "whitespace",
+          "bytes": 12553
+        },
+        {
+          "id": 282,
+          "piece": "\u2581p",
+          "clean_piece": "p",
+          "class": "alpha",
+          "bytes": 12368
+        },
+        {
+          "id": 274,
+          "piece": "\u2581c",
+          "clean_piece": "c",
+          "class": "alpha",
+          "bytes": 12066
+        },
+        {
+          "id": 286,
+          "piece": "al",
+          "clean_piece": "al",
+          "class": "alpha",
+          "bytes": 11974
+        },
+        {
+          "id": 352,
+          "piece": "\u2581The",
+          "clean_piece": "The",
+          "class": "alpha",
+          "bytes": 11972
+        },
+        {
+          "id": 342,
+          "piece": "ation",
+          "clean_piece": "ation",
+          "class": "alpha",
+          "bytes": 11810
+        },
+        {
+          "id": 326,
+          "piece": "\u2581be",
+          "clean_piece": "be",
+          "class": "alpha",
+          "bytes": 10752
+        }
+      ]
+    },
+    "repetition_profile": {
+      "1": {
+        "positions": 199999,
+        "repeat_context_frac": 0.9958149790748954,
+        "avg_repeat_max_next_prob": 0.15887469846284902,
+        "avg_repeat_entropy_bits": 4.959312151998382,
+        "avg_repeat_context_support": 471.8753075385867
+      },
+      "2": {
+        "positions": 199998,
+        "repeat_context_frac": 0.7847828478284783,
+        "avg_repeat_max_next_prob": 0.5069044217741202,
+        "avg_repeat_entropy_bits": 1.895071787450773,
+        "avg_repeat_context_support": 17.889579815870793
+      },
+      "4": {
+        "positions": 199996,
+        "repeat_context_frac": 0.1876587531750635,
+        "avg_repeat_max_next_prob": 0.807439143255847,
+        "avg_repeat_entropy_bits": 0.565179404345375,
+        "avg_repeat_context_support": 4.163891183288482
+      },
+      "8": {
+        "positions": 199992,
+        "repeat_context_frac": 0.030106204248169927,
+        "avg_repeat_max_next_prob": 0.9311175411959054,
+        "avg_repeat_entropy_bits": 0.21097838964187132,
+        "avg_repeat_context_support": 4.211260587942203
+      },
+      "16": {
+        "positions": 199984,
+        "repeat_context_frac": 0.0054554364349147936,
+        "avg_repeat_max_next_prob": 0.9671723475917939,
+        "avg_repeat_entropy_bits": 0.09519521047311522,
+        "avg_repeat_context_support": 2.7296058661778186
+      },
+      "32": {
+        "positions": 199968,
+        "repeat_context_frac": 0.0007251160185629701,
+        "avg_repeat_max_next_prob": 0.996551724137931,
+        "avg_repeat_entropy_bits": 0.006896551724137931,
+        "avg_repeat_context_support": 1.0413793103448277
+      }
+    }
+  }
+}

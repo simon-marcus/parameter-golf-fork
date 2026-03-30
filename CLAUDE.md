@@ -207,6 +207,57 @@ ssh root@HOST -p PORT "cd /workspace/parameter-golf && bash ./verify_runpod_data
 ssh root@HOST -p PORT "cd /workspace/parameter-golf && DATA_ROOT_MODE=tmp bash ./launch_leadercore_ablation_runpod.sh base"
 ```
 
+### Modal 8xH100 Runs
+
+Use the image-root dataset path for serious timing runs on Modal. In our March 29, 2026 A/B smoke test with the official baseline, `image` mode ran at about `45.5ms/step` while `tmp` mode ran at about `46.9ms/step`, so Modal does not show the same `/workspace` vs `/tmp` penalty we saw on Runpod. The launcher still supports `/tmp` staging for explicit comparison, and it verifies shard/tokenizer integrity with the same preflight used on Runpod.
+
+Prereqs:
+- Modal CLI and Python package installed in `.venv-modal`
+- Active Modal profile (`modal profile current`)
+- `HF_TOKEN` available via env or `.env.local` so the image build can fetch the FineWeb export
+
+Recommended sequence:
+
+```bash
+source .venv-modal/bin/activate
+modal profile current
+
+# 8xH100 baseline smoke on Modal
+modal run modal_record_candidate_run.py \
+  --source records/track_10min_16mb/2026-03-17_NaiveBaseline/train_gpt.py \
+  --run-name baseline_modal_image_smoke_8x \
+  --output-dir records/track_10min_16mb/2026-03-29_BaselineModalImageSmoke \
+  --max-wallclock-seconds 60 \
+  --val-loss-every 200 \
+  --train-log-every 50 \
+  --data-root-mode image
+
+# 8xH100 full 10-minute baseline parity check on Modal
+modal run modal_record_candidate_run.py \
+  --source records/track_10min_16mb/2026-03-17_NaiveBaseline/train_gpt.py \
+  --run-name baseline_modal_image_8x \
+  --output-dir records/track_10min_16mb/2026-03-29_BaselineModalImage \
+  --max-wallclock-seconds 600 \
+  --val-loss-every 200 \
+  --train-log-every 50 \
+  --data-root-mode image
+
+# 8xH100 candidate run on Modal
+modal run modal_record_candidate_run.py \
+  --source /absolute/path/to/train_gpt.py \
+  --run-name candidate_modal_image_8x \
+  --output-dir records/track_10min_16mb/<run_name> \
+  --max-wallclock-seconds 600 \
+  --val-loss-every 0 \
+  --train-log-every 50 \
+  --data-root-mode image
+```
+
+Notes:
+- Keep `--data-root-mode image` for normal Modal record runs. Use `tmp` only for explicit A/B checks.
+- `modal_record_candidate_run.py` always runs `verify_runpod_data_ready.sh` before `torchrun`; in `tmp` mode it also copies `/root/parameter-golf/data` into `/tmp/parameter-golf-data` first.
+- Logs and a `submission.json` snapshot are written to the local `--output-dir` after the remote run completes.
+
 Optional on-pod dataset download when you intentionally want it:
 
 ```bash

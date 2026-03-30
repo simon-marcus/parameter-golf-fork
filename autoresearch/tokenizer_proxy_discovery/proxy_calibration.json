@@ -1,0 +1,60 @@
+{
+  "type": "aggregate",
+  "source": "/Users/simon/Code/parameter-golf/modal_logs/proxy_confirm_long_aggregate.json",
+  "num_runs": 3,
+  "family_vocab": {
+    "tokenmonster:1024": {
+      "mean": 4.150599336666667,
+      "std": 0.1793318419274158,
+      "n": 3
+    },
+    "sentencepiece:1024": {
+      "mean": 4.3198467166666665,
+      "std": 0.19134158420931224,
+      "n": 3
+    },
+    "tokenmonster:2048": {
+      "mean": 4.501217113333333,
+      "std": 0.24603150957669578,
+      "n": 3
+    }
+  },
+  "exact": {
+    "english-1024-balanced-v1": {
+      "mean": 4.10228596,
+      "std": 0.14541348343144958,
+      "n": 3,
+      "family": "tokenmonster",
+      "vocab_size": 1024
+    },
+    "english-1024-clean-v1": {
+      "mean": 4.15042738,
+      "std": 0.23398177816623686,
+      "n": 3,
+      "family": "tokenmonster",
+      "vocab_size": 1024
+    },
+    "english-1024-consistent-v1": {
+      "mean": 4.150599336666667,
+      "std": 0.1793318419274158,
+      "n": 3,
+      "family": "tokenmonster",
+      "vocab_size": 1024
+    },
+    "baseline_sp1024": {
+      "mean": 4.3198467166666665,
+      "std": 0.19134158420931224,
+      "n": 3,
+      "family": "sentencepiece",
+      "vocab_size": 1024
+    },
+    "english-2048-clean-v1": {
+      "mean": 4.501217113333333,
+      "std": 0.24603150957669578,
+      "n": 3,
+      "family": "tokenmonster",
+      "vocab_size": 2048
+    }
+  },
+  "variance_penalty": 0.25
+}

@@ -1,0 +1,27 @@
+{
+  "best_label": "experiment_0022",
+  "best_score": 0.3483178826428708,
+  "best_metrics": {
+    "family": "sentencepiece",
+    "model_path": "/Users/simon/Code/parameter-golf/autoresearch/tokenizer_discovery/experiments/0022/tokenizer.model",
+    "vocab_size": 6400,
+    "chunks": 9770,
+    "total_tokens": 14155993,
+    "total_bytes": 48592425,
+    "tokens_per_byte": 0.29132098264287076,
+    "bytes_per_token": 3.432639801390125,
+    "unique_tokens_used": 6380,
+    "dead_vocab_frac": 0.003125,
+    "estimated_vocab_linked_params": 3276800,
+    "estimated_vocab_artifact_bytes": 910950.4000000001,
+    "estimated_artifact_budget_frac": 0.05693440000000001,
+    "estimated_vocab_linked_params_delta": 2752512,
+    "estimated_vocab_artifact_bytes_delta": 765198.3360000001
+  },
+  "best_experiment_id": 22,
+  "headline": "vocab_size=6400 edges out 6144 frontier by 0.0001 (0.03%) with minimal extra artifact cost",
+  "frontier_update": "New best is vocab_size=6400 with character_coverage=0.999 at score 0.34832; the optimal vocab size appears to be in the 6144-6400+ range with diminishing but still positive returns from adding tokens",
+  "next_direction": "Test vocab_size=7168 or 8192 to find where the artifact cost penalty overtakes the compression benefit and locate the true optimum",
+  "strategy_experiment_id": 22,
+  "strategy_score": 0.3483178826428708
+}

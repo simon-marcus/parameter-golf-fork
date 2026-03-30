@@ -1,0 +1,296 @@
+[2026-03-29T02:13:12.388927+00:00] run:start
+[2026-03-29T02:13:12.389530+00:00] run:config hash=1304d5272e44 split=train
+[2026-03-29T02:13:12.389621+00:00] text_sample:start split=train max_tokens=2000000 max_shards=10 tokens_per_shard=2000000 offset_mode=staggered chunk_tokens=2048
+[2026-03-29T02:13:19.178489+00:00] text_sample:done path=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_proxy_discovery/text_sample.jsonl
+[2026-03-29T02:13:19.583234+00:00] baseline:done tokens_per_byte=0.405538 dead_vocab_frac=0.1680 artifact_frac=0.0091
+[2026-03-29T02:13:21.117233+00:00] calibration:done rows=6 weights=-0.0000,-5.6180,2.6501,-11.0041,-0.0277
+[2026-03-29T02:13:37.257575+00:00] experiment:1:start type=tokenmonster_eval params={'vocab_ref': 'english-1024-clean-v1'}
+[2026-03-29T02:13:37.639579+00:00] experiment:1:done family=tokenmonster vocab=1024 tpb=0.401483 artifact_frac=0.0091 calibrated_score=-0.302556
+[2026-03-29T02:13:37.639670+00:00] review:start experiment=1
+[2026-03-29T02:13:50.615731+00:00] review:done experiment=1 keep=True headline=TokenMonster 1024-clean beats baseline by 0.30 calibrated BPB
+[2026-03-29T02:13:50.616318+00:00] frontier:update best=experiment_0001 score=-0.302556
+[2026-03-29T02:13:50.616724+00:00] run:done
+[2026-03-29T02:18:36.495063+00:00] state:archived_incompatible_run archive=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_proxy_discovery/_archives/20260329T021836Z_1304d5272e44 old_hash=1304d5272e44 new_hash=b25d848666d1
+[2026-03-29T02:18:36.495241+00:00] run:start
+[2026-03-29T02:18:36.495287+00:00] run:config hash=b25d848666d1 split=train
+[2026-03-29T02:18:36.495338+00:00] text_sample:start split=train max_tokens=2000000 max_shards=10 tokens_per_shard=2000000 offset_mode=staggered chunk_tokens=2048
+[2026-03-29T02:18:43.367405+00:00] text_sample:done path=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_proxy_discovery/text_sample.jsonl
+[2026-03-29T02:18:56.223853+00:00] baseline:done tokens_per_byte=0.411282 dead_vocab_frac=0.1416 artifact_frac=0.0091
+[2026-03-29T02:19:47.124009+00:00] calibration:done rows=6 weights=-0.0000,-5.5325,1.2129,-8.3641,-0.2192
+[2026-03-29T02:20:00.388088+00:00] experiment:1:start type=tokenmonster_eval params={'vocab_ref': 'english-1024-clean-v1'}
+[2026-03-29T02:20:06.890445+00:00] experiment:1:done family=tokenmonster vocab=1024 tpb=0.405436 artifact_frac=0.0091 calibrated_score=-0.304219
+[2026-03-29T02:20:06.890554+00:00] review:start experiment=1
+[2026-03-29T02:20:19.597614+00:00] review:done experiment=1 keep=True headline=TokenMonster 1024-clean beats baseline by 0.304 on calibrated score
+[2026-03-29T02:20:19.598376+00:00] frontier:update best=experiment_0001 score=-0.304219
+[2026-03-29T02:20:34.492499+00:00] experiment:2:start type=tokenmonster_eval params={'vocab_ref': 'english-2048-clean-v1'}
+[2026-03-29T02:20:40.550969+00:00] experiment:2:done family=tokenmonster vocab=2048 tpb=0.336569 artifact_frac=0.0182 calibrated_score=0.008893
+[2026-03-29T02:20:40.551059+00:00] review:start experiment=2
+[2026-03-29T02:20:51.931384+00:00] review:done experiment=2 keep=True headline=TokenMonster 2048-clean is the new frontier at +0.009 vs previous -0.304
+[2026-03-29T02:20:51.932691+00:00] frontier:strategy_update experiment=0002 best_score=-0.304219 strategy_score=0.008893
+[2026-03-29T02:21:09.038234+00:00] experiment:3:start type=sentencepiece_train params={'vocab_size': 768, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T02:21:22.090812+00:00] experiment:3:done family=sentencepiece vocab=768 tpb=0.442425 artifact_frac=0.0068 calibrated_score=-0.320313
+[2026-03-29T02:21:22.090897+00:00] review:start experiment=3
+[2026-03-29T02:21:33.161271+00:00] review:done experiment=3 keep=False headline=SP-768 scores -0.320, worse than 2048-clean frontier at +0.009
+[2026-03-29T02:21:57.242294+00:00] experiment:4:start type=sentencepiece_train params={'vocab_size': 1024, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:22:10.755241+00:00] experiment:4:done family=sentencepiece vocab=1024 tpb=0.417399 artifact_frac=0.0091 calibrated_score=-0.200903
+[2026-03-29T02:22:10.755493+00:00] review:start experiment=4
+[2026-03-29T02:22:23.119352+00:00] review:done experiment=4 keep=False headline=SP-1024 5x-training scores -0.201, worse than 2048-clean frontier at +0.009
+[2026-03-29T02:22:45.016663+00:00] experiment:5:start type=sentencepiece_train params={'vocab_size': 1024, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:22:52.478948+00:00] experiment:5:done family=sentencepiece vocab=1024 tpb=0.429574 artifact_frac=0.0091 calibrated_score=-0.269446
+[2026-03-29T02:22:52.479116+00:00] review:start experiment=5
+[2026-03-29T02:23:04.576181+00:00] review:done experiment=5 keep=False headline=Unigram 1024 scores -0.269 vs frontier -0.304 — worse (higher) calibrated score
+[2026-03-29T02:23:31.225860+00:00] experiment:6:start type=sentencepiece_train params={'vocab_size': 896, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:23:44.818795+00:00] experiment:6:done family=sentencepiece vocab=896 tpb=0.429639 artifact_frac=0.0080 calibrated_score=-0.259774
+[2026-03-29T02:23:44.819083+00:00] review:start experiment=6
+[2026-03-29T02:23:55.964735+00:00] review:done experiment=6 keep=False headline=SP-896 scores -0.260, worse than 2048-clean frontier at +0.009
+[2026-03-29T02:24:14.250070+00:00] experiment:7:start type=sentencepiece_train params={'vocab_size': 1152, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:24:27.770170+00:00] experiment:7:done family=sentencepiece vocab=1152 tpb=0.406371 artifact_frac=0.0102 calibrated_score=-0.149939
+[2026-03-29T02:24:27.770420+00:00] review:start experiment=7
+[2026-03-29T02:24:39.661190+00:00] review:done experiment=7 keep=False headline=SP-1152 scores -0.150, worse than TM-2048-clean frontier at +0.009
+[2026-03-29T02:25:02.024111+00:00] experiment:8:start type=sentencepiece_train params={'vocab_size': 1280, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:25:15.448831+00:00] experiment:8:done family=sentencepiece vocab=1280 tpb=0.398023 artifact_frac=0.0114 calibrated_score=-0.113700
+[2026-03-29T02:25:15.449134+00:00] review:start experiment=8
+[2026-03-29T02:25:27.102902+00:00] review:done experiment=8 keep=False headline=SP 1280 scores -0.114, worse than frontier +0.009
+[2026-03-29T02:25:46.686534+00:00] experiment:9:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:26:00.602806+00:00] experiment:9:done family=sentencepiece vocab=1536 tpb=0.381695 artifact_frac=0.0137 calibrated_score=-0.042253
+[2026-03-29T02:26:00.603079+00:00] review:start experiment=9
+[2026-03-29T02:26:12.754185+00:00] review:done experiment=9 keep=False headline=SP-1536 at -0.042 does not beat TokenMonster 2048-clean at +0.009
+[2026-03-29T02:26:28.439489+00:00] experiment:10:start type=sentencepiece_train params={'vocab_size': 2048, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:26:42.589314+00:00] experiment:10:done family=sentencepiece vocab=2048 tpb=0.359758 artifact_frac=0.0182 calibrated_score=0.040030
+[2026-03-29T02:26:42.589618+00:00] review:start experiment=10
+[2026-03-29T02:26:55.317454+00:00] review:done experiment=10 keep=True headline=SentencePiece BPE 2048 takes the frontier at +0.040 vs TokenMonster 2048-clean's +0.009
+[2026-03-29T02:26:55.318798+00:00] frontier:strategy_update experiment=0010 best_score=-0.304219 strategy_score=0.040030
+[2026-03-29T02:27:21.841117+00:00] experiment:11:start type=sentencepiece_train params={'vocab_size': 2560, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:27:36.233742+00:00] experiment:11:done family=sentencepiece vocab=2560 tpb=0.345095 artifact_frac=0.0228 calibrated_score=0.083409
+[2026-03-29T02:27:36.234168+00:00] review:start experiment=11
+[2026-03-29T02:27:48.791039+00:00] review:done experiment=11 keep=True headline=SP BPE 2560 extends the frontier to +0.083, confirming the scaling curve continues past 2048
+[2026-03-29T02:27:48.792114+00:00] frontier:strategy_update experiment=0011 best_score=-0.304219 strategy_score=0.083409
+[2026-03-29T02:27:58.457298+00:00] experiment:12:start type=sentencepiece_train params={'vocab_size': 3072, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:28:13.249355+00:00] experiment:12:done family=sentencepiece vocab=3072 tpb=0.333248 artifact_frac=0.0273 calibrated_score=0.110308
+[2026-03-29T02:28:13.249471+00:00] review:start experiment=12
+[2026-03-29T02:28:22.738215+00:00] review:done experiment=12 keep=True headline=SP BPE 3072 extends the frontier to +0.110, confirming scaling curve continues past 2560
+[2026-03-29T02:28:22.739008+00:00] frontier:strategy_update experiment=0012 best_score=-0.304219 strategy_score=0.110308
+[2026-03-29T02:28:33.548031+00:00] experiment:13:start type=sentencepiece_train params={'vocab_size': 3584, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:28:50.026046+00:00] experiment:13:done family=sentencepiece vocab=3584 tpb=0.324294 artifact_frac=0.0319 calibrated_score=0.121690
+[2026-03-29T02:28:50.026193+00:00] review:start experiment=13
+[2026-03-29T02:29:08.919044+00:00] review:done experiment=13 keep=True headline=SP BPE 3584 extends frontier to +0.122, beating 3072's +0.110
+[2026-03-29T02:29:08.920796+00:00] frontier:strategy_update experiment=0013 best_score=-0.304219 strategy_score=0.121690
+[2026-03-29T02:29:19.216909+00:00] experiment:14:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:29:36.140434+00:00] experiment:14:done family=sentencepiece vocab=4096 tpb=0.316014 artifact_frac=0.0364 calibrated_score=0.129361
+[2026-03-29T02:29:36.140726+00:00] review:start experiment=14
+[2026-03-29T02:29:49.347635+00:00] review:done experiment=14 keep=True headline=SP BPE 4096 edges past 3584 at +0.129, but gains are flattening fast
+[2026-03-29T02:29:49.349314+00:00] frontier:strategy_update experiment=0014 best_score=-0.304219 strategy_score=0.129361
+[2026-03-29T02:30:12.128239+00:00] experiment:15:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:30:26.889462+00:00] experiment:15:done family=sentencepiece vocab=4096 tpb=0.315455 artifact_frac=0.0364 calibrated_score=0.132457
+[2026-03-29T02:30:26.889768+00:00] review:start experiment=15
+[2026-03-29T02:30:41.967820+00:00] review:done experiment=15 keep=True headline=SP BPE 4096 char_coverage=0.999 matches frontier at +0.132, marginal gain over 0.129
+[2026-03-29T02:30:41.969042+00:00] frontier:strategy_update experiment=0015 best_score=-0.304219 strategy_score=0.132457
+[2026-03-29T02:31:18.424194+00:00] experiment:16:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.998, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:31:33.018735+00:00] experiment:16:done family=sentencepiece vocab=4096 tpb=0.315176 artifact_frac=0.0364 calibrated_score=0.133706
+[2026-03-29T02:31:33.019016+00:00] review:start experiment=16
+[2026-03-29T02:31:44.744975+00:00] review:done experiment=16 keep=True headline=SP BPE 4096 char_coverage=0.998 sets new frontier at +0.134, marginal gain over 0.132
+[2026-03-29T02:31:44.746804+00:00] frontier:strategy_update experiment=0016 best_score=-0.304219 strategy_score=0.133706
+[2026-03-29T02:32:04.578025+00:00] experiment:17:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:32:19.325784+00:00] experiment:17:done family=sentencepiece vocab=4096 tpb=0.315182 artifact_frac=0.0364 calibrated_score=0.133081
+[2026-03-29T02:32:19.325907+00:00] review:start experiment=17
+[2026-03-29T02:32:32.321003+00:00] review:done experiment=17 keep=False headline=SP BPE 4096 coverage=0.995 scores 0.133, no improvement over frontier 0.134
+[2026-03-29T02:32:58.437583+00:00] experiment:18:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.998, 'input_sentence_size': 2000000, 'max_chunks': 0}
+[2026-03-29T02:33:12.932681+00:00] experiment:18:done family=sentencepiece vocab=4096 tpb=0.315176 artifact_frac=0.0364 calibrated_score=0.133706
+[2026-03-29T02:33:12.932795+00:00] review:start experiment=18
+[2026-03-29T02:33:23.562386+00:00] review:done experiment=18 keep=False headline=SP BPE 4096 input_sentence_size=2M ties frontier at +0.134, no improvement
+[2026-03-29T02:33:45.873096+00:00] experiment:19:start type=sentencepiece_train params={'vocab_size': 4608, 'model_type': 'bpe', 'character_coverage': 0.998, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:34:00.412951+00:00] experiment:19:done family=sentencepiece vocab=4608 tpb=0.308858 artifact_frac=0.0410 calibrated_score=0.131086
+[2026-03-29T02:34:00.413067+00:00] review:start experiment=19
+[2026-03-29T02:34:11.030494+00:00] review:done experiment=19 keep=False headline=SP BPE 4608 scores 0.131, marginal regression from frontier 0.134
+[2026-03-29T02:34:33.221004+00:00] experiment:20:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:34:47.890974+00:00] experiment:20:done family=sentencepiece vocab=4096 tpb=0.314812 artifact_frac=0.0364 calibrated_score=0.135122
+[2026-03-29T02:34:47.891086+00:00] review:start experiment=20
+[2026-03-29T02:35:02.335842+00:00] review:done experiment=20 keep=True headline=SP BPE 4096 coverage=0.997 edges out 0.998 as new frontier at +0.135
+[2026-03-29T02:35:02.336539+00:00] frontier:strategy_update experiment=0020 best_score=-0.304219 strategy_score=0.135122
+[2026-03-29T02:35:24.329567+00:00] experiment:21:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'unigram', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:35:30.670875+00:00] experiment:21:done family=sentencepiece vocab=4096 tpb=0.323866 artifact_frac=0.0364 calibrated_score=0.084145
+[2026-03-29T02:35:30.670983+00:00] review:start experiment=21
+[2026-03-29T02:35:42.979475+00:00] review:done experiment=21 keep=False headline=Unigram 4096 scores +0.084, well behind BPE 4096 frontier at +0.135
+[2026-03-29T02:36:03.774522+00:00] experiment:22:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.996, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:36:18.190558+00:00] experiment:22:done family=sentencepiece vocab=4096 tpb=0.314793 artifact_frac=0.0364 calibrated_score=0.135233
+[2026-03-29T02:36:18.190663+00:00] review:start experiment=22
+[2026-03-29T02:36:28.402588+00:00] review:done experiment=22 keep=False headline=SP BPE 4096 coverage=0.996 ties frontier at +0.135, no improvement
+[2026-03-29T02:36:49.012322+00:00] experiment:23:start type=sentencepiece_train params={'vocab_size': 3584, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:37:03.399348+00:00] experiment:23:done family=sentencepiece vocab=3584 tpb=0.322770 artifact_frac=0.0319 calibrated_score=0.129106
+[2026-03-29T02:37:03.399508+00:00] review:start experiment=23
+[2026-03-29T02:37:18.934501+00:00] review:done experiment=23 keep=False headline=SP BPE 3584 scores 0.129, worse than frontier's -0.304
+[2026-03-29T02:37:48.105358+00:00] experiment:24:start type=sentencepiece_train params={'vocab_size': 4096, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 500000, 'max_chunks': 0}
+[2026-03-29T02:38:03.252753+00:00] experiment:24:done family=sentencepiece vocab=4096 tpb=0.314812 artifact_frac=0.0364 calibrated_score=0.135122
+[2026-03-29T02:38:03.252854+00:00] review:start experiment=24
+[2026-03-29T02:38:17.726139+00:00] review:done experiment=24 keep=False headline=SP BPE 4096 500k-sentence training matches previous best but doesn't improve frontier
+[2026-03-29T02:38:43.183987+00:00] experiment:25:start type=sentencepiece_train params={'vocab_size': 3072, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:38:57.305982+00:00] experiment:25:done family=sentencepiece vocab=3072 tpb=0.331825 artifact_frac=0.0273 calibrated_score=0.116995
+[2026-03-29T02:38:57.306086+00:00] review:start experiment=25
+[2026-03-29T02:39:09.099476+00:00] review:done experiment=25 keep=True headline=SP BPE 3072 coverage=0.997 sets new frontier at +0.117, beating previous best +0.135
+[2026-03-29T02:39:09.100389+00:00] frontier:strategy_update experiment=0025 best_score=-0.304219 strategy_score=0.116995
+[2026-03-29T02:39:22.657698+00:00] experiment:26:start type=sentencepiece_train params={'vocab_size': 2048, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:39:36.480741+00:00] experiment:26:done family=sentencepiece vocab=2048 tpb=0.356931 artifact_frac=0.0182 calibrated_score=0.054485
+[2026-03-29T02:39:36.480859+00:00] review:start experiment=26
+[2026-03-29T02:39:50.321115+00:00] review:done experiment=26 keep=True headline=SP BPE 2048 coverage=0.997 sets new frontier at +0.054, beating previous best +0.117
+[2026-03-29T02:39:50.321884+00:00] frontier:strategy_update experiment=0026 best_score=-0.304219 strategy_score=0.054485
+[2026-03-29T02:40:01.698098+00:00] experiment:27:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:40:15.129173+00:00] experiment:27:done family=sentencepiece vocab=1536 tpb=0.377335 artifact_frac=0.0137 calibrated_score=-0.019711
+[2026-03-29T02:40:15.129284+00:00] review:start experiment=27
+[2026-03-29T02:40:26.404677+00:00] review:done experiment=27 keep=True headline=SP BPE 1536 sets new frontier at -0.020, beating previous best -0.304
+[2026-03-29T02:40:26.405384+00:00] frontier:strategy_update experiment=0027 best_score=-0.304219 strategy_score=-0.019711
+[2026-03-29T02:40:39.182845+00:00] experiment:28:start type=sentencepiece_train params={'vocab_size': 1280, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:40:52.562879+00:00] experiment:28:done family=sentencepiece vocab=1280 tpb=0.392019 artifact_frac=0.0114 calibrated_score=-0.081432
+[2026-03-29T02:40:52.562991+00:00] review:start experiment=28
+[2026-03-29T02:41:05.028987+00:00] review:done experiment=28 keep=False headline=SP BPE 1280 at -0.081 does not beat SP BPE 1536 at -0.020
+[2026-03-29T02:41:40.544771+00:00] experiment:29:start type=sentencepiece_train params={'vocab_size': 1792, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:41:54.162892+00:00] experiment:29:done family=sentencepiece vocab=1792 tpb=0.366030 artifact_frac=0.0159 calibrated_score=0.023444
+[2026-03-29T02:41:54.163053+00:00] review:start experiment=29
+[2026-03-29T02:42:06.184958+00:00] review:done experiment=29 keep=False headline=SP BPE 1792 scores +0.023, worse than 1536's -0.020
+[2026-03-29T02:42:40.868615+00:00] experiment:30:start type=sentencepiece_train params={'vocab_size': 1408, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:42:54.219002+00:00] experiment:30:done family=sentencepiece vocab=1408 tpb=0.384261 artifact_frac=0.0125 calibrated_score=-0.048293
+[2026-03-29T02:42:54.219134+00:00] review:start experiment=30
+[2026-03-29T02:43:06.808549+00:00] review:done experiment=30 keep=False headline=SP BPE 1408 scores -0.048, worse than 1536's -0.020
+[2026-03-29T02:43:26.255199+00:00] experiment:31:start type=sentencepiece_train params={'vocab_size': 1664, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:43:40.109630+00:00] experiment:31:done family=sentencepiece vocab=1664 tpb=0.371143 artifact_frac=0.0148 calibrated_score=0.004839
+[2026-03-29T02:43:40.109735+00:00] review:start experiment=31
+[2026-03-29T02:43:49.889728+00:00] review:done experiment=31 keep=False headline=SP BPE 1664 scores 0.005, worse than 1536's -0.020
+[2026-03-29T02:44:08.694756+00:00] experiment:32:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 2000000, 'max_chunks': 0}
+[2026-03-29T02:44:22.097261+00:00] experiment:32:done family=sentencepiece vocab=1536 tpb=0.377335 artifact_frac=0.0137 calibrated_score=-0.019711
+[2026-03-29T02:44:22.097370+00:00] review:start experiment=32
+[2026-03-29T02:44:35.272605+00:00] review:done experiment=32 keep=True headline=SP BPE 1536 2M-sentence matches frontier best at -0.020, confirming 1536 as optimal vocab size
+[2026-03-29T02:44:35.273664+00:00] frontier:strategy_update experiment=0032 best_score=-0.304219 strategy_score=-0.019711
+[2026-03-29T02:44:55.051713+00:00] experiment:33:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:45:01.993970+00:00] experiment:33:done family=sentencepiece vocab=1536 tpb=0.393354 artifact_frac=0.0137 calibrated_score=-0.107551
+[2026-03-29T02:45:01.994070+00:00] review:start experiment=33
+[2026-03-29T02:45:13.815321+00:00] review:done experiment=33 keep=False headline=SP unigram 1536 scores -0.108, worse than frontier -0.304
+[2026-03-29T02:45:32.205755+00:00] experiment:34:start type=sentencepiece_train params={'vocab_size': 1024, 'model_type': 'bpe', 'character_coverage': 0.997, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:45:45.459006+00:00] experiment:34:done family=sentencepiece vocab=1024 tpb=0.410054 artifact_frac=0.0091 calibrated_score=-0.161451
+[2026-03-29T02:45:45.459144+00:00] review:start experiment=34
+[2026-03-29T02:45:58.560935+00:00] review:done experiment=34 keep=False headline=SP BPE 1024 cc=0.997 scores -0.161, worse than frontier -0.304
+[2026-03-29T02:46:18.416513+00:00] experiment:35:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:46:31.901614+00:00] experiment:35:done family=sentencepiece vocab=1536 tpb=0.376684 artifact_frac=0.0137 calibrated_score=-0.016110
+[2026-03-29T02:46:31.901764+00:00] review:start experiment=35
+[2026-03-29T02:46:44.245886+00:00] review:done experiment=35 keep=False headline=SP BPE 1536 cc=0.995 scores -0.016, not beating frontier -0.020
+[2026-03-29T02:47:25.043288+00:00] experiment:36:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.99, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:47:38.786142+00:00] experiment:36:done family=sentencepiece vocab=1536 tpb=0.375846 artifact_frac=0.0137 calibrated_score=-0.011473
+[2026-03-29T02:47:38.786267+00:00] review:start experiment=36
+[2026-03-29T02:47:52.431205+00:00] review:done experiment=36 keep=True headline=SP BPE 1536 cc=0.99 sets new frontier at -0.011, beating previous best -0.020
+[2026-03-29T02:47:52.432122+00:00] frontier:strategy_update experiment=0036 best_score=-0.304219 strategy_score=-0.011473
+[2026-03-29T02:48:04.523514+00:00] experiment:37:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.98, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:48:17.960310+00:00] experiment:37:done family=sentencepiece vocab=1536 tpb=0.378396 artifact_frac=0.0137 calibrated_score=-0.025583
+[2026-03-29T02:48:17.960420+00:00] review:start experiment=37
+[2026-03-29T02:48:30.236738+00:00] review:done experiment=37 keep=False headline=SP BPE 1536 cc=0.98 scores -0.026, worse than cc=0.99 at -0.011
+[2026-03-29T02:48:52.579904+00:00] experiment:38:start type=sentencepiece_train params={'vocab_size': 1408, 'model_type': 'bpe', 'character_coverage': 0.99, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:49:05.884303+00:00] experiment:38:done family=sentencepiece vocab=1408 tpb=0.382903 artifact_frac=0.0125 calibrated_score=-0.040780
+[2026-03-29T02:49:05.884405+00:00] review:start experiment=38
+[2026-03-29T02:49:17.007825+00:00] review:done experiment=38 keep=False headline=SP BPE 1408/cc=0.99 at -0.041 does not beat frontier -0.011
+[2026-03-29T02:49:38.816745+00:00] experiment:39:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.985, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T02:50:00.069115+00:00] experiment:39:done family=sentencepiece vocab=1536 tpb=0.377691 artifact_frac=0.0137 calibrated_score=-0.021680
+[2026-03-29T02:50:00.069239+00:00] review:start experiment=39
+[2026-03-29T02:50:10.936396+00:00] review:done experiment=39 keep=False headline=SP BPE 1536 cc=0.985 scores -0.022, worse than frontier -0.011 at cc=0.99
+[2026-03-29T02:50:26.791444+00:00] experiment:40:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.99, 'input_sentence_size': 2000000, 'max_chunks': 0}
+[2026-03-29T02:50:40.249050+00:00] experiment:40:done family=sentencepiece vocab=1536 tpb=0.375846 artifact_frac=0.0137 calibrated_score=-0.011473
+[2026-03-29T02:50:40.249153+00:00] review:start experiment=40
+[2026-03-29T02:50:53.010972+00:00] review:done experiment=40 keep=False headline=SP BPE 1536 cc=0.99 2M sentences ties frontier, no improvement from more training data
+[2026-03-29T02:50:53.013382+00:00] run:done
+[2026-03-29T14:27:17.113749+00:00] state:archived_incompatible_run archive=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_proxy_discovery/_archives/20260329T142717Z_b25d848666d1 old_hash=b25d848666d1 new_hash=df21435e17b2
+[2026-03-29T14:27:17.114219+00:00] run:start
+[2026-03-29T14:27:17.114342+00:00] run:config hash=df21435e17b2 split=train
+[2026-03-29T14:27:17.114416+00:00] text_sample:start split=train max_tokens=2000000 max_shards=10 tokens_per_shard=2000000 offset_mode=staggered chunk_tokens=2048
+[2026-03-29T14:27:27.183743+00:00] text_sample:done path=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_proxy_discovery/text_sample.jsonl
+[2026-03-29T14:27:41.075512+00:00] baseline:done tokens_per_byte=0.411282 dead_vocab_frac=0.1416 artifact_frac=0.0091
+[2026-03-29T14:27:41.076376+00:00] calibration:done type=aggregate num_runs=3 family_vocab_rows=11
+[2026-03-29T14:27:52.681031+00:00] experiment:1:start type=tokenmonster_eval params={'vocab_ref': 'english-1024-consistent-v1'}
+[2026-03-29T14:27:58.322771+00:00] experiment:1:done family=tokenmonster vocab=1024 tpb=0.407393 artifact_frac=0.0091 calibrated_score=2.180671
+[2026-03-29T14:27:58.322854+00:00] review:start experiment=1
+[2026-03-29T14:28:11.873357+00:00] review:done experiment=1 keep=True headline=TokenMonster consistent-v1 beats baseline by 0.187 BPB
+[2026-03-29T14:28:11.873965+00:00] frontier:update best=experiment_0001 score=2.180671
+[2026-03-29T14:28:11.874272+00:00] run:done
+[2026-03-29T14:42:53.571873+00:00] state:archived_incompatible_run archive=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_proxy_discovery/_archives/20260329T144253Z_df21435e17b2 old_hash=df21435e17b2 new_hash=c7ce2dfe5846
+[2026-03-29T14:42:53.574316+00:00] run:start
+[2026-03-29T14:42:53.574373+00:00] run:config hash=c7ce2dfe5846 split=train
+[2026-03-29T14:42:53.574423+00:00] text_sample:start split=train max_tokens=2000000 max_shards=10 tokens_per_shard=2000000 offset_mode=staggered chunk_tokens=2048
+[2026-03-29T14:43:03.832333+00:00] text_sample:done path=/Users/simon/Code/parameter-golf/autoresearch/tokenizer_proxy_discovery/text_sample.jsonl
+[2026-03-29T14:43:16.748894+00:00] baseline:done tokens_per_byte=0.411282 dead_vocab_frac=0.1416 artifact_frac=0.0091
+[2026-03-29T14:43:16.749751+00:00] calibration:done type=aggregate num_runs=3 family_vocab_rows=3
+[2026-03-29T14:43:29.808740+00:00] experiment:1:start type=tokenmonster_eval params={'vocab_ref': 'english-1024-balanced-v1'}
+[2026-03-29T14:43:36.615513+00:00] experiment:1:done family=tokenmonster vocab=1024 tpb=0.408178 artifact_frac=0.0091 calibrated_score=4.138639
+[2026-03-29T14:43:36.615604+00:00] review:start experiment=1
+[2026-03-29T14:43:50.369356+00:00] review:done experiment=1 keep=True headline=TokenMonster balanced-v1 beats baseline by 0.23 calibrated BPB
+[2026-03-29T14:43:50.370800+00:00] frontier:update best=experiment_0001 score=4.138639
+[2026-03-29T14:43:58.258030+00:00] experiment:2:start type=tokenmonster_eval params={'vocab_ref': 'english-1024-clean-v1'}
+[2026-03-29T14:44:04.849587+00:00] experiment:2:done family=tokenmonster vocab=1024 tpb=0.405436 artifact_frac=0.0091 calibrated_score=4.208923
+[2026-03-29T14:44:04.849882+00:00] review:start experiment=2
+[2026-03-29T14:44:16.545595+00:00] review:done experiment=2 keep=False headline=clean-v1 scores 4.209 vs balanced-v1's 4.139 — not competitive
+[2026-03-29T14:44:23.492972+00:00] experiment:3:start type=tokenmonster_eval params={'vocab_ref': 'english-1024-consistent-v1'}
+[2026-03-29T14:44:28.919058+00:00] experiment:3:done family=tokenmonster vocab=1024 tpb=0.407393 artifact_frac=0.0091 calibrated_score=4.195432
+[2026-03-29T14:44:28.919197+00:00] review:start experiment=3
+[2026-03-29T14:44:40.956709+00:00] review:done experiment=3 keep=False headline=consistent-v1 (4.195) does not beat balanced-v1 frontier (4.139)
+[2026-03-29T14:44:52.696241+00:00] experiment:4:start type=sentencepiece_train params={'vocab_size': 768, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:45:05.844499+00:00] experiment:4:done family=sentencepiece vocab=768 tpb=0.442425 artifact_frac=0.0068 calibrated_score=4.367682
+[2026-03-29T14:45:05.844830+00:00] review:start experiment=4
+[2026-03-29T14:45:17.577761+00:00] review:done experiment=4 keep=False headline=SP-768 scores 4.368 vs frontier 4.139 — worse by 0.23 calibrated BPB
+[2026-03-29T14:45:33.939721+00:00] experiment:5:start type=sentencepiece_train params={'vocab_size': 1024, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 1000000, 'max_chunks': 0}
+[2026-03-29T14:45:46.909681+00:00] experiment:5:done family=sentencepiece vocab=1024 tpb=0.417399 artifact_frac=0.0091 calibrated_score=4.367682
+[2026-03-29T14:45:46.909774+00:00] review:start experiment=5
+[2026-03-29T14:45:59.051437+00:00] review:done experiment=5 keep=False headline=Retrained SentencePiece still loses to TokenMonster balanced-v1 by 0.23 calibrated BPB
+[2026-03-29T14:46:17.188650+00:00] experiment:6:start type=sentencepiece_train params={'vocab_size': 1024, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:46:24.524336+00:00] experiment:6:done family=sentencepiece vocab=1024 tpb=0.429574 artifact_frac=0.0091 calibrated_score=4.367682
+[2026-03-29T14:46:24.524431+00:00] review:start experiment=6
+[2026-03-29T14:46:35.903263+00:00] review:done experiment=6 keep=False headline=Unigram SentencePiece worse than both baseline BPE and TokenMonster balanced-v1
+[2026-03-29T14:46:44.250222+00:00] experiment:7:start type=sentencepiece_train params={'vocab_size': 896, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:46:57.033872+00:00] experiment:7:done family=sentencepiece vocab=896 tpb=0.429639 artifact_frac=0.0080 calibrated_score=4.367682
+[2026-03-29T14:46:57.033966+00:00] review:start experiment=7
+[2026-03-29T14:47:08.779510+00:00] review:done experiment=7 keep=False headline=SP-896 scores 4.368 vs frontier 4.139 — not competitive
+[2026-03-29T14:47:17.553806+00:00] experiment:8:start type=sentencepiece_train params={'vocab_size': 1024, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 500000, 'max_chunks': 0}
+[2026-03-29T14:47:30.575690+00:00] experiment:8:done family=sentencepiece vocab=1024 tpb=0.417399 artifact_frac=0.0091 calibrated_score=4.367682
+[2026-03-29T14:47:30.575769+00:00] review:start experiment=8
+[2026-03-29T14:47:44.451967+00:00] review:done experiment=8 keep=False headline=Larger SP corpus still loses to TokenMonster balanced-v1 by 0.23 BPB
+[2026-03-29T14:48:22.221855+00:00] experiment:9:start type=sentencepiece_train params={'vocab_size': 512, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:48:34.628221+00:00] experiment:9:done family=sentencepiece vocab=512 tpb=0.488390 artifact_frac=0.0046 calibrated_score=4.367682
+[2026-03-29T14:48:34.628303+00:00] review:start experiment=9
+[2026-03-29T14:48:48.997339+00:00] review:done experiment=9 keep=False headline=SP-512 scores 4.368 vs frontier 4.139 — not competitive
+[2026-03-29T14:49:11.739453+00:00] experiment:10:start type=sentencepiece_train params={'vocab_size': 1152, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:49:30.859536+00:00] experiment:10:done family=sentencepiece vocab=1152 tpb=0.406371 artifact_frac=0.0102 calibrated_score=4.367682
+[2026-03-29T14:49:30.859822+00:00] review:start experiment=10
+[2026-03-29T14:49:41.749533+00:00] review:done experiment=10 keep=False headline=SP-1152 scores 4.368, well behind balanced-v1 frontier at 4.139
+[2026-03-29T14:50:07.686128+00:00] experiment:11:start type=sentencepiece_train params={'vocab_size': 1280, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:50:20.967654+00:00] experiment:11:done family=sentencepiece vocab=1280 tpb=0.398023 artifact_frac=0.0114 calibrated_score=4.367682
+[2026-03-29T14:50:20.967953+00:00] review:start experiment=11
+[2026-03-29T14:50:35.457513+00:00] review:done experiment=11 keep=False headline=SP-1280 scores 4.368, well behind TokenMonster balanced-v1 at 4.139
+[2026-03-29T14:51:01.781514+00:00] experiment:12:start type=sentencepiece_train params={'vocab_size': 1024, 'model_type': 'bpe', 'character_coverage': 0.999, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:51:16.566122+00:00] experiment:12:done family=sentencepiece vocab=1024 tpb=0.412871 artifact_frac=0.0091 calibrated_score=4.367682
+[2026-03-29T14:51:16.566400+00:00] review:start experiment=12
+[2026-03-29T14:51:35.990561+00:00] review:done experiment=12 keep=False headline=SentencePiece 0.999 coverage scores 4.368 vs frontier 4.139 — not competitive
+[2026-03-29T14:51:44.890217+00:00] experiment:13:start type=tokenmonster_eval params={'vocab_ref': 'english-2048-clean-v1'}
+[2026-03-29T14:51:49.982931+00:00] experiment:13:done family=tokenmonster vocab=2048 tpb=0.336569 artifact_frac=0.0182 calibrated_score=4.562725
+[2026-03-29T14:51:49.983012+00:00] review:start experiment=13
+[2026-03-29T14:52:03.085980+00:00] review:done experiment=13 keep=False headline=2048-vocab confirmed worse than 1024 variants, as expected from proxy data
+[2026-03-29T14:52:24.013753+00:00] experiment:14:start type=sentencepiece_train params={'vocab_size': 1536, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:52:38.278724+00:00] experiment:14:done family=sentencepiece vocab=1536 tpb=0.381695 artifact_frac=0.0137 calibrated_score=4.367682
+[2026-03-29T14:52:38.279007+00:00] review:start experiment=14
+[2026-03-29T14:52:50.443410+00:00] review:done experiment=14 keep=False headline=SP-1536 scores 4.368 vs frontier 4.139 — not competitive
+[2026-03-29T14:53:16.575685+00:00] experiment:15:start type=sentencepiece_train params={'vocab_size': 960, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:53:30.109317+00:00] experiment:15:done family=sentencepiece vocab=960 tpb=0.423636 artifact_frac=0.0085 calibrated_score=4.367682
+[2026-03-29T14:53:30.109625+00:00] review:start experiment=15
+[2026-03-29T14:53:41.040476+00:00] review:done experiment=15 keep=False headline=SP BPE 960 scores 4.368 vs frontier 4.139 — not competitive
+[2026-03-29T14:54:00.168272+00:00] experiment:16:start type=sentencepiece_train params={'vocab_size': 768, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:54:07.798539+00:00] experiment:16:done family=sentencepiece vocab=768 tpb=0.457588 artifact_frac=0.0068 calibrated_score=4.367682
+[2026-03-29T14:54:07.798634+00:00] review:start experiment=16
+[2026-03-29T14:54:20.379364+00:00] review:done experiment=16 keep=False headline=SP unigram 768 scores 4.368 vs frontier 4.139 — not competitive
+[2026-03-29T14:54:37.763839+00:00] experiment:17:start type=sentencepiece_train params={'vocab_size': 960, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:54:47.018837+00:00] experiment:17:done family=sentencepiece vocab=960 tpb=0.435606 artifact_frac=0.0085 calibrated_score=4.367682
+[2026-03-29T14:54:47.018939+00:00] review:start experiment=17
+[2026-03-29T14:54:59.009697+00:00] review:done experiment=17 keep=False headline=SentencePiece unigram 960 scores 4.368, well behind frontier 4.139
+[2026-03-29T14:55:20.107321+00:00] experiment:18:start type=sentencepiece_train params={'vocab_size': 1152, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:55:28.125445+00:00] experiment:18:done family=sentencepiece vocab=1152 tpb=0.420018 artifact_frac=0.0102 calibrated_score=4.367682
+[2026-03-29T14:55:28.125544+00:00] review:start experiment=18
+[2026-03-29T14:55:40.334227+00:00] review:done experiment=18 keep=False headline=SentencePiece unigram 1152 scores 4.368 vs frontier 4.139 — no improvement
+[2026-03-29T14:56:05.676815+00:00] experiment:19:start type=sentencepiece_train params={'vocab_size': 1280, 'model_type': 'unigram', 'character_coverage': 0.9995, 'input_sentence_size': 200000, 'max_chunks': 0}
+[2026-03-29T14:56:13.019312+00:00] experiment:19:done family=sentencepiece vocab=1280 tpb=0.410123 artifact_frac=0.0114 calibrated_score=4.367682
+[2026-03-29T14:56:13.019398+00:00] review:start experiment=19
+[2026-03-29T14:56:27.934481+00:00] review:done experiment=19 keep=False headline=SP unigram 1280 scores 4.368 vs frontier 4.139 — not competitive
+[2026-03-29T14:56:47.247002+00:00] experiment:20:start type=sentencepiece_train params={'vocab_size': 1024, 'model_type': 'bpe', 'character_coverage': 0.9995, 'input_sentence_size': 2000000, 'max_chunks': 0}
+[2026-03-29T14:57:01.093648+00:00] experiment:20:done family=sentencepiece vocab=1024 tpb=0.417399 artifact_frac=0.0091 calibrated_score=4.367682
+[2026-03-29T14:57:01.093740+00:00] review:start experiment=20
+[2026-03-29T14:57:13.235608+00:00] review:done experiment=20 keep=False headline=SentencePiece 2M-sentence BPE 1024 scores 4.368, well behind frontier 4.139

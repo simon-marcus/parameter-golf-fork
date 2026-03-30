@@ -90,9 +90,9 @@ Pods land in `/workspace/`. The repo is at `/workspace/parameter-golf/`.
 
 ### Setting Up a New Pod
 
-Preferred custom image/template:
-- Image: `ghcr.io/simon-marcus/parameter-golf-runpod:cuda128-torch210`
-- Template: `vtoarnccmw`
+Recommended pod path:
+- Use the standard template-backed RunPod flow reflected in [`pod.sh`](/Users/simon/Code/parameter-golf/pod.sh)
+- Do not treat the custom image/template path as preferred right now; it is suspended as a default due to cold-start pods that stayed `RUNNING` without becoming SSH-ready
 
 Pod creation rule:
 - Even when using the template, pass `--container-disk-in-gb 50 --volume-in-gb 50` explicitly.
@@ -103,7 +103,7 @@ Example `1xH100` smoke pod:
 ```bash
 runpodctl pod create \
   --name "pg-smoke" \
-  --template-id "vtoarnccmw" \
+  --template-id "y5cejece4j" \
   --gpu-id "NVIDIA H100 80GB HBM3" \
   --gpu-count 1 \
   --cloud-type SECURE \
@@ -117,7 +117,7 @@ Example `8xH100` record pod:
 ```bash
 runpodctl pod create \
   --name "pg-record" \
-  --template-id "vtoarnccmw" \
+  --template-id "y5cejece4j" \
   --gpu-id "NVIDIA H100 80GB HBM3" \
   --gpu-count 8 \
   --cloud-type SECURE \
@@ -160,8 +160,8 @@ Then:
 
 ### RunPod Rules For Agents
 
-- Prefer a pinned prebuilt image/template over rebuilding the environment on expensive pods.
-  Current preferred image/template are in `RUNPOD.md`.
+- Prefer the standard template-backed pod flow over the suspended custom image path.
+  If the custom image/template is being tested again, treat it as experimental until SSH-ready startup is proven reliable.
 - Never launch an expensive run before preflight passes.
   Use `./verify_runpod_data_ready.sh "$DATA_PATH" "$TOKENIZER_PATH"` or a launcher that already calls it.
 - Do not download dataset shards on an `8xH100` pod by default.
@@ -178,10 +178,7 @@ Then:
   If you stop first, assume artifact recovery may fail.
 - Direct TCP SSH/SCP/rsync are part of the contract now.
   If a new image/template breaks direct SSH or `rsync`, do not adopt it.
-- Reused pods are expected for the custom image.
-  Cold starts can be slow; do not judge the image by fresh-host startup time alone.
-- The image must keep the container alive and run `sshd`.
-  If the pod sits in "initializing" or direct TCP SSH is refused, treat that as an image regression.
+- If a pod sits in `RUNNING` / `initializing` without becoming SSH-ready, treat that as an image/template regression and stop using it as the default path.
 
 ### Recommended Run Sequences
 
@@ -206,6 +203,57 @@ ssh root@HOST -p PORT "cd /workspace/parameter-golf && bash ./setup_local_parity
 ssh root@HOST -p PORT "cd /workspace/parameter-golf && bash ./verify_runpod_data_ready.sh /tmp/parameter-golf-data/datasets/fineweb10B_sp1024 /tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model"
 ssh root@HOST -p PORT "cd /workspace/parameter-golf && DATA_ROOT_MODE=tmp bash ./launch_leadercore_ablation_runpod.sh base"
 ```
+
+### Modal 8xH100 Runs
+
+Use the image-root dataset path for serious timing runs on Modal. In our March 29, 2026 A/B smoke test with the official baseline, `image` mode ran at about `45.5ms/step` while `tmp` mode ran at about `46.9ms/step`, so Modal does not show the same `/workspace` vs `/tmp` penalty we saw on Runpod. The launcher still supports `/tmp` staging for explicit comparison, and it verifies shard/tokenizer integrity with the same preflight used on Runpod.
+
+Prereqs:
+- Modal CLI and Python package installed in `.venv-modal`
+- Active Modal profile (`modal profile current`)
+- `HF_TOKEN` available via env or `.env.local` so the image build can fetch the FineWeb export
+
+Recommended sequence:
+
+```bash
+source .venv-modal/bin/activate
+modal profile current
+
+# 8xH100 baseline smoke on Modal
+modal run modal_record_candidate_run.py \
+  --source records/track_10min_16mb/2026-03-17_NaiveBaseline/train_gpt.py \
+  --run-name baseline_modal_image_smoke_8x \
+  --output-dir records/track_10min_16mb/2026-03-29_BaselineModalImageSmoke \
+  --max-wallclock-seconds 60 \
+  --val-loss-every 200 \
+  --train-log-every 50 \
+  --data-root-mode image
+
+# 8xH100 full 10-minute baseline parity check on Modal
+modal run modal_record_candidate_run.py \
+  --source records/track_10min_16mb/2026-03-17_NaiveBaseline/train_gpt.py \
+  --run-name baseline_modal_image_8x \
+  --output-dir records/track_10min_16mb/2026-03-29_BaselineModalImage \
+  --max-wallclock-seconds 600 \
+  --val-loss-every 200 \
+  --train-log-every 50 \
+  --data-root-mode image
+
+# 8xH100 candidate run on Modal
+modal run modal_record_candidate_run.py \
+  --source /absolute/path/to/train_gpt.py \
+  --run-name candidate_modal_image_8x \
+  --output-dir records/track_10min_16mb/<run_name> \
+  --max-wallclock-seconds 600 \
+  --val-loss-every 0 \
+  --train-log-every 50 \
+  --data-root-mode image
+```
+
+Notes:
+- Keep `--data-root-mode image` for normal Modal record runs. Use `tmp` only for explicit A/B checks.
+- `modal_record_candidate_run.py` always runs `verify_runpod_data_ready.sh` before `torchrun`; in `tmp` mode it also copies `/root/parameter-golf/data` into `/tmp/parameter-golf-data` first.
+- Logs and a `submission.json` snapshot are written to the local `--output-dir` after the remote run completes.
 
 Optional on-pod dataset download when you intentionally want it:
 

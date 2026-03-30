@@ -1,0 +1,12 @@
+{
+  "model_params": 26911580,
+  "step_avg_ms": 120.64,
+  "last_step": "4950/9000",
+  "artifact_bytes": 15720792,
+  "roundtrip_postquant_val_loss": 2.00242532,
+  "roundtrip_postquant_val_bpb": 1.12058281,
+  "sliding_postquant_val_loss": 1.96392588,
+  "sliding_postquant_val_bpb": 1.09903564,
+  "legal_ttt_postquant_val_loss": 1.95893266,
+  "legal_ttt_postquant_val_bpb": 1.09624138
+}
