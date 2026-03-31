@@ -31,6 +31,11 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Append TokenMonsterHexEncode{XX} entries for any missing bytes in 0x80..0xFF",
     )
+    parser.add_argument(
+        "--add-missing-byte-tokens",
+        action="store_true",
+        help="Append TokenMonsterHexEncode{XX} entries for any missing bytes in 0x00..0xFF",
+    )
     return parser
 
 
@@ -62,7 +67,9 @@ def main() -> None:
         for token_id in sorted(delete_ids, reverse=True):
             derived.delete_token_by_id(token_id)
 
-    if args.add_missing_high_byte_tokens:
+    output_yaml_bytes: bytes | None = None
+
+    if args.add_missing_high_byte_tokens or args.add_missing_byte_tokens:
         yaml_lines = derived.export_yaml().decode("utf-8").splitlines()
         existing_hex: set[str] = set()
         max_id = -1
@@ -73,7 +80,8 @@ def main() -> None:
             id_match = re.search(r"\bid:\s+(\d+)", line)
             if id_match:
                 max_id = max(max_id, int(id_match.group(1)))
-        missing_hex = [f"{byte:02x}" for byte in range(0x80, 0x100) if f"{byte:02x}" not in existing_hex]
+        byte_range = range(0x00, 0x100) if args.add_missing_byte_tokens else range(0x80, 0x100)
+        missing_hex = [f"{byte:02x}" for byte in byte_range if f"{byte:02x}" not in existing_hex]
         if missing_hex:
             insert_at = max(i for i, line in enumerate(yaml_lines) if "TokenMonsterHexEncode{" in line) + 4
             appended: list[str] = []
@@ -90,6 +98,7 @@ def main() -> None:
                 )
             yaml_text = "\n".join(yaml_lines[:insert_at] + appended + yaml_lines[insert_at:]) + "\n"
             derived = tokenmonster.new(yaml_text)
+            output_yaml_bytes = yaml_text.encode("utf-8")
         else:
             missing_hex = []
     else:
@@ -97,7 +106,7 @@ def main() -> None:
 
     output_path = Path(args.output_path).expanduser().resolve()
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_bytes = derived.export_yaml()
+    output_bytes = output_yaml_bytes if output_yaml_bytes is not None else derived.export_yaml()
     output_path.write_bytes(output_bytes)
 
     summary = {
@@ -113,6 +122,7 @@ def main() -> None:
         "delete_raw_regex": args.delete_raw_regex,
         "delete_decoded_regex": args.delete_decoded_regex,
         "add_missing_high_byte_tokens": bool(args.add_missing_high_byte_tokens),
+        "add_missing_byte_tokens": bool(args.add_missing_byte_tokens),
         "missing_high_byte_tokens_added": len(missing_hex),
         "missing_high_byte_values_sample": missing_hex[:20],
     }
