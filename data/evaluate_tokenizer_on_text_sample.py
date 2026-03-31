@@ -6,6 +6,7 @@ from collections import Counter
 from pathlib import Path
 
 import numpy as np
+from tokenmonster_utils import load_tokenmonster_vocab
 
 
 def iter_texts(path: Path, max_chunks: int | None = None):
@@ -17,17 +18,18 @@ def iter_texts(path: Path, max_chunks: int | None = None):
 
 
 def evaluate_tokenmonster(vocab_ref: str, sample_path: Path, *, max_chunks: int | None) -> dict[str, object]:
-    try:
-        import tokenmonster
-    except ImportError as exc:
-        raise RuntimeError("tokenmonster is required for tokenmonster evaluation") from exc
-    vocab = tokenmonster.load(vocab_ref)
+    vocab = load_tokenmonster_vocab(vocab_ref)
     token_counter: Counter[int] = Counter()
     total_bytes = 0
     total_tokens = 0
     total_chunks = 0
     for text in iter_texts(sample_path, max_chunks=max_chunks):
-        ids = np.asarray(vocab.tokenize(text), dtype=np.int64).reshape(-1)
+        try:
+            tokenized = vocab.tokenize(text)
+        except UnicodeEncodeError:
+            # Byte-native TokenMonster vocabs expect exact input bytes, not a Unicode-normalized string path.
+            tokenized = vocab.tokenize(text.encode("utf-8"))
+        ids = np.asarray(tokenized, dtype=np.int64).reshape(-1)
         total_chunks += 1
         total_tokens += int(ids.size)
         total_bytes += len(text.encode("utf-8"))

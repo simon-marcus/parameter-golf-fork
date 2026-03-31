@@ -5,6 +5,7 @@ import json
 import re
 from pathlib import Path
 
+from tokenmonster_utils import load_tokenmonster_vocab
 
 def is_regular(item: dict[str, object]) -> bool:
     return str(item.get("type", "")) == "regular"
@@ -46,12 +47,7 @@ def build_parser() -> argparse.ArgumentParser:
 
 def main() -> None:
     args = build_parser().parse_args()
-    try:
-        import tokenmonster
-    except ImportError as exc:
-        raise RuntimeError("tokenmonster is required for build_tokenmonster_candidate.py") from exc
-
-    vocab = tokenmonster.load(args.base_vocab)
+    vocab = load_tokenmonster_vocab(args.base_vocab)
     before_size = int(vocab.vocab_size)
     delete_regexes = [re.compile(p) for p in args.delete_regex]
     dictionary = vocab.get_dictionary()

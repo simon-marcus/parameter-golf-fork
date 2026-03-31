@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 import numpy as np
+from tokenmonster_utils import load_tokenmonster_vocab
 
 
 DATAFILE_MAGIC = 20240520
@@ -56,11 +57,7 @@ def encode_sentencepiece(model_path: Path, text_path: Path, *, max_chunks: int |
 
 
 def encode_tokenmonster(vocab_ref: str, text_path: Path, *, max_chunks: int | None) -> np.ndarray:
-    try:
-        import tokenmonster
-    except ImportError as exc:
-        raise RuntimeError("tokenmonster is required for build_proxy_tokenizer_dataset.py") from exc
-    vocab = tokenmonster.load(vocab_ref)
+    vocab = load_tokenmonster_vocab(vocab_ref)
     pieces: list[np.ndarray] = []
     for text in iter_texts(text_path, max_chunks=max_chunks):
         ids = np.asarray(vocab.tokenize(text), dtype=np.uint16).reshape(-1)

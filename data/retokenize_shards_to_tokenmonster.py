@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
+from tokenmonster_utils import load_tokenmonster_vocab
 
 
 VERSION = "10B"
@@ -98,6 +99,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--max-val-shards", type=int, default=0)
     parser.add_argument("--max-train-docs", type=int, default=0)
     parser.add_argument("--max-val-docs", type=int, default=0)
+    parser.add_argument(
+        "--allow-normalized",
+        action="store_true",
+        help="Allow TokenMonster vocabularies with non-None normalization. Unsafe for exact competition bundles.",
+    )
     return parser
 
 
@@ -152,7 +158,6 @@ def main() -> None:
     args = build_parser().parse_args()
     try:
         import sentencepiece as spm
-        import tokenmonster
     except ImportError as exc:
         raise RuntimeError("sentencepiece and tokenmonster are required") from exc
 
@@ -178,7 +183,14 @@ def main() -> None:
         source_val = source_val[: int(args.max_val_shards)]
 
     vocab_ref = args.tokenizer_path
-    vocab = tokenmonster.load(vocab_ref)
+    vocab = load_tokenmonster_vocab(vocab_ref)
+    normalization = str(vocab.normalization())
+    if normalization != "None" and not args.allow_normalized:
+        raise RuntimeError(
+            "refusing to build a competition bundle from a normalizing TokenMonster vocabulary: "
+            f"{vocab_ref!r} reports normalization={normalization!r}. "
+            "This can change the underlying byte stream."
+        )
     vocab_size = int(vocab.vocab_size)
     bos_id: int | None = None
     eos_id: int | None = None
@@ -301,7 +313,11 @@ def main() -> None:
                 "recommended_bigram_vocab_size": ((vocab_size + 127) // 128) * 128 * 5,
                 "path": str(tokenizer_dst),
                 "meta_path": str(meta_path),
-                "source_spec": {"kind": "tokenmonster", "source_model": str(vocab_ref)},
+                "source_spec": {
+                    "kind": "tokenmonster",
+                    "source_model": str(vocab_ref),
+                    "normalization": normalization,
+                },
             }
         ],
         "datasets": [

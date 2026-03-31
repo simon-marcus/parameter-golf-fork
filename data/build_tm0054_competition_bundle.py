@@ -136,6 +136,28 @@ def main() -> None:
         ],
         cwd=ROOT,
     )
+    run(
+        [
+            sys.executable,
+            str(ROOT / "data" / "audit_tokenmonster_bundle.py"),
+            "--source-root",
+            str(source_root),
+            "--source-dataset",
+            args.source_dataset,
+            "--source-tokenizer",
+            args.source_tokenizer,
+            "--bundle-root",
+            str(output_root),
+            "--bundle-dataset",
+            args.dataset_name,
+            "--bundle-tokenizer",
+            str(Path("tokenizers") / tokenizer_path.name),
+            "--bundle-meta",
+            str(Path("tokenizers") / f"{tokenizer_path.stem}.meta.npz"),
+            "--strict",
+        ],
+        cwd=ROOT,
+    )
 
     summary = {
         "source_root": str(source_root),

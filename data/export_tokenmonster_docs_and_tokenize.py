@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+from tokenmonster_utils import load_tokenmonster_vocab
 
 
 VERSION = "10B"
@@ -195,11 +196,6 @@ def main() -> None:
     if args.chunk_tokens <= 0:
         raise ValueError("--chunk-tokens must be positive")
 
-    try:
-        import tokenmonster
-    except ImportError as exc:
-        raise RuntimeError("tokenmonster is required for export_tokenmonster_docs_and_tokenize.py") from exc
-
     source_root = Path(args.source_root).expanduser().resolve()
     output_root = Path(args.output_root).expanduser().resolve()
     output_root.mkdir(parents=True, exist_ok=True)
@@ -223,7 +219,7 @@ def main() -> None:
         num_val_docs = int(source_manifest.get("num_val_docs") or NUM_VAL_DOCS)
 
     tokenizer_ref = args.tokenizer_path
-    vocab = tokenmonster.load(tokenizer_ref)
+    vocab = load_tokenmonster_vocab(tokenizer_ref)
     vocab_size = int(vocab.vocab_size)
     bos_id = int(vocab.token_to_id("<s>"))
     eos_id = int(vocab.token_to_id("</s>"))
