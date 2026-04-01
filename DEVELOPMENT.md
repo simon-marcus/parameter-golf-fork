@@ -51,6 +51,47 @@ Interpretation:
 
 # Current Work and Next Steps
 
+## Current Scylla-v2 Status
+
+The corrected Scylla-v2 tokenizer bundle is now exact and auditable.
+
+Current exact bundle:
+
+- bundle root:
+  - `/Users/simon/Code/parameter-golf-local/scylla_v2_cap0_competition_export`
+- tokenizer:
+  - `tokenizers/scylla_v2_cap0_fullbyte.yaml`
+  - `tokenizers/scylla_v2_cap0_fullbyte.meta.npz`
+- dataset:
+  - `11` train shards
+  - `1` val shard
+  - `835,771` docs total
+
+Strict full-bundle audit now passes exactly:
+
+- `bad_docs = 0`
+- `source_bytes = 151080891`
+- `meta_bytes = 151080891`
+- `decoded_bytes = 151080891`
+- `meta_overcount_frac = 0.0`
+- `decoded_drift_frac = 0.0`
+
+So the old PR concern has been resolved for Scylla-v2:
+
+- byte accounting is now correct
+- the flat dataset bundle now preserves exact document bytes
+- the remaining open question is model quality under the legal competition stack
+
+## Immediate Submission Plan
+
+The next sequence is:
+
+1. stage Scylla-v2 onto the RunPod network volume using the cheap prep pod
+2. launch a `1xH100` smoke run with the current best legal score-first TTT stack
+3. compare against baseline `sp1024`
+4. if Scylla-v2 is still directionally strong, promote it to the `8xH100` legal ladder
+5. only then revisit PR/submission packaging
+
 ## Current status
 
 The promoted tokenizer path has already cleared its first real training gate.

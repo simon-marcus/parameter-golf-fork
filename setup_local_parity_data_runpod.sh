@@ -5,11 +5,20 @@ SRC_ROOT="${1:-/workspace/parameter-golf/data}"
 DEST_ROOT="${2:-/tmp/parameter-golf-data}"
 VARIANT="${3:-fineweb10B_sp1024}"
 TOKENIZER_BASENAME="${4:-fineweb_1024_bpe}"
+ARCHIVE_ROOT="${ARCHIVE_ROOT:-$SRC_ROOT/archives}"
+ARCHIVE_PATH="${ARCHIVE_PATH:-$ARCHIVE_ROOT/${VARIANT}__${TOKENIZER_BASENAME}.tar.zst}"
+STAGE_USE_ARCHIVE="${STAGE_USE_ARCHIVE:-1}"
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 
 SRC_DATASET_DIR="$SRC_ROOT/datasets/$VARIANT"
 SRC_TOKENIZER_DIR="$SRC_ROOT/tokenizers"
 DEST_DATASET_DIR="$DEST_ROOT/datasets/$VARIANT"
 DEST_TOKENIZER_DIR="$DEST_ROOT/tokenizers"
+
+if [[ "$STAGE_USE_ARCHIVE" != "0" && -f "$ARCHIVE_PATH" ]]; then
+  bash "$SCRIPT_DIR/stage_runpod_data_archive.sh" "$ARCHIVE_PATH" "$DEST_ROOT" "$VARIANT" "$TOKENIZER_BASENAME"
+  exit 0
+fi
 
 rm -rf "$DEST_DATASET_DIR" "$DEST_TOKENIZER_DIR"
 mkdir -p "$DEST_DATASET_DIR" "$DEST_TOKENIZER_DIR"

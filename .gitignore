@@ -16,11 +16,32 @@ autoresearch/logs/
 autoresearch/history.jsonl
 autoresearch/*.best.py
 autoresearch/experiments/*/train.log
+autoresearch.out
+# Namespaced autoresearch subdir runtime artifacts
+autoresearch/*/_archives/
+autoresearch/*/experiments/
+autoresearch/*/logs/
+autoresearch/*/history.jsonl
+autoresearch/*/*.best.py
+autoresearch/*/run.log
+autoresearch/*/run_manifest.json
+autoresearch/*/frontier.json
+autoresearch/*/latest_review.md
+autoresearch/*/baseline_eval.json
+autoresearch/*/autoresearch.out
+autoresearch/scylla_decoder/
+autoresearch/tokenmonster_byte_native_discovery/
 **/text_sample.jsonl
 **/pass1_arrays.npz
 **/final_model.pt
 **/final_model.int6.ptz
-autoresearch.out
+# Runtime artifact directories
+proxy_validation/
+runpod_artifacts/
+scylla_csv/
+modal_logs/
+.claude/
+**/autoresearch_cache/
 final_model*
 *.ptz
 *.raw

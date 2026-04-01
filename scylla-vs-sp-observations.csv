@@ -1,0 +1,8 @@
+STEP,Scylla,sp1024
+step:100/9000,train_loss:4.3881 train_time:62680ms step_avg:626.80ms,train_loss:4.7139 train_time:62231ms step_avg:622.31ms
+step:200/9000,train_loss:3.7040 train_time:153289ms step_avg:766.45ms,train_loss:3.6929 train_time:125713ms step_avg:628.56ms
+final_int8_zlib_roundtrip_exact,val_loss:6.23033433 val_bpb:3.86079038,val_loss:7.90979504 val_bpb:4.68463856
+ttt_chunk [1/1981],bpb=3.787657,bpb=3.787657
+ttt_chunk [201/1981],bpb=2.878738,bpb=2.878738
+ttt_chunk [801/1981] ,bpb=2.660261,bpb=2.660261
+legal_ttt_exact,val_loss:4.15415854 val_bpb:2.57423349,val_loss:4.27743447 val_bpb:2.53334434

@@ -5,7 +5,11 @@ import json
 from pathlib import Path
 
 import numpy as np
-from tokenmonster_utils import load_tokenmonster_vocab
+from tokenmonster_utils import (
+    load_tokenmonster_vocab,
+    tokenmonster_byte_encoding,
+    tokenmonster_decoded_text_to_bytes,
+)
 
 DATAFILE_MAGIC = 20240520
 DATAFILE_VERSION = 1
@@ -32,6 +36,19 @@ def dataset_path(manifest: dict, dataset_name: str, bundle_root: Path) -> Path:
         if entry.get("name") == dataset_name:
             return bundle_root / Path(entry["path"])
     raise KeyError(f"dataset {dataset_name!r} not found in manifest")
+
+
+def split_docs(tokens: np.ndarray, *, bos_id: int) -> list[np.ndarray]:
+    docs: list[np.ndarray] = []
+    start: int | None = None
+    for i, token in enumerate(tokens.tolist()):
+        if int(token) == bos_id:
+            if start is not None:
+                docs.append(tokens[start:i])
+            start = i + 1
+    if start is not None and start <= len(tokens):
+        docs.append(tokens[start:])
+    return docs
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -71,40 +88,48 @@ def main() -> None:
     sp = spm.SentencePieceProcessor(model_file=str(source_root / "tokenizers" / args.source_tokenizer))
     vocab = load_tokenmonster_vocab(str(bundle_root / args.bundle_tokenizer))
     meta = np.load(bundle_root / args.bundle_meta, allow_pickle=False)
+    bundle_encoding = tokenmonster_byte_encoding(vocab)
 
     source_val = read_tokens(source_val_path)
     bundle_val = read_tokens(bundle_val_path)
+    bundle_dataset_entry = next(x for x in bundle_manifest.get("datasets", []) if x.get("name") == args.bundle_dataset)
+    bos_id = int(bundle_dataset_entry.get("bos_id", -1))
+    if bos_id < 0:
+        raise SystemExit("TokenMonster bundle audit requires an explicit bos_id to preserve document boundaries")
 
-    source_bytes = 0
-    chunk = 200_000
-    for i in range(0, len(source_val), chunk):
-        text = sp.DecodeIds(source_val[i : i + chunk].astype(int).tolist())
-        source_bytes += len(text.encode("utf-8"))
+    source_bos = int(sp.bos_id())
+    source_docs = split_docs(source_val, bos_id=source_bos)
+    source_doc_bytes = [sp.DecodeIds(doc.astype(int).tolist()).encode("utf-8") for doc in source_docs]
+    source_bytes = sum(len(doc) for doc in source_doc_bytes)
 
     meta_bytes = int(np.asarray(meta["base_bytes"], dtype=np.int64)[bundle_val].sum())
 
-    decoded_bytes = 0
-    dec = vocab.decoder()
-    for i in range(0, len(bundle_val), chunk):
-        text = dec.decode(bundle_val[i : i + chunk])
-        decoded_bytes += len(text.encode("utf-8"))
+    bundle_docs = split_docs(bundle_val, bos_id=bos_id)
+    decoded_doc_bytes = [tokenmonster_decoded_text_to_bytes(vocab.decoder().decode(doc), vocab) for doc in bundle_docs if len(doc) > 0]
+    decoded_bytes = sum(len(doc) for doc in decoded_doc_bytes)
+    bad_docs = sum(1 for src, dec in zip(source_doc_bytes, decoded_doc_bytes) if src != dec)
 
     summary = {
         "source_val_tokens": int(len(source_val)),
         "bundle_val_tokens": int(len(bundle_val)),
+        "source_val_docs": int(len(source_docs)),
+        "bundle_val_docs": int(len(bundle_docs)),
+        "bos_id": bos_id,
         "source_bytes": int(source_bytes),
         "meta_bytes": int(meta_bytes),
         "decoded_bytes": int(decoded_bytes),
+        "bad_docs": int(bad_docs),
         "meta_overcount_frac": float(meta_bytes / source_bytes - 1.0),
         "decoded_drift_frac": float(decoded_bytes / source_bytes - 1.0),
         "normalization": str(vocab.normalization()),
+        "charset_encoding": bundle_encoding,
     }
     print(json.dumps(summary, indent=2))
 
-    if args.strict and decoded_bytes != source_bytes:
+    if args.strict and (len(source_docs) != len(decoded_doc_bytes) or bad_docs != 0):
         raise SystemExit(
-            "TokenMonster bundle does not decode back to the exact source validation byte stream: "
-            f"source_bytes={source_bytes} decoded_bytes={decoded_bytes}"
+            "TokenMonster bundle does not decode back to the exact source validation documents: "
+            f"source_docs={len(source_docs)} decoded_docs={len(decoded_doc_bytes)} bad_docs={bad_docs}"
         )
 
 

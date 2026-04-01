@@ -9,7 +9,7 @@ from pathlib import Path
 from typing import Iterable
 
 import numpy as np
-from tokenmonster_utils import load_tokenmonster_vocab
+from tokenmonster_utils import load_tokenmonster_vocab, tokenmonster_byte_encoding
 
 
 VERSION = "10B"
@@ -185,13 +185,14 @@ def main() -> None:
     vocab_ref = args.tokenizer_path
     vocab = load_tokenmonster_vocab(vocab_ref)
     normalization = str(vocab.normalization())
+    byte_encoding = tokenmonster_byte_encoding(vocab)
     if normalization != "None" and not args.allow_normalized:
         raise RuntimeError(
             "refusing to build a competition bundle from a normalizing TokenMonster vocabulary: "
             f"{vocab_ref!r} reports normalization={normalization!r}. "
             "This can change the underlying byte stream."
         )
-    vocab_size = int(vocab.vocab_size)
+    logical_vocab_size = int(vocab.vocab_size)
     bos_id: int | None = None
     eos_id: int | None = None
 
@@ -202,6 +203,16 @@ def main() -> None:
     else:
         vocab.save(str(tokenizer_dst))
     meta_path = tokenizers_dir / f"{tokenizer_dst.stem}.meta.npz"
+    dictionary = vocab.get_dictionary()
+    max_token_id = max(int(item["id"]) for item in dictionary.values())
+    real_vocab_size = max_token_id + 1
+    bos_id = real_vocab_size
+    vocab_size = bos_id + 1
+    token_decoded_by_id = [""] * vocab_size
+    for item in dictionary.values():
+        token_id = int(item["id"])
+        if 0 <= token_id < vocab_size:
+            token_decoded_by_id[token_id] = str(item["token_decoded"])
     np.savez_compressed(
         meta_path,
         format_version=np.int64(1),
@@ -209,11 +220,11 @@ def main() -> None:
         source_model_name=np.array(str(vocab_ref)),
         vocab_size=np.int64(vocab_size),
         base_bytes=np.asarray(
-            [len(str(vocab.get_dictionary()[i]["token_decoded"]).encode("utf-8")) for i in range(vocab_size)],
+            [len(token_decoded_by_id[i].encode(byte_encoding)) for i in range(vocab_size)],
             dtype=np.int16,
         ),
         has_leading_space=np.zeros((vocab_size,), dtype=np.bool_),
-        is_boundary_token=np.zeros((vocab_size,), dtype=np.bool_),
+        is_boundary_token=np.asarray([i == bos_id for i in range(vocab_size)], dtype=np.bool_),
     )
 
     output_dir = datasets_dir / args.dataset_name
@@ -237,6 +248,11 @@ def main() -> None:
     fill = 0
     split = "val"
 
+    def tokenize_texts(texts: list[str]):
+        if normalization == "None":
+            return vocab.tokenize([text.encode("utf-8") for text in texts])
+        return vocab.tokenize(texts)
+
     def process_docs(doc_iter: Iterable[list[int]], split_name: str, *, max_docs: int) -> None:
         nonlocal fill, split
         batch: list[list[int]] = []
@@ -247,8 +263,11 @@ def main() -> None:
             batch.append(doc_tokens)
             if len(batch) >= DECODE_BATCH_DOCS:
                 texts = sp.decode(batch)
-                encoded_docs = vocab.tokenize(texts)
+                encoded_docs = tokenize_texts(texts)
                 for encoded in encoded_docs:
+                    if max_docs > 0 and processed >= max_docs:
+                        batch.clear()
+                        return
                     if split != split_name:
                         fill = flush_buf(buf, fill, split, shard_idx, output_dir, stats)
                         split = split_name
@@ -272,8 +291,10 @@ def main() -> None:
             if not batch:
                 return
             texts = sp.decode(batch)
-            encoded_docs = vocab.tokenize(texts)
+            encoded_docs = tokenize_texts(texts)
             for encoded in encoded_docs:
+                if max_docs > 0 and processed >= max_docs:
+                    return
                 if split != split_name:
                     fill = flush_buf(buf, fill, split, shard_idx, output_dir, stats)
                     split = split_name
@@ -308,7 +329,9 @@ def main() -> None:
                 "name": args.tokenizer_name,
                 "kind": "tokenmonster",
                 "vocab_size": vocab_size,
-                "bos_id": -1,
+                "logical_vocab_size": logical_vocab_size,
+                "max_token_id": max_token_id,
+                "bos_id": bos_id,
                 "eos_id": -1,
                 "recommended_bigram_vocab_size": ((vocab_size + 127) // 128) * 128 * 5,
                 "path": str(tokenizer_dst),
@@ -317,6 +340,8 @@ def main() -> None:
                     "kind": "tokenmonster",
                     "source_model": str(vocab_ref),
                     "normalization": normalization,
+                    "logical_vocab_size": logical_vocab_size,
+                    "max_token_id": max_token_id,
                 },
             }
         ],
@@ -329,7 +354,9 @@ def main() -> None:
                 "train_glob": str(output_dir / "fineweb_train_*.bin"),
                 "val_glob": str(output_dir / "fineweb_val_*.bin"),
                 "vocab_size": vocab_size,
-                "bos_id": -1,
+                "logical_vocab_size": logical_vocab_size,
+                "max_token_id": max_token_id,
+                "bos_id": bos_id,
                 "eos_id": -1,
                 "recommended_bigram_vocab_size": ((vocab_size + 127) // 128) * 128 * 5,
                 "stats": stats,

@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 
 import numpy as np
-from tokenmonster_utils import load_tokenmonster_vocab
+from tokenmonster_utils import load_tokenmonster_vocab, tokenmonster_byte_encoding
 
 
 FORMAT_VERSION = 1
@@ -31,15 +31,16 @@ def build_tokenmonster_luts(vocab_ref: str, *, allow_normalized: bool = False) -
     normalization = require_exact_byte_preserving_vocab(
         vocab, vocab_ref=vocab_ref, allow_normalized=allow_normalized
     )
-    vocab_size = int(vocab.vocab_size)
+    byte_encoding = tokenmonster_byte_encoding(vocab)
+    dictionary = vocab.get_dictionary()
+    vocab_size = max(int(item["id"]) for item in dictionary.values()) + 1
     base_bytes = np.zeros((vocab_size,), dtype=np.int16)
     has_leading_space = np.zeros((vocab_size,), dtype=np.bool_)
     is_boundary_token = np.zeros((vocab_size,), dtype=np.bool_)
-    dictionary = vocab.get_dictionary()
-    for token_id in range(vocab_size):
-        item = dictionary[token_id]
+    for item in dictionary.values():
+        token_id = int(item["id"])
         piece = str(item["token_decoded"])
-        base_bytes[token_id] = len(piece.encode("utf-8"))
+        base_bytes[token_id] = len(piece.encode(byte_encoding))
     return base_bytes, has_leading_space, is_boundary_token, vocab_size, normalization
 
 
