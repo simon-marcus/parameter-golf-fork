@@ -285,3 +285,27 @@ Current leader-stack conclusion:
 Operational note:
 - the raw logs for the last `600s` `0.05` / `0.10` follow-up were not fully copied before pod shutdown because pull and stop were launched in parallel.
 - the exact final metrics above were captured before shutdown and preserved here.
+
+## 2026-04-01 CPU Staging Probe
+
+Goal:
+- measure whether direct ordinary AWS S3 -> Runpod is fast enough to replace slow pod-to-pod archive copies for future leader-stack promotions
+
+Setup:
+- archive under test:
+  - `s3://parameter-golf-staging-094651608775/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst`
+- method:
+  - generate a presigned URL locally
+  - on each cheap CPU pod, `curl -L -r 0-536870911` the first `512MB`
+  - compare `speed_download`
+
+Results:
+- `US-GA-2` cheap CPU pod (`runpod/parameter-golf:latest`): about `35.5 MB/s`
+- `US-GA-2` prep pod (`runpod/base:1.0.2-ubuntu2204`): about `57.3 MB/s`
+- `US-IL-1` cheap CPU pod (`runpod/parameter-golf:latest`): about `46.1 MB/s`
+- `AP-IN-1` cheap staging pod (`runpod/parameter-golf:latest`): about `5.0 MB/s`
+
+Interpretation:
+- direct AWS S3 -> Runpod is a viable staging path in at least some US regions
+- `AP-IN-1` remains a bad fit for data-heavy startup unless the archive is already local
+- Canada CPU probes could not be completed because `CA-MTL-1`, `CA-MTL-2`, and `CA-MTL-3` had no available CPU capacity at probe time

@@ -163,6 +163,114 @@ Reusable prep assets:
 - code bundle: `/workspace/pg-data/parameter-golf/staging_bundles/parameter-golf-leader-stack-jepa-bundle.tar`
 - relay helper: `/workspace/pg-data/parameter-golf/relay_runpod_archive.sh`
 
+## Runpod S3-Compatible API
+
+The Runpod S3-compatible API is a strong candidate for reducing prep friction, but it only works in the datacenters listed in Runpod's S3 docs. `AP-IN-1` is not currently on that list, so do not assume the S3 path will help an `AP-IN-1` run directly.
+
+What is ready in this repo:
+- [runpod_s3_env.example](/Users/simon/Code/parameter-golf/runpod_s3_env.example)
+- [runpod_s3_probe.sh](/Users/simon/Code/parameter-golf/runpod_s3_probe.sh)
+- [runpod_s3_cp.sh](/Users/simon/Code/parameter-golf/runpod_s3_cp.sh)
+- [runpod_s3_sync_leader_stack_assets.sh](/Users/simon/Code/parameter-golf/runpod_s3_sync_leader_stack_assets.sh)
+
+Current state:
+- existing supported volume: `gs27hsi4q0` in `US-GA-2`
+- local `aws` CLI is installed
+- current local AWS credentials are **not** a Runpod S3 API key, so Runpod S3 auth currently fails with `SignatureDoesNotMatch`
+
+Next step before S3 testing:
+1. Create a Runpod S3 API key in the Runpod console.
+2. Export those credentials or place them in an AWS profile.
+3. Run:
+
+```bash
+cp runpod_s3_env.example .env.runpod-s3
+# fill in AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY from Runpod S3 API Keys
+source .env.runpod-s3
+bash ./runpod_s3_probe.sh
+```
+
+If the probe works, then sync the regular leader-stack assets:
+
+```bash
+source .env.runpod-s3
+bash ./prepare_leader_stack_jepa_bundle.sh
+bash ./runpod_s3_sync_leader_stack_assets.sh
+```
+
+## AWS S3 Staging
+
+Independent of Runpod's S3-compatible API, we can also use ordinary AWS S3 as a cross-region staging source for Runpod pods.
+
+Current AWS staging bucket:
+- `parameter-golf-staging-094651608775`
+
+Current staged objects:
+- leader-stack `sp1024` archive:
+  - `s3://parameter-golf-staging-094651608775/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst`
+- JEPA isolation `byte260` archive:
+  - `s3://parameter-golf-staging-094651608775/data/archives/fineweb10B_byte260__fineweb_pure_byte_260.tar.zst`
+- `byte260` archive manifest:
+  - `s3://parameter-golf-staging-094651608775/data/archives/fineweb10B_byte260__fineweb_pure_byte_260.manifest.tsv`
+- leader-stack code bundle:
+  - `s3://parameter-golf-staging-094651608775/staging_bundles/parameter-golf-leader-stack-jepa-bundle.tar`
+- leader-stack bundle manifest:
+  - `s3://parameter-golf-staging-094651608775/staging_bundles/parameter-golf-leader-stack-jepa-bundle.MANIFEST.txt`
+- JEPA isolation bundle:
+  - `s3://parameter-golf-staging-094651608775/staging_bundles/parameter-golf-jepa-iso-bundle.tar`
+- JEPA isolation bundle manifest:
+  - `s3://parameter-golf-staging-094651608775/staging_bundles/parameter-golf-jepa-iso-bundle.MANIFEST.txt`
+
+Validated behavior:
+- uploaded the leader-stack bundle successfully
+- downloaded that bundle directly onto a Runpod pod in `AP-IN-1` using a presigned URL and `curl`
+- uploaded the full `sp1024` archive to ordinary AWS S3
+- uploaded the reusable `byte260` archive and JEPA isolation bundle to ordinary AWS S3
+
+Operational implication:
+- a Runpod pod does not need `aws` installed to fetch from ordinary AWS S3 if we generate presigned URLs locally
+- this is a viable fallback for regions like `AP-IN-1` that are not in Runpod's S3-compatible datacenter list
+
+Measured `512MB` ranged download throughput from AWS S3 to cheap CPU pods using a presigned URL:
+- `US-GA-2` (`runpod/parameter-golf:latest` CPU pod): `time_total=14.402087`, `speed_download=37277299` bytes/s, about `35.5 MB/s`
+- `US-GA-2` prep pod (`runpod/base:1.0.2-ubuntu2204`): `time_total=8.935649`, `speed_download=60081915` bytes/s, about `57.3 MB/s`
+- `US-IL-1` (`runpod/parameter-golf:latest` CPU pod): `time_total=11.098344`, `speed_download=48373965` bytes/s, about `46.1 MB/s`
+- `AP-IN-1` (`runpod/parameter-golf:latest` cheap staging pod): `time_total=103.007029`, `speed_download=5211983` bytes/s, about `5.0 MB/s`
+
+Current conclusion:
+- `AP-IN-1` is high-risk for data-heavy staging. Avoid renting `8xH100` there unless the archive is already local.
+- `US-GA-2` and `US-IL-1` are good enough to treat direct AWS S3 -> Runpod as a viable staging path.
+- Canada CPU capacity for this test was unavailable in `CA-MTL-1`, `CA-MTL-2`, and `CA-MTL-3` at probe time, so no Canada throughput number is recorded yet.
+
+Recommended restore flow from AWS S3:
+1. Generate a presigned URL locally for the asset you want.
+2. On the target cheap pod or run pod, download the archive or bundle with `curl -L --fail`.
+3. For bundle tarballs, extract into `/workspace/parameter-golf`.
+4. For dataset archives, stage into `/tmp` with [stage_runpod_data_archive.sh](/Users/simon/Code/parameter-golf/stage_runpod_data_archive.sh).
+5. Run [verify_runpod_data_ready.sh](/Users/simon/Code/parameter-golf/verify_runpod_data_ready.sh) before any `torchrun`.
+
+Example: download the leader-stack `sp1024` archive onto a pod:
+
+```bash
+curl -L --fail "$PRESIGNED_URL" -o /workspace/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst
+```
+
+Example: stage that archive into `/tmp`:
+
+```bash
+cd /workspace/parameter-golf
+bash ./stage_runpod_data_archive.sh \
+  /workspace/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst \
+  /tmp/parameter-golf-data
+```
+
+Example: download and unpack the JEPA isolation bundle:
+
+```bash
+curl -L --fail "$PRESIGNED_URL" -o /workspace/parameter-golf-jepa-iso-bundle.tar
+tar -xf /workspace/parameter-golf-jepa-iso-bundle.tar -C /workspace/parameter-golf
+```
+
 Verify `/tmp`:
 
 ```bash
