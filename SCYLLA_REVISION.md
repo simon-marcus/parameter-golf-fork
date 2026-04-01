@@ -152,3 +152,56 @@ likely one of:
 1. a from-scratch byte-native TokenMonster vocabulary build, or
 2. a richer edit space than deletion alone, such as deliberately replacing or reintroducing exact byte
    fallback coverage
+
+## Scylla-v2 Exactness Result
+
+The byte-native Scylla-v2 repair is now working.
+
+Winning construction:
+
+- base family: TokenMonster `english-1024-clean-v1`
+- byte-native settings:
+  - `capcode = 0`
+  - `charset = none`
+  - `normalization = none`
+- explicit `0x00..0xFF` byte fallback coverage added
+- synthetic BOS boundary token added at dataset/export time for exact flat-stream accounting
+
+Critical corrections made in the bundle pipeline:
+
+1. TokenMonster `charset:none` decoded strings must be interpreted as raw bytes via `latin-1`, not `utf-8`.
+2. The flat shard format needs an explicit zero-byte synthetic BOS token so document boundaries are preserved.
+3. Strict bundle auditing must split on BOS and compare exact decoded bytes document-by-document.
+
+Validated result on the corrected full local competition bundle:
+
+- bundle root:
+  - `/Users/simon/Code/parameter-golf-local/scylla_v2_cap0_competition_export`
+- tokenizer:
+  - `tokenizers/scylla_v2_cap0_fullbyte.yaml`
+  - `tokenizers/scylla_v2_cap0_fullbyte.meta.npz`
+- dataset:
+  - `11` train shards
+  - `1` val shard
+
+Strict audit result:
+
+- `source_val_docs = 50000`
+- `bundle_val_docs = 50000`
+- `bad_docs = 0`
+- `source_bytes = 151080891`
+- `meta_bytes = 151080891`
+- `decoded_bytes = 151080891`
+- `meta_overcount_frac = 0.0`
+- `decoded_drift_frac = 0.0`
+
+This means Scylla-v2 is now legally exact on the fixed validation text. The remaining question is competitiveness, not correctness.
+
+## Next Steps Toward Submission
+
+1. Stage the corrected Scylla-v2 bundle onto the RunPod network volume with a cheap prep pod.
+2. Run a `1xH100` smoke comparison using the current best legal score-first TTT stack:
+   - baseline `sp1024`
+   - Scylla-v2 exact bundle
+3. If Scylla-v2 is directionally alive, rerun the legal ladder on `8xH100`.
+4. Only after new exact-bundle runs exist should we revisit a competition PR/submission.

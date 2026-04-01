@@ -141,6 +141,28 @@ Stage to `/tmp`:
 ssh root@HOST -p PORT "cd /workspace/parameter-golf && bash ./setup_local_parity_data_runpod.sh"
 ```
 
+If `/workspace/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst` exists, `setup_local_parity_data_runpod.sh` now prefers that archive automatically instead of copying the directory tree shard-by-shard. To build the reusable archive on a prep machine:
+
+```bash
+cd /workspace/parameter-golf
+bash ./build_runpod_data_archive.sh ./data ./data/archives fineweb10B_sp1024 fineweb_1024_bpe
+```
+
+For expensive leader-stack promotions, do not rely on a live cross-region archive copy into the `8xH100` pod. The archive must already be present locally on the pod before launch. The leader-stack launcher now refuses multi-GPU `/tmp` runs if `/workspace/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst` is missing.
+
+Recommended leader-stack `8xH100` prep flow:
+1. Keep the durable source archive and code bundle on the prep pod or prep volume.
+2. When `8xH100` capacity appears in a region, first create a cheap staging pod in that same region.
+3. Copy the leader-stack code bundle and the `sp1024` archive onto the cheap staging pod.
+4. Verify the archive and, if possible, keep the cheap pod alive while waiting for the `8xH100`.
+5. Only then create the `8xH100` pod in the same region and copy the already-local archive across.
+6. Launch the leader-stack run only after the archive exists on the `8xH100` pod and preflight passes.
+
+Reusable prep assets:
+- archive: `/workspace/pg-data/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst`
+- code bundle: `/workspace/pg-data/parameter-golf/staging_bundles/parameter-golf-leader-stack-jepa-bundle.tar`
+- relay helper: `/workspace/pg-data/parameter-golf/relay_runpod_archive.sh`
+
 Verify `/tmp`:
 
 ```bash
@@ -169,6 +191,7 @@ ssh root@HOST -p PORT "cd /workspace/parameter-golf && DATA_ROOT_MODE=tmp bash .
 - Never download data on an expensive pod by default.
 - Never trust `/tmp` as persistent storage.
 - Never launch before preflight passes.
+- For multi-GPU leader-stack runs, never launch until the local `sp1024` archive is already present on the pod.
 - Always pull logs and artifacts before stopping a pod.
 - If a new image/template repeatedly stays `RUNNING` without becoming SSH-ready, do not adopt it as the default path.
 - Use `DATA_ROOT_MODE=tmp` for serious throughput or record-style runs.
