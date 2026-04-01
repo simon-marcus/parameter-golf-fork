@@ -37,7 +37,7 @@ Rule:
 
 Network volumes are datacenter-locked.
 
-Efficient pattern:
+Efficient pattern when using a Runpod network volume:
 1. Create the persistent volume in the target datacenter.
 2. Attach it to a cheap prep pod in that same datacenter.
 3. Download/cache repo data under `/workspace`.
@@ -46,6 +46,11 @@ Efficient pattern:
 6. Stage from `/workspace/...` to `/tmp/parameter-golf-data/...`.
 
 Do not prepare data in one datacenter and expect to reuse that volume in another.
+
+Current preferred alternative:
+- for recurring `sp1024` and `byte260` staging, ordinary AWS S3 is now the preferred durable source
+- this avoids the datacenter lock of Runpod network volumes
+- datacenter locality still matters for throughput, so prefer regions where we have measured acceptable S3 download speed
 
 ## Pod Creation
 
@@ -151,16 +156,20 @@ bash ./build_runpod_data_archive.sh ./data ./data/archives fineweb10B_sp1024 fin
 For expensive leader-stack promotions, do not rely on a live cross-region archive copy into the `8xH100` pod. The archive must already be present locally on the pod before launch. The leader-stack launcher now refuses multi-GPU `/tmp` runs if `/workspace/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst` is missing.
 
 Recommended leader-stack `8xH100` prep flow:
-1. Keep the durable source archive and code bundle on the prep pod or prep volume.
+1. Keep the durable source archive and code bundle in AWS S3.
 2. When `8xH100` capacity appears in a region, first create a cheap staging pod in that same region.
-3. Copy the leader-stack code bundle and the `sp1024` archive onto the cheap staging pod.
+3. Download the leader-stack code bundle and the `sp1024` archive from AWS S3 onto the cheap staging pod.
 4. Verify the archive and, if possible, keep the cheap pod alive while waiting for the `8xH100`.
-5. Only then create the `8xH100` pod in the same region and copy the already-local archive across.
+5. Only then create the `8xH100` pod in the same region and move or copy the already-local archive across.
 6. Launch the leader-stack run only after the archive exists on the `8xH100` pod and preflight passes.
 
-Reusable prep assets:
-- archive: `/workspace/pg-data/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst`
-- code bundle: `/workspace/pg-data/parameter-golf/staging_bundles/parameter-golf-leader-stack-jepa-bundle.tar`
+Fallback flow:
+- if AWS S3 is unavailable or too slow in the target region, use the prep pod or a same-datacenter Runpod volume as the source instead
+- do not treat cross-region prep-pod relay into a live `8xH100` as the default path
+
+Fallback prep assets:
+- prep pod archive: `/workspace/pg-data/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst`
+- prep pod code bundle: `/workspace/pg-data/parameter-golf/staging_bundles/parameter-golf-leader-stack-jepa-bundle.tar`
 - relay helper: `/workspace/pg-data/parameter-golf/relay_runpod_archive.sh`
 
 ## Runpod S3-Compatible API
@@ -229,7 +238,8 @@ Validated behavior:
 
 Operational implication:
 - a Runpod pod does not need `aws` installed to fetch from ordinary AWS S3 if we generate presigned URLs locally
-- this is a viable fallback for regions like `AP-IN-1` that are not in Runpod's S3-compatible datacenter list
+- this is now the preferred durable staging path for recurring assets
+- it is also a viable fallback for regions like `AP-IN-1` that are not in Runpod's S3-compatible datacenter list
 
 Measured `512MB` ranged download throughput from AWS S3 to cheap CPU pods using a presigned URL:
 - `US-GA-2` (`runpod/parameter-golf:latest` CPU pod): `time_total=14.402087`, `speed_download=37277299` bytes/s, about `35.5 MB/s`
@@ -241,6 +251,7 @@ Current conclusion:
 - `AP-IN-1` is high-risk for data-heavy staging. Avoid renting `8xH100` there unless the archive is already local.
 - `US-GA-2` and `US-IL-1` are good enough to treat direct AWS S3 -> Runpod as a viable staging path.
 - Canada CPU capacity for this test was unavailable in `CA-MTL-1`, `CA-MTL-2`, and `CA-MTL-3` at probe time, so no Canada throughput number is recorded yet.
+- for future `8xH100` promotions, prefer `US-GA-2` or `US-IL-1` if capacity exists before considering weaker regions like `AP-IN-1`
 
 Recommended restore flow from AWS S3:
 1. Generate a presigned URL locally for the asset you want.
