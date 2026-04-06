@@ -1,0 +1,10 @@
+{
+  "name": "JEPA Leader-Stack + Storage-Only Int6 Export",
+  "val_bpb": 1.12271348,
+  "bytes_total": 15919760,
+  "blurb": "Leader-stack SP-1024 submission with a learned JEPA auxiliary loss (weight 0.10), validated first in a clean JEPA-vs-control isolation lane and then translated into the stronger March 23 stack. Final artifact uses a storage-only post-training int6 export pass from the saved checkpoint to land under 16 MB. Seed 1337 complete; seeds 42 and 2026 pending.",
+  "author": "simonw",
+  "github_id": "simonw",
+  "date": "2026-04-01",
+  "status": "draft_pending_3_seeds"
+}

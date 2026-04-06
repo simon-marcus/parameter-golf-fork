@@ -72,6 +72,57 @@ These appear clearly disallowed now.
 
 This is the most important positive statement currently on record.
 
+### Score-first TTT is explicitly legal in principle
+
+- The README says:
+  "you are only allowed to test-time train on validation set tokens you've
+  already evaluated your model on, since those tokens have already been
+  graded!"
+- `@0hq` also clarified that evaluation is over the concatenated token stream,
+  and that:
+  "You're allowed to use any preceding tokens from the evaluation set that
+  you've already been tested on in any way you'd like."
+- `@valerio-oai` explicitly said:
+  "TTT is a valid approach in theory, but very easy to unintentionally leak val
+  data into."
+- A merged record example exists:
+  `#549` ("Legal Score-First TTT"), which `@valerio-oai` approved as
+  "Looks legal."
+- Sources:
+  - README:
+    https://raw.githubusercontent.com/openai/parameter-golf/main/README.md
+  - `#402` / `@0hq`:
+    https://github.com/openai/parameter-golf/issues/402#issuecomment-4112325938
+  - `#402` / `@valerio-oai`:
+    https://github.com/openai/parameter-golf/issues/402#issuecomment-4119313230
+  - `#549`:
+    https://github.com/openai/parameter-golf/pull/549
+  - `#549` approval:
+    https://github.com/openai/parameter-golf/pull/549#issuecomment-4118263181
+
+### Pre-quant TTT is not specifically banned
+
+- I have not found a maintainer comment or README rule saying that doing TTT on
+  full-precision / pre-quantization weights is illegal as a category.
+- The enforced distinction has been causal ordering:
+  - legal: score-first / backward-looking TTT
+  - illegal: adapt on validation tokens, then report scores after that
+    adaptation
+- The strongest example is `#1006`. That PR explicitly used pre-quant AdamW
+  TTT, but the compliance objection was adapt-then-score, not "pre-quant."
+- The author of `#1006` explicitly conceded that the reported score used the
+  non-compliant adapt-then-score path.
+- So the best current reading is:
+  pre-quant TTT appears legal if and only if it still obeys the same
+  score-first causality rule as any other TTT.
+- Sources:
+  - `#1006` discussion:
+    https://github.com/openai/parameter-golf/pull/1006
+  - comment flagging adapt-then-score:
+    https://github.com/openai/parameter-golf/pull/1006#issuecomment-4149164167
+  - author concession:
+    https://github.com/openai/parameter-golf/pull/1006#issuecomment-4149293113
+
 ### N-grams are not banned in principle
 
 - The judge explanation says "n-grams should be perfectly legal if":
@@ -119,6 +170,19 @@ These areas are still uncertain.
 - So "artifact memory" is not itself illegal; the problem has been the
   incorrect probabilistic construction.
 
+### Pre-quant TTT still has a separate budget risk
+
+- Even if pre-quant TTT is causal, the surrounding export path can still become
+  illegal if it sneaks in extra post-training compute or data use.
+- The clearest maintainer warning is around GPTQ / calibration after the 600s
+  training cap, especially if training data is re-opened during export/eval.
+- So the practical standard is:
+  - pre-quant TTT itself is a causality question
+  - calibration / export / artifact-construction steps are a separate budget
+    and data-access question
+- Source:
+  https://github.com/openai/parameter-golf/issues/677#issuecomment-4123231934
+
 ### A second leaderboard
 
 - The judge comment says they are still considering one.
@@ -136,6 +200,9 @@ Safest high-confidence moves:
 - fixed distribution built from previous tokens only
 - exact normalization before likelihood is accumulated
 - no second-pass reuse of eval tokens
+- if using TTT, keep it score-first and make the logged path obviously so
+- treat pre-quant TTT as acceptable only if the export/calibration path is also
+  clean under the 600s + eval rules
 
 High-risk moves:
 
@@ -143,6 +210,9 @@ High-risk moves:
 - hashed cache distributions without exact renormalization
 - target-conditioned mixing
 - anything that relies on bucket collisions to "work"
+- any TTT path that adapts on tokens before scoring them
+- any post-training GPTQ / calibration / export stage that reuses training data
+  or quietly extends the training budget
 
 ## Implication For Us
 

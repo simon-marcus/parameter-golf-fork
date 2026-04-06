@@ -259,6 +259,128 @@ Interpretation:
 - on the cheap screen, many nonzero JEPA weights beat `0.1`, with the best result at `0.65`
 - this does not overrule the `8xH100` evidence, but it does justify testing at least one larger weight at full scale beyond `0.2`
 
+### Recent JEPA attempts summary
+
+#### Byte-level isolation lane
+This remains the cleanest proof lane for the claim that JEPA helps.
+
+Established results:
+- matched `8xH100` control: `1.36692884`
+- matched `8xH100` `jepa01`: `1.36182961`
+- EMA control: `1.36487466`
+- EMA `jepa01`: `1.36169919`
+
+Interpretation:
+- JEPA is a real positive contributor in the byte-level isolation lane
+- the best full-scale byte-level JEPA setting tested so far is still `JEPA_LOSS_WEIGHT=0.10`
+- this lane is still far above the `1.2244` target, so it is evidence of JEPA help, not yet a byte-level JEPA baseline-beater
+
+#### Leader-stack JEPA lane
+This is the stronger `sp1024` competition-facing lane.
+
+Established results:
+- longer `1xH100` control: `2.22466503`
+- longer `1xH100` `jepa01`: `2.19728869`
+- `8xH100` over-cap trained export: `1.12128254`
+- under-cap storage pass: `1.12271348`
+- 3 under-cap seeds:
+  - `1337`: `1.12271348`
+  - `42`: `1.12337480`
+  - `2026`: `1.12300861`
+
+Interpretation:
+- JEPA translated successfully into the stronger leader stack
+- that produced the final non-record JEPA submission
+- it does not satisfy the merch challenge because it uses `sp1024`, not byte-level input
+
+#### Byte-level capacity screen
+To test whether the byte-level lane was simply underusing the `16MB` artifact budget, we tried larger matched byte-level variants on `1xH100`, `180s`:
+
+- `control` (`9x512`): `1.87138830`
+- `jepa01` (`9x512`): `1.84092584`
+- `depth12_control` (`12x512`): `2.33624034`
+- `depth12_jepa01` (`12x512`): `2.29014684`
+- `depth12wide_control` (`12x576`): `2.77315789`
+- `depth12wide_jepa01` (`12x576`): `2.74212553`
+
+Interpretation:
+- bigger versions were dramatically worse
+- the current byte-level lane is throughput-bound, not parameter-starved
+- this ruled out "just scale the current byte-level backbone" as the next move
+
+#### Patch-first byte JEPA lane
+We then tried to reduce effective sequence length with internal byte patches in [train_jepa_patched.py](/Users/simon/Code/parameter-golf/train_jepa_patched.py).
+
+Latest patched matrix on `1xH100`, `180s`, `PATCH_SIZE=2`:
+- `mixer control`: `2.53405611`
+- `mixer jepa01`: `2.56703380`
+- `attn control`: `2.57629430`
+- `attn jepa01`: `2.59779192`
+
+Interpretation:
+- both patched variants were much worse than the old byte-level isolation lane
+- in both patched families, JEPA hurt rather than helped
+- patch-first is not dead as a long-term idea, but the current implementation is not viable
+
+### Byte-level capacity screen
+To test whether the byte-level JEPA lane was simply underusing the `16MB` budget, we ran a matched `1xH100`, `180s` capacity screen on [train_jepa_baseline.py](/Users/simon/Code/parameter-golf/train_jepa_baseline.py):
+
+- `control` (`9x512`): `1.87138830`
+- `jepa01` (`9x512`): `1.84092584`
+- `depth12_control` (`12x512`): `2.33624034`
+- `depth12_jepa01` (`12x512`): `2.29014684`
+- `depth12wide_control` (`12x576`): `2.77315789`
+- `depth12wide_jepa01` (`12x576`): `2.74212553`
+
+Interpretation:
+- larger versions of the current 1024-byte backbone are dramatically worse
+- this byte-level lane is throughput-bound, not parameter-starved
+- the next serious byte-level JEPA step should be a patch-first architecture, not more scaling of the old backbone
+
+### Byte-level patch-first attempts
+First two patch-first `1xH100`, `180s` screens on [train_jepa_patched.py](/Users/simon/Code/parameter-golf/train_jepa_patched.py):
+
+Attempt 1, `PATCH_SIZE=4`, GRU-style local decoder:
+- `control`: `2.36628623`
+- `jepa01`: `2.40829222`
+
+Attempt 2, `PATCH_SIZE=2`, conditional local MLP decoder:
+- `control`: `2.53186931`
+- `jepa01`: `2.49196903`
+
+Interpretation:
+- patch-first is still the right architectural direction, but the first two implementations are not good enough yet
+- the first attempt failed because the whole family was weak and JEPA hurt
+- the second attempt restored a positive JEPA delta, but the patched family is still far behind the old byte-level baseline lane
+- the next probes should focus on the patch representation itself: a local mixer and an intra-patch attention reducer
+
+### XSA-all byte-level subset screen
+As the next clean transplant from PR #1019, we added `XSA_ALL=1` to the byte-level isolation lane in [train_jepa_baseline.py](/Users/simon/Code/parameter-golf/train_jepa_baseline.py) and ran JEPA versus control in parallel on separate `1xH100` pods.
+
+Matched `1xH100`, `180s` subset-screen results using the staged byte260 S3 bundle (`3` train shards, `2` val shards):
+- `xsa_control`: `2.66036151`
+- `xsa_jepa01`: `2.60044021`
+
+Interpretation:
+- JEPA still beat the matched XSA-all control by about `0.0599` BPB
+- but the absolute quality was much worse than the older full byte-level isolation lane
+- so this was useful only as a directional A/B for the transplant, not as a promotion candidate
+
+### JEPA target-embedding autoresearch lane
+We created a dedicated narrow autoresearch lane for the byte-level isolation model:
+- explanation: [records/byte-level-jepa/target-embedding-autoresearch/JEPA_TARGET_EMBEDDING_AUTORESEARCH.md](/Users/simon/Code/parameter-golf/records/byte-level-jepa/target-embedding-autoresearch/JEPA_TARGET_EMBEDDING_AUTORESEARCH.md)
+- research prompt: [records/byte-level-jepa/target-embedding-autoresearch/program.md](/Users/simon/Code/parameter-golf/records/byte-level-jepa/target-embedding-autoresearch/program.md)
+- runner: [run_jepa_target_embedding_autoresearch.sh](/Users/simon/Code/parameter-golf/run_jepa_target_embedding_autoresearch.sh)
+
+The lane is intentionally narrow:
+- mutate only the JEPA target embedding / target patch representation path
+- keep the rest of the byte-level isolation lane stable
+- preserve the matched `JEPA on` versus `JEPA off` control story
+
+Operational note:
+- the autoresearch harness was generalized so it can target a training script other than `train_gpt.py`
+- this lane works against an isolated working copy of [train_jepa_baseline.py](/Users/simon/Code/parameter-golf/train_jepa_baseline.py) under its own namespace, so it does not need to mutate the repo-root file directly
+
 ### Leader-stack 1xH100 confirmatory runs
 Using [train_gpt_leader_stack_jepa.py](/Users/simon/Code/parameter-golf/train_gpt_leader_stack_jepa.py) on `1x H100`, `sp1024`, `TTT_ENABLED=0`, `DATA_ROOT_MODE=tmp`:
 
