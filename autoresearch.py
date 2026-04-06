@@ -41,8 +41,8 @@ from pathlib import Path
 # Configuration
 # ---------------------
 
-TRAIN_SCRIPT = Path("train_gpt.py")
-PROGRAM_FILE = Path("program.md")
+TRAIN_SCRIPT = Path(os.environ.get("AUTORESEARCH_TRAIN_SCRIPT", "train_gpt.py"))
+PROGRAM_FILE = Path(os.environ.get("AUTORESEARCH_PROGRAM_FILE", "program.md"))
 
 EXPERIMENT_SECONDS = int(os.environ.get("EXPERIMENT_SECONDS", "180"))
 MAX_EXPERIMENTS = int(os.environ.get("MAX_EXPERIMENTS", "100"))
@@ -75,7 +75,7 @@ STORAGE_MIN_SIZE_IMPROVEMENT = int(os.environ.get("STORAGE_MIN_SIZE_IMPROVEMENT"
 REPRESENTATION_VERIFIED = bool(int(os.environ.get("REPRESENTATION_VERIFIED", "0")))
 
 AUTORESEARCH_DIR = Path("autoresearch") / NAMESPACE if NAMESPACE else Path("autoresearch")
-TRAIN_SCRIPT_BEST = AUTORESEARCH_DIR / "train_gpt.best.py"
+TRAIN_SCRIPT_BEST = AUTORESEARCH_DIR / f"{TRAIN_SCRIPT.stem}.best.py"
 HISTORY_FILE = AUTORESEARCH_DIR / "history.jsonl"
 LOGS_DIR = AUTORESEARCH_DIR / "logs"
 EXPERIMENTS_DIR = AUTORESEARCH_DIR / "experiments"
@@ -156,7 +156,7 @@ def save_experiment_snapshot(
     exp_dir.mkdir(exist_ok=True)
 
     # Save the code that was tested
-    (exp_dir / "train_gpt.py").write_text(code)
+    (exp_dir / TRAIN_SCRIPT.name).write_text(code)
 
     # Save training log if available
     if training_output:
@@ -374,7 +374,7 @@ def keep_decision(
 
 
 def summarize_current_config(code: str) -> str:
-    """Summarize the current default config from train_gpt.py for the prompt."""
+    """Summarize the current default config from the target training script for the prompt."""
     def extract_int(name: str) -> str:
         m = re.search(rf'{name} = int\(os\.environ\.get\("[^"]+", (\d+)\)\)', code)
         return m.group(1) if m else "?"
@@ -433,9 +433,41 @@ def build_proposal_prompt(program: str, history: list[dict], best_bpb: float | N
     current_config = summarize_current_config(TRAIN_SCRIPT.read_text())
     policy = lane_policy()
     lane_guidance = "\n".join(f"- {line}" for line in policy.prompt_guidance)
+    editable_path = f"./{TRAIN_SCRIPT.name}"
+    is_probe = TRAIN_SCRIPT.name == "target_embedding_probe.py"
+    task_line = (
+        f"Your job: make ONE specific modification to {TRAIN_SCRIPT.name} to try to improve the held-out proxy score."
+        if is_probe
+        else f"Your job: make ONE specific modification to {TRAIN_SCRIPT.name} to try to improve validation BPB."
+    )
+    metric_block = (
+        "The primary metric is the final lower-is-better proxy score emitted as "
+        "`final_int8_zlib_roundtrip_exact ... val_bpb:<score>`.\n"
+        "Do not optimize for artifact size here; optimize for the probe score while keeping the loop cheap and stable."
+        if is_probe
+        else (
+            "The final metric is post-int8-quantization roundtrip val_bpb (lower is better)\n"
+            f"- Total artifact (compressed weights + code) must stay under {MAX_ARTIFACT_BYTES:,} bytes"
+        )
+    )
+    general_guidance = (
+        "- This is a focused probe loop. Prefer small target-embedding changes over broad model changes."
+        if is_probe
+        else "- This is a 1xH100 short-horizon proxy. Prefer changes that improve convergence in the first ~300 steps and do not materially slow step time"
+    )
+    size_guidance = (
+        ""
+        if is_probe
+        else "\n- The current best is already close to the size ceiling, so avoid parameter increases unless you also have a concrete compression hypothesis"
+    )
+    final_focus = (
+        "- Focus on changes likely to improve the held-out proxy score through better target/predictor behavior."
+        if is_probe
+        else "- Focus on changes likely to improve BPB: architecture, hyperparameters, training tricks, compression"
+    )
 
     return f"""You are an autonomous ML researcher running experiments for the parameter-golf challenge.
-Your job: make ONE specific modification to train_gpt.py to try to improve validation BPB.
+{task_line}
 
 ## Research Program
 {program}
@@ -448,34 +480,36 @@ Stage: {STAGE}
 Lane objective: {policy.objective}
 Stage intent: {policy.stage_desc}
 Current best val_bpb: {best_str}
-Current default config in train_gpt.py: {current_config}
+Current default config in {TRAIN_SCRIPT.name}: {current_config}
 Experiment time budget: {EXPERIMENT_SECONDS}s on {GPUS} GPU(s)
 
 ## Instructions
-1. Read train_gpt.py to understand the current state
+1. Read {editable_path} to understand the current state
 2. Decide on ONE specific change to try (guided by the research program and history)
-3. Edit train_gpt.py to make that change — use surgical edits, not full rewrites
+3. Edit {editable_path} to make that change — use surgical edits, not full rewrites
 4. After editing, read the changed lines back to VERIFY your edit was actually applied
 5. Print a single line starting with "DESCRIPTION:" summarizing what you changed and why
+
+Important:
+- The file you must edit is {editable_path} in the current working directory.
+- Do not only describe a change. Actually apply it to {editable_path}.
 
 Guidelines:
 - Make exactly ONE conceptual change per experiment so we can isolate what helps
 - Consider what has and hasn't worked in the experiment history
 - The script must remain functional — don't break imports, class structure, etc.
-- The final metric is post-int8-quantization roundtrip val_bpb (lower is better)
-- Total artifact (compressed weights + code) must stay under {MAX_ARTIFACT_BYTES:,} bytes
+- {metric_block}
 - Be creative but grounded — vary your approaches, don't repeat failed ideas
-- This is a 1xH100 short-horizon proxy. Prefer changes that improve convergence in the first ~300 steps and do not materially slow step time
-- The current best is already close to the size ceiling, so avoid parameter increases unless you also have a concrete compression hypothesis
+- {general_guidance}{size_guidance}
 - Favor small shape/hyperparameter/training-schedule changes over speculative full-module rewrites
-- Focus on changes likely to improve BPB: architecture, hyperparameters, training tricks, compression
+- {final_focus}
 
 Lane-specific guidance:
 {lane_guidance}"""
 
 
 def run_claude_proposal(prompt: str) -> str | None:
-    """Run claude -p and return the description. Claude edits train_gpt.py in place."""
+    """Run claude -p and return the description. Claude edits the target train script in place."""
     try:
         result = subprocess.run(
             [
@@ -483,11 +517,13 @@ def run_claude_proposal(prompt: str) -> str | None:
                 "-p", prompt,
                 "--model", CLAUDE_MODEL,
                 "--effort", CLAUDE_EFFORT,
-                "--allowedTools", "Read,Edit,Glob,Grep",
+                "--allowedTools", "default",
+                "--permission-mode", "bypassPermissions",
                 "--output-format", "text",
             ],
             capture_output=True,
             text=True,
+            cwd=str(TRAIN_SCRIPT.parent),
             timeout=PROPOSAL_TIMEOUT_SECONDS,
         )
     except subprocess.TimeoutExpired:
@@ -518,7 +554,7 @@ def run_claude_proposal(prompt: str) -> str | None:
 
 
 def run_training(experiment_id: int) -> tuple[str, int]:
-    """Run train_gpt.py and return (output, returncode)."""
+    """Run the target train script and return (output, returncode)."""
     env = os.environ.copy()
     env["MAX_WALLCLOCK_SECONDS"] = str(EXPERIMENT_SECONDS)
     env["ITERATIONS"] = str(EXPERIMENT_ITERATIONS)
@@ -526,12 +562,15 @@ def run_training(experiment_id: int) -> tuple[str, int]:
     if VAL_LOSS_EVERY > 0:
         env["VAL_LOSS_EVERY"] = str(VAL_LOSS_EVERY)
 
-    cmd = [
-        "torchrun",
-        "--standalone",
-        f"--nproc_per_node={GPUS}",
-        str(TRAIN_SCRIPT),
-    ]
+    if TRAIN_SCRIPT.name == "target_embedding_probe.py":
+        cmd = [sys.executable, str(TRAIN_SCRIPT)]
+    else:
+        cmd = [
+            "torchrun",
+            "--standalone",
+            f"--nproc_per_node={GPUS}",
+            str(TRAIN_SCRIPT),
+        ]
 
     timeout = EXPERIMENT_SECONDS + TRAIN_TIMEOUT_PADDING_SECONDS
 
@@ -777,7 +816,7 @@ def main():
             print(f"  Proposal took {propose_time:.1f}s")
 
             if description is None:
-                print("  Failed to get modification. Skipping.")
+                print(f"  Failed to get modification for {TRAIN_SCRIPT.name}. Skipping.")
                 entry = {
                     "id": experiment_id, "description": "Failed to propose",
                     "val_bpb": None, "artifact_bytes": None, "kept": False,
@@ -793,7 +832,7 @@ def main():
         # Check if the file actually changed
         new_code = TRAIN_SCRIPT.read_text()
         if new_code == prev_code:
-            print("  No changes made to train_gpt.py. Skipping.")
+            print(f"  No changes made to {TRAIN_SCRIPT.name}. Skipping.")
             entry = {
                 "id": experiment_id,
                 "description": f"{description} (NO CHANGES)",
@@ -809,7 +848,7 @@ def main():
         print("Training...")
         t_train = time.time()
 
-        # Start training as a subprocess (it loads train_gpt.py at startup)
+        # Start training as a subprocess (it loads the target train script at startup)
         env = os.environ.copy()
         env["MAX_WALLCLOCK_SECONDS"] = str(EXPERIMENT_SECONDS)
         env["ITERATIONS"] = str(EXPERIMENT_ITERATIONS)
@@ -817,7 +856,10 @@ def main():
         if VAL_LOSS_EVERY > 0:
             env["VAL_LOSS_EVERY"] = str(VAL_LOSS_EVERY)
 
-        cmd = ["torchrun", "--standalone", f"--nproc_per_node={GPUS}", str(TRAIN_SCRIPT)]
+        if TRAIN_SCRIPT.name == "target_embedding_probe.py":
+            cmd = [sys.executable, str(TRAIN_SCRIPT)]
+        else:
+            cmd = ["torchrun", "--standalone", f"--nproc_per_node={GPUS}", str(TRAIN_SCRIPT)]
         train_timeout = EXPERIMENT_SECONDS + TRAIN_TIMEOUT_PADDING_SECONDS
         print(f"  Command: {' '.join(cmd)}")
         print(f"  Time budget: {EXPERIMENT_SECONDS}s, timeout: {train_timeout}s")
@@ -827,24 +869,30 @@ def main():
             text=True, env=env,
         )
 
-        # Once training has started and loaded the file, revert train_gpt.py
-        # to the current best so Claude can work on it for the next proposal
-        time.sleep(5)  # brief pause to ensure torchrun has loaded the script
+        # Once training has started and loaded the file, revert the target script
+        # to the current best so Claude can work on it for the next proposal.
+        time.sleep(1 if TRAIN_SCRIPT.name == "target_embedding_probe.py" else 5)
         TRAIN_SCRIPT.write_text(prev_code)
 
-        # Speculatively propose the next experiment while training runs
-        print("  Speculatively proposing next experiment while training...")
-        spec_prompt = build_proposal_prompt(program, history, best_bpb)
+        is_probe = TRAIN_SCRIPT.name == "target_embedding_probe.py"
+        if not is_probe:
+            # Speculatively propose the next experiment while training runs.
+            print("  Speculatively proposing next experiment while training...")
+            spec_prompt = build_proposal_prompt(program, history, best_bpb)
 
-        def speculative_propose():
-            return run_claude_proposal(spec_prompt)
+            def speculative_propose():
+                return run_claude_proposal(spec_prompt)
 
-        spec_thread_result: list[str | None] = [None]
-        def spec_worker():
-            spec_thread_result[0] = speculative_propose()
+            spec_thread_result: list[str | None] = [None]
 
-        spec_thread = threading.Thread(target=spec_worker)
-        spec_thread.start()
+            def spec_worker():
+                spec_thread_result[0] = speculative_propose()
+
+            spec_thread = threading.Thread(target=spec_worker)
+            spec_thread.start()
+        else:
+            spec_thread_result = [None]
+            spec_thread = None
 
         # Wait for training to complete
         try:
@@ -860,24 +908,30 @@ def main():
         train_time = time.time() - t_train
         print(f"  Training took {train_time:.1f}s (exit code {returncode})")
 
-        # Wait for speculative proposal to finish too
-        spec_thread.join(timeout=max(600 - train_time, 30))
-        spec_desc = spec_thread_result[0]
-        if spec_desc:
-            # Save the speculative proposal's code (Claude edited train_gpt.py)
-            speculative_code = TRAIN_SCRIPT.read_text()
-            speculative_description = spec_desc
-            speculative_base_bpb = best_bpb
-            # Revert train_gpt.py again so evaluate_and_record can work cleanly
-            TRAIN_SCRIPT.write_text(prev_code)
-            print(f"  Speculative proposal ready: {spec_desc[:80]}...")
+        if spec_thread is not None:
+            # Wait for speculative proposal to finish too.
+            spec_thread.join(timeout=max(600 - train_time, 30))
+            spec_desc = spec_thread_result[0]
+            if spec_desc:
+                # Save the speculative proposal's code (Claude edited the target script).
+                speculative_code = TRAIN_SCRIPT.read_text()
+                speculative_description = spec_desc
+                speculative_base_bpb = best_bpb
+                # Revert the target script again so evaluate_and_record can work cleanly
+                TRAIN_SCRIPT.write_text(prev_code)
+                print(f"  Speculative proposal ready: {spec_desc[:80]}...")
+            else:
+                speculative_code = None
+                speculative_description = None
+                speculative_base_bpb = None
+                # Make sure the target script is in the right state
+                TRAIN_SCRIPT.write_text(prev_code)
+                print("  Speculative proposal failed (will propose fresh next iteration)")
         else:
             speculative_code = None
             speculative_description = None
             speculative_base_bpb = None
-            # Make sure train_gpt.py is in the right state
             TRAIN_SCRIPT.write_text(prev_code)
-            print("  Speculative proposal failed (will propose fresh next iteration)")
 
         # Now put the experiment's code back for evaluation
         TRAIN_SCRIPT.write_text(new_code)
