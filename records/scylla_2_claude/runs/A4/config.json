@@ -1,0 +1,11 @@
+{
+  "name": "A4",
+  "ttt_chunk_tokens": 65536,
+  "ttt_lr": 0.001,
+  "ttt_epochs": 2,
+  "ttt_freeze_blocks": 6,
+  "ttt_freeze_embeddings": 1,
+  "nproc_per_node": 1,
+  "max_wallclock_seconds": 180,
+  "seed": 1337
+}

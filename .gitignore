@@ -44,12 +44,6 @@ modal_logs/
 **/autoresearch_cache/
 autoresearch/*/work/
 data/archives/
-records/scylla_2_claude/frontier_runs/
-records/scylla_2_claude/frontier_runs_vocab_ladder/
-records/scylla_2_claude/frontier_runs_vocab_ladder_high/
-records/scylla_2_claude/pulled_followup_runs/
-records/scylla_2_claude/pulled_stage1_runs/
-records/scylla_2_claude/runs/
 records/scylla_2_claude/pods.json
 summary.log
 final_model*

@@ -1,0 +1,14 @@
+{
+  "base_role": "standard_control",
+  "base_case_name": "sp_xsa_all",
+  "base_config_path": "/workspace/parameter-golf/records/scylla_2_claude/followup_bases/sp_xsa_all.json",
+  "dataset_family": "sp1024",
+  "case_name": "top4_r32",
+  "seed": 1337,
+  "ttt_mode": "adapter",
+  "ttt_lr": 0.1,
+  "ttt_epochs": 1,
+  "ttt_chunk_tokens": 32768,
+  "ttt_adapter_last_n": 4,
+  "ttt_adapter_rank": 32
+}

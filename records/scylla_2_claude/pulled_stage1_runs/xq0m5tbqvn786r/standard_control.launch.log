@@ -1,0 +1,2 @@
+verified train_shards=80 val_shards=1
+verified tokenizer=/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model

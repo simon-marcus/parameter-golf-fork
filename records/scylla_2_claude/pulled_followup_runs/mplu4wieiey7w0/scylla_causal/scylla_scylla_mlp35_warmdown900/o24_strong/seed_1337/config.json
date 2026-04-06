@@ -1,0 +1,13 @@
+{
+  "base_role": "scylla_capacity",
+  "base_case_name": "scylla_mlp35_warmdown900",
+  "base_config_path": "/workspace/parameter-golf/records/scylla_2_claude/followup_bases/scylla_mlp35_warmdown900.json",
+  "dataset_family": "scylla",
+  "case_name": "o24_strong",
+  "seed": 1337,
+  "causal_cache_min_order": 2,
+  "causal_cache_max_order": 4,
+  "causal_cache_min_count": 2,
+  "causal_cache_alpha_min": 0.08,
+  "causal_cache_alpha_max": 0.30
+}

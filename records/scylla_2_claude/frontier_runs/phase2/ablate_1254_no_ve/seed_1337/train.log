@@ -1,0 +1,134 @@
+=== phase=phase2 case=ablate_1254_no_ve seed=1337 started=2026-04-06T13:55:25Z ===
+ADAM_WD=0.02
+BIGRAM_VOCAB_SIZE=6400
+BYTE_SHUFFLE=0
+COMPRESSOR=lzma
+DATA_PATH=/tmp/parameter-golf-data/datasets/fineweb10B_scylla_v2_cap0_fullbyte
+EMBED_BITS=8
+EMBED_CLIP_MODE=std
+EMBED_CLIP_SIGMAS=20.0
+EMBED_WD=0.085
+ENABLE_LOOPING_AT=0.5
+EVAL_SEQ_LEN=2048
+EVAL_STRIDE=64
+ITERATIONS=1200
+LOOP_END=5
+LOOP_START=4
+MATRIX_BITS=6
+MATRIX_CLIP_MODE=std
+MATRIX_CLIP_SIGMAS=12.85
+MAX_WALLCLOCK_SECONDS=600
+MLP_MULT=4
+MUON_WD=0.085
+NPROC_PER_NODE=1
+NUM_LOOPS=2
+QK_GAIN_INIT=5.0
+RUN_ID=scylla_frontier_ablate_1254_no_ve_seed1337
+SEED=1337
+SMEAR_ENABLED=0
+TOKENIZER_META_PATH=/tmp/parameter-golf-data/tokenizers/scylla_v2_cap0_fullbyte.meta.npz
+TOKENIZER_PATH=/tmp/parameter-golf-data/tokenizers/scylla_v2_cap0_fullbyte.yaml
+TRAIN_BATCH_TOKENS=262144
+TRAIN_SEQ_LEN=2048
+TTT_CHUNK_BYTES=131072
+TTT_CHUNK_TOKENS=0
+TTT_ENABLED=1
+TTT_EPOCHS=3
+TTT_FREEZE_BLOCKS=2
+TTT_FREEZE_EMBEDDINGS=0
+TTT_LR=0.0010
+VAL_BATCH_SIZE=131072
+VAL_TOKENS_LIMIT=1048576
+VE_ENABLED=0
+VOCAB_SIZE=1254
+XSA_LAST_N=11
+=== command ===
+python3 -m torch.distributed.run --standalone --nproc_per_node=1 /workspace/parameter-golf/records/scylla_2_claude/train_gpt_legal_ttt.py
+===============
+logs/scylla_frontier_ablate_1254_no_ve_seed1337.txt
+val_bpb:enabled tokenizer_kind=tokenmonster tokenizer_path=/tmp/parameter-golf-data/tokenizers/scylla_v2_cap0_fullbyte.yaml tokenizer_meta_path=/tmp/parameter-golf-data/tokenizers/scylla_v2_cap0_fullbyte.meta.npz
+train_loader:dataset:fineweb10B_scylla_v2_cap0_fullbyte train_shards:11
+val_loader:shards pattern=/tmp/parameter-golf-data/datasets/fineweb10B_scylla_v2_cap0_fullbyte/fineweb_val_*.bin tokens:1048576
+model_params:33272921
+mtp_num_heads:0 mtp_loss_weight:0.2 mtp_params:0
+XSA:last_11 active_layers:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+world_size:1 grad_accum_steps:8
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.03 head_lr:0.0 matrix_lr:0.02 scalar_lr:0.02
+smear_enabled:False loops:2 loop_range:4-5 enable_looping_at:0.500
+loop_indices:encoder=[0, 1, 2, 3, 4, 5, 4] decoder=[5, 4, 5, 6, 7, 8, 9, 10]
+activation_mode:leaky_relu_sq neg_slope:0.5 asym_init:0.25 gated_beta_init:1.0
+export:compressor=lzma byte_shuffle=0 matrix_bits=6 embed_bits=8 matrix_clip_mode=std embed_clip_mode=std
+train_batch_tokens:262144 train_seq_len:2048 iterations:1200 warmup_steps:20 max_wallclock_seconds:600.000
+use_compile:False
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:1/1200 train_loss:7.1365 train_time:733ms step_avg:733.05ms
+step:2/1200 train_loss:11.8891 train_time:1541ms step_avg:770.51ms
+step:3/1200 train_loss:9.7907 train_time:2352ms step_avg:784.06ms
+step:4/1200 train_loss:7.6648 train_time:3154ms step_avg:788.39ms
+step:5/1200 train_loss:6.5919 train_time:3934ms step_avg:786.82ms
+step:6/1200 train_loss:6.0897 train_time:4759ms step_avg:793.15ms
+step:7/1200 train_loss:5.9321 train_time:5555ms step_avg:793.62ms
+step:8/1200 train_loss:5.8602 train_time:6367ms step_avg:795.87ms
+step:9/1200 train_loss:5.7272 train_time:7120ms step_avg:791.16ms
+step:10/1200 train_loss:5.6325 train_time:7886ms step_avg:788.61ms
+step:50/1200 train_loss:3.7438 train_time:36922ms step_avg:738.44ms
+step:100/1200 train_loss:3.3666 train_time:73495ms step_avg:734.95ms
+step:150/1200 train_loss:3.1229 train_time:109853ms step_avg:732.35ms
+step:200/1200 train_loss:3.0153 train_time:146083ms step_avg:730.41ms
+step:250/1200 train_loss:2.7507 train_time:182665ms step_avg:730.66ms
+step:300/1200 train_loss:2.6173 train_time:218728ms step_avg:729.09ms
+step:350/1200 train_loss:2.6381 train_time:254721ms step_avg:727.77ms
+step:400/1200 train_loss:2.5449 train_time:291334ms step_avg:728.34ms
+step:450/1200 train_loss:2.5008 train_time:327406ms step_avg:727.57ms
+step:500/1200 train_loss:2.4262 train_time:363728ms step_avg:727.46ms
+step:550/1200 train_loss:2.3977 train_time:400129ms step_avg:727.51ms
+step:600/1200 train_loss:2.2658 train_time:436857ms step_avg:728.09ms
+layer_loop:enabled step:600 frac:0.500 encoder:[0, 1, 2, 3, 4, 5, 4] decoder:[5, 4, 5, 6, 7, 8, 9, 10]
+swa:start step:650
+step:650/1200 train_loss:2.3190 train_time:485391ms step_avg:746.76ms
+step:700/1200 train_loss:2.3653 train_time:534337ms step_avg:763.34ms
+step:750/1200 train_loss:2.3045 train_time:583164ms step_avg:777.55ms
+step:767/1200 val_loss:2.2475 val_bpb:1.4213 train_time:600393ms step_avg:782.78ms
+stopping_early: wallclock_cap train_time:600393ms step:767/1200
+peak memory allocated: 16493 MiB reserved: 17214 MiB
+ema:applying EMA weights
+DIAGNOSTIC post_ema val_loss:2.4424 val_bpb:1.5445 eval_time:1331ms
+Serialized model: 130186161 bytes
+Code size: 142412 bytes
+Serialized model quantized+lzma: 10699432 bytes
+Total submission size quantized+lzma: 10841844 bytes
+final_int6_roundtrip val_loss:2.5166 val_bpb:1.5915 eval_time:1320ms
+final_int6_roundtrip_exact val_loss:2.51664492 val_bpb:1.59147233
+final_int6_sliding_window val_loss:2.4831 val_bpb:1.5698 stride:64 eval_time:39068ms
+final_int6_sliding_window_exact val_loss:2.48307028 val_bpb:1.56975333
+final_int8_zlib_roundtrip_exact val_loss:2.48307028 val_bpb:1.56975333
+ttt_sliding:start chunks=19 chunk_bytes=131072 total_windows=16384 stride=64 ttt_mode=classic ttt_lr=0.001 ttt_epochs=3 freeze_blocks=2 freeze_embeddings=False adapter_rank=32 adapter_last_n=4
+ttt_sliding:params unfrozen=33268809 frozen=4112 frozen_blocks=[0, 1] freeze_emb=False
+  ttt_chunk [1/19] bpb=1.586470 time=2.6s
+  ttt_chunk [11/19] bpb=1.552326 time=30.1s
+  ttt_chunk [19/19] bpb=1.551217 time=49.8s
+ttt_sliding:done val_loss=2.453750 val_bpb=1.551217 elapsed=49.9s
+legal_ttt val_loss:2.4537 val_bpb:1.5512 eval_time:50163ms
+legal_ttt_exact val_loss:2.45374990 val_bpb:1.55121750

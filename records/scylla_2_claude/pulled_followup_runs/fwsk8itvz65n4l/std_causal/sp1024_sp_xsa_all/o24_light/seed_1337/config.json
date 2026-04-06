@@ -1,0 +1,13 @@
+{
+  "base_role": "standard_control",
+  "base_case_name": "sp_xsa_all",
+  "base_config_path": "/workspace/parameter-golf/records/scylla_2_claude/followup_bases/sp_xsa_all.json",
+  "dataset_family": "sp1024",
+  "case_name": "o24_light",
+  "seed": 1337,
+  "causal_cache_min_order": 2,
+  "causal_cache_max_order": 4,
+  "causal_cache_min_count": 2,
+  "causal_cache_alpha_min": 0.05,
+  "causal_cache_alpha_max": 0.20
+}

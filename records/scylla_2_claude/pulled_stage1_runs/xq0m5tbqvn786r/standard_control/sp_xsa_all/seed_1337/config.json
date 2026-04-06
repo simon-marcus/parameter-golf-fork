@@ -1,0 +1,16 @@
+{
+  "role": "standard_control",
+  "dataset_family": "sp1024",
+  "case_name": "sp_xsa_all",
+  "seed": 1337,
+  "data_path": "/tmp/parameter-golf-data/datasets/fineweb10B_sp1024",
+  "tokenizer_path": "/tmp/parameter-golf-data/tokenizers/fineweb_1024_bpe.model",
+  "tokenizer_meta_path": "",
+  "iterations": 1200,
+  "train_batch_tokens": 262144,
+  "val_tokens_limit": 1048576,
+  "qk_gain_init": 5.0,
+  "xsa_last_n": 11,
+  "mlp_mult": 3,
+  "warmdown_iters": 600
+}

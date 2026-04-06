@@ -1,0 +1,14 @@
+{
+  "base_role": "scylla_capacity",
+  "base_case_name": "scylla_mlp35_warmdown900",
+  "base_config_path": "/workspace/parameter-golf/records/scylla_2_claude/followup_bases/scylla_mlp35_warmdown900.json",
+  "dataset_family": "scylla",
+  "case_name": "all_r64",
+  "seed": 1337,
+  "ttt_mode": "adapter",
+  "ttt_lr": 0.1,
+  "ttt_epochs": 1,
+  "ttt_chunk_tokens": 32768,
+  "ttt_adapter_last_n": 11,
+  "ttt_adapter_rank": 64
+}

@@ -1,0 +1,2 @@
+verified train_shards=10 val_shards=1
+verified tokenizer=/tmp/parameter-golf-data/tokenizers/scylla_v2_v3072.meta.npz

@@ -1,0 +1,134 @@
+=== phase=phase3 case=ladder_2048 seed=1337 started=2026-04-06T14:52:52Z ===
+ADAM_WD=0.02
+BIGRAM_VOCAB_SIZE=0
+BYTE_SHUFFLE=0
+COMPRESSOR=lzma
+DATA_PATH=/tmp/parameter-golf-data/datasets/fineweb10B_scylla_v2_v2048
+EMBED_BITS=8
+EMBED_CLIP_MODE=std
+EMBED_CLIP_SIGMAS=20.0
+EMBED_WD=0.085
+ENABLE_LOOPING_AT=0.5
+EVAL_SEQ_LEN=2048
+EVAL_STRIDE=64
+ITERATIONS=1200
+LOOP_END=5
+LOOP_START=4
+MATRIX_BITS=6
+MATRIX_CLIP_MODE=std
+MATRIX_CLIP_SIGMAS=12.85
+MAX_WALLCLOCK_SECONDS=600
+MLP_MULT=4
+MUON_WD=0.085
+NPROC_PER_NODE=1
+NUM_LOOPS=2
+QK_GAIN_INIT=5.0
+RUN_ID=scylla_frontier_ladder_2048_seed1337
+SEED=1337
+SMEAR_ENABLED=0
+TOKENIZER_META_PATH=/tmp/parameter-golf-data/tokenizers/scylla_v2_v2048.meta.npz
+TOKENIZER_PATH=/tmp/parameter-golf-data/tokenizers/scylla_v2_v2048.yaml
+TRAIN_BATCH_TOKENS=262144
+TRAIN_SEQ_LEN=2048
+TTT_CHUNK_BYTES=131072
+TTT_CHUNK_TOKENS=0
+TTT_ENABLED=1
+TTT_EPOCHS=3
+TTT_FREEZE_BLOCKS=2
+TTT_FREEZE_EMBEDDINGS=0
+TTT_LR=0.0010
+VAL_BATCH_SIZE=131072
+VAL_TOKENS_LIMIT=1048576
+VE_ENABLED=0
+VOCAB_SIZE=2048
+XSA_LAST_N=11
+=== command ===
+python3 -m torch.distributed.run --standalone --nproc_per_node=1 /workspace/parameter-golf/records/scylla_2_claude/train_gpt_legal_ttt.py
+===============
+logs/scylla_frontier_ladder_2048_seed1337.txt
+val_bpb:enabled tokenizer_kind=tokenmonster tokenizer_path=/tmp/parameter-golf-data/tokenizers/scylla_v2_v2048.yaml tokenizer_meta_path=/tmp/parameter-golf-data/tokenizers/scylla_v2_v2048.meta.npz
+train_loader:dataset:fineweb10B_scylla_v2_v2048 train_shards:11
+val_loader:shards pattern=/tmp/parameter-golf-data/datasets/fineweb10B_scylla_v2_v2048/fineweb_val_*.bin tokens:1048576
+model_params:32794712
+mtp_num_heads:0 mtp_loss_weight:0.2 mtp_params:0
+XSA:last_11 active_layers:[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+world_size:1 grad_accum_steps:8
+sdp_backends:cudnn=False flash=True mem_efficient=False math=False
+attention_mode:gqa num_heads:8 num_kv_heads:4
+tie_embeddings:True embed_lr:0.03 head_lr:0.0 matrix_lr:0.02 scalar_lr:0.02
+smear_enabled:False loops:2 loop_range:4-5 enable_looping_at:0.500
+loop_indices:encoder=[0, 1, 2, 3, 4, 5, 4] decoder=[5, 4, 5, 6, 7, 8, 9, 10]
+activation_mode:leaky_relu_sq neg_slope:0.5 asym_init:0.25 gated_beta_init:1.0
+export:compressor=lzma byte_shuffle=0 matrix_bits=6 embed_bits=8 matrix_clip_mode=std embed_clip_mode=std
+train_batch_tokens:262144 train_seq_len:2048 iterations:1200 warmup_steps:20 max_wallclock_seconds:600.000
+use_compile:False
+seed:1337
+warmup_step:1/20
+warmup_step:2/20
+warmup_step:3/20
+warmup_step:4/20
+warmup_step:5/20
+warmup_step:6/20
+warmup_step:7/20
+warmup_step:8/20
+warmup_step:9/20
+warmup_step:10/20
+warmup_step:11/20
+warmup_step:12/20
+warmup_step:13/20
+warmup_step:14/20
+warmup_step:15/20
+warmup_step:16/20
+warmup_step:17/20
+warmup_step:18/20
+warmup_step:19/20
+warmup_step:20/20
+step:1/1200 train_loss:7.6258 train_time:728ms step_avg:727.73ms
+step:2/1200 train_loss:12.2857 train_time:1523ms step_avg:761.28ms
+step:3/1200 train_loss:10.3101 train_time:2336ms step_avg:778.80ms
+step:4/1200 train_loss:8.4251 train_time:3154ms step_avg:788.39ms
+step:5/1200 train_loss:7.2514 train_time:3975ms step_avg:795.04ms
+step:6/1200 train_loss:6.5782 train_time:4825ms step_avg:804.13ms
+step:7/1200 train_loss:6.3126 train_time:5647ms step_avg:806.65ms
+step:8/1200 train_loss:6.2069 train_time:6448ms step_avg:806.03ms
+step:9/1200 train_loss:6.1230 train_time:7247ms step_avg:805.17ms
+step:10/1200 train_loss:6.2278 train_time:8042ms step_avg:804.19ms
+step:50/1200 train_loss:4.5075 train_time:37428ms step_avg:748.56ms
+step:100/1200 train_loss:3.9453 train_time:74125ms step_avg:741.25ms
+step:150/1200 train_loss:3.3651 train_time:110578ms step_avg:737.19ms
+step:200/1200 train_loss:3.1270 train_time:146967ms step_avg:734.84ms
+step:250/1200 train_loss:2.9409 train_time:183337ms step_avg:733.35ms
+step:300/1200 train_loss:2.8378 train_time:219637ms step_avg:732.12ms
+step:350/1200 train_loss:2.7773 train_time:256148ms step_avg:731.85ms
+step:400/1200 train_loss:2.7164 train_time:292613ms step_avg:731.53ms
+step:450/1200 train_loss:2.6417 train_time:328948ms step_avg:731.00ms
+step:500/1200 train_loss:2.6849 train_time:365167ms step_avg:730.33ms
+step:550/1200 train_loss:2.7123 train_time:401531ms step_avg:730.06ms
+step:600/1200 train_loss:2.5451 train_time:437713ms step_avg:729.52ms
+layer_loop:enabled step:600 frac:0.500 encoder:[0, 1, 2, 3, 4, 5, 4] decoder:[5, 4, 5, 6, 7, 8, 9, 10]
+swa:start step:650
+step:650/1200 train_loss:2.6098 train_time:486033ms step_avg:747.74ms
+step:700/1200 train_loss:2.6588 train_time:534572ms step_avg:763.67ms
+step:750/1200 train_loss:2.4777 train_time:583173ms step_avg:777.56ms
+step:768/1200 val_loss:2.4778 val_bpb:1.3995 train_time:600951ms step_avg:782.49ms
+stopping_early: wallclock_cap train_time:600951ms step:768/1200
+peak memory allocated: 16507 MiB reserved: 17012 MiB
+ema:applying EMA weights
+DIAGNOSTIC post_ema val_loss:2.6918 val_bpb:1.5204 eval_time:1350ms
+Serialized model: 129097774 bytes
+Code size: 142412 bytes
+Serialized model quantized+lzma: 10227688 bytes
+Total submission size quantized+lzma: 10370100 bytes
+final_int6_roundtrip val_loss:2.7840 val_bpb:1.5725 eval_time:1331ms
+final_int6_roundtrip_exact val_loss:2.78399922 val_bpb:1.57246422
+final_int6_sliding_window val_loss:2.7501 val_bpb:1.5527 stride:64 eval_time:39050ms
+final_int6_sliding_window_exact val_loss:2.75014001 val_bpb:1.55270250
+final_int8_zlib_roundtrip_exact val_loss:2.75014001 val_bpb:1.55270250
+ttt_sliding:start chunks=21 chunk_bytes=131072 total_windows=16384 stride=64 ttt_mode=classic ttt_lr=0.001 ttt_epochs=3 freeze_blocks=2 freeze_embeddings=False adapter_rank=32 adapter_last_n=4
+ttt_sliding:params unfrozen=32790600 frozen=4112 frozen_blocks=[0, 1] freeze_emb=False
+  ttt_chunk [1/21] bpb=1.575741 time=2.3s
+  ttt_chunk [11/21] bpb=1.547996 time=27.2s
+  ttt_chunk [21/21] bpb=1.542961 time=49.9s
+ttt_sliding:done val_loss=2.732885 val_bpb=1.542961 elapsed=50.0s
+legal_ttt val_loss:2.7329 val_bpb:1.5430 eval_time:50295ms
+legal_ttt_exact val_loss:2.73288548 val_bpb:1.54296076
