@@ -17,40 +17,44 @@ Current rule:
 
 ## Storage Model
 
-Use `/workspace` for persistent state:
+Use `/workspace` for durable pod-local state:
 - repo checkout
-- dataset cache
-- tokenizer cache
+- downloaded archives and bundles
 - logs
 - pulled artifacts
 
-Use `/tmp/parameter-golf-data` for fast run-time staging:
+Use `/tmp` for the actual hot-path run bundle:
 - `DATA_PATH`
 - `TOKENIZER_PATH`
+- `TOKENIZER_META_PATH`
 - timed training/eval runs
 
 Rule:
-- `/workspace` is durable
-- `/tmp` is fast but ephemeral
+- `/workspace` is the pod-local cache
+- `/tmp` is the fast execution path
+
+Preferred pattern for serious runs:
+1. download a dataset archive and a small code bundle into `/workspace`
+2. extract the code bundle into `/workspace/parameter-golf`
+3. extract or stage the dataset into `/tmp/...`
+4. run preflight against the `/tmp` paths
+5. only then launch `torchrun`
 
 ## Datacenter Rule
 
-Network volumes are datacenter-locked.
+Network volumes are datacenter-locked, but they are no longer the default recommendation for recurring assets.
 
-Efficient pattern when using a Runpod network volume:
-1. Create the persistent volume in the target datacenter.
-2. Attach it to a cheap prep pod in that same datacenter.
-3. Download/cache repo data under `/workspace`.
-4. Stop the cheap pod.
-5. Attach the same volume to the expensive pod in that same datacenter.
-6. Stage from `/workspace/...` to `/tmp/parameter-golf-data/...`.
+Current preferred durable source:
+- ordinary AWS S3
 
-Do not prepare data in one datacenter and expect to reuse that volume in another.
+Why:
+- it avoids datacenter lock
+- it avoids depending on a warm prep pod or volume handoff
+- for US regions we have already measured acceptable download speed
 
-Current preferred alternative:
-- for recurring `sp1024` and `byte260` staging, ordinary AWS S3 is now the preferred durable source
-- this avoids the datacenter lock of Runpod network volumes
-- datacenter locality still matters for throughput, so prefer regions where we have measured acceptable S3 download speed
+Use a RunPod network volume only when:
+- S3 is unavailable or too slow in the target region
+- or you already have a same-datacenter prep workflow set up
 
 ## Pod Creation
 
@@ -121,13 +125,19 @@ rsync -avz -e "ssh -p PORT -o StrictHostKeyChecking=no -i ~/.ssh/id_ed25519" \
 
 ## Required Preflight
 
-On every fresh pod:
+Do not assume `/opt/parameter-golf/validate_image.sh` exists on every acceptable template. Some good template-backed pods do not provide it.
+
+Safe rule:
+- if `/opt/parameter-golf/validate_image.sh` exists, run it
+- otherwise continue with the repo-local validation and actual data preflight
+
+Optional image validation:
 
 ```bash
-ssh root@HOST -p PORT "bash /opt/parameter-golf/validate_image.sh"
+ssh root@HOST -p PORT 'test -x /opt/parameter-golf/validate_image.sh && bash /opt/parameter-golf/validate_image.sh || true'
 ```
 
-After repo sync:
+Repo-local validation:
 
 ```bash
 ssh root@HOST -p PORT "cd /workspace/parameter-golf && bash ops/runpod_image/validate_image.sh"
@@ -153,24 +163,40 @@ cd /workspace/parameter-golf
 bash ./build_runpod_data_archive.sh ./data ./data/archives fineweb10B_sp1024 fineweb_1024_bpe
 ```
 
-For expensive leader-stack promotions, do not rely on a live cross-region archive copy into the `8xH100` pod. The archive must already be present locally on the pod before launch. The leader-stack launcher now refuses multi-GPU `/tmp` runs if `/workspace/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst` is missing.
+For expensive `8xH100` runs, the dataset archive and code bundle must exist locally on the pod before launch.
 
-Recommended leader-stack `8xH100` prep flow:
-1. Keep the durable source archive and code bundle in AWS S3.
-2. When `8xH100` capacity appears in a region, first create a cheap staging pod in that same region.
-3. Download the leader-stack code bundle and the `sp1024` archive from AWS S3 onto the cheap staging pod.
-4. Verify the archive and, if possible, keep the cheap pod alive while waiting for the `8xH100`.
-5. Only then create the `8xH100` pod in the same region and move or copy the already-local archive across.
-6. Launch the leader-stack run only after the archive exists on the `8xH100` pod and preflight passes.
+Current preferred `8xH100` prep flow:
+1. Keep the durable dataset archive and a small experiment-specific code bundle in AWS S3.
+2. When `8xH100` capacity appears, create the pod and wait for SSH.
+3. Download both assets directly onto that pod with presigned URLs and `curl`.
+4. Extract the code bundle into `/workspace/parameter-golf`.
+5. Stage the dataset archive into `/tmp/...`.
+6. Run `verify_runpod_data_ready.sh` against the staged `/tmp` paths.
+7. Only then launch the run.
 
-Fallback flow:
-- if AWS S3 is unavailable or too slow in the target region, use the prep pod or a same-datacenter Runpod volume as the source instead
-- do not treat cross-region prep-pod relay into a live `8xH100` as the default path
+Use a cheap prep pod or a same-datacenter volume only as fallback, not as the default.
 
-Fallback prep assets:
-- prep pod archive: `/workspace/pg-data/parameter-golf/data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst`
-- prep pod code bundle: `/workspace/pg-data/parameter-golf/staging_bundles/parameter-golf-leader-stack-jepa-bundle.tar`
-- relay helper: `/workspace/pg-data/parameter-golf/relay_runpod_archive.sh`
+## Recent Pitfalls
+
+Keep these in mind for short Scylla screens and similar pod fanouts:
+
+- Verify that each pod has exactly one active `torchrun` and one worker process after launch.
+  We hit a bad relaunch state where two overlapping jobs wrote into the same `train.log`, which doubled the observed `step_avg` and made the run look much slower than it really was.
+  Useful check:
+
+```bash
+ssh root@HOST -p PORT "pgrep -af 'train_gpt_legal_ttt|torchrun' || true"
+```
+
+- For `1xH100` smoke/screen runs, prefer `USE_COMPILE=0` and confirm the training script actually honors it.
+  If the script still calls `torch.compile` unconditionally, startup/compile time can dominate the run and distort timing comparisons.
+
+- Do not assume the template image can decode every export codec.
+  On these template-backed pods, system Python did not have `brotli` or `zstandard`, and PEP 668 blocked casual `pip install` into the base environment.
+  For quick screens, prefer `COMPRESSOR=lzma BYTE_SHUFFLE=0` unless you have already provisioned those Python modules in a venv or the image.
+
+- If you add byte-based TTT chunking, force token ids to integer dtype before LUT indexing.
+  We hit a real crash in `_ttt_chunk_bounds()` until `prev_ids` and `tgt_ids` were cast to `torch.int64`.
 
 ## Runpod S3-Compatible API
 
@@ -229,6 +255,14 @@ Current staged objects:
   - `s3://parameter-golf-staging-094651608775/staging_bundles/parameter-golf-jepa-iso-bundle.tar`
 - JEPA isolation bundle manifest:
   - `s3://parameter-golf-staging-094651608775/staging_bundles/parameter-golf-jepa-iso-bundle.MANIFEST.txt`
+- Scylla-v2 exact dataset archive:
+  - `s3://parameter-golf-staging-094651608775/data/archives/scylla_v2_cap0_fullbyte.tar.zst`
+- Scylla-v2 exact dataset manifest:
+  - `s3://parameter-golf-staging-094651608775/data/archives/scylla_v2_cap0_fullbyte.manifest.tsv`
+- Scylla pre-quant TTT bundle:
+  - `s3://parameter-golf-staging-094651608775/staging_bundles/parameter-golf-scylla-v2-prequant-bundle.tar`
+- Scylla pre-quant TTT bundle manifest:
+  - `s3://parameter-golf-staging-094651608775/staging_bundles/parameter-golf-scylla-v2-prequant-bundle.MANIFEST.txt`
 
 Validated behavior:
 - uploaded the leader-stack bundle successfully
@@ -260,6 +294,12 @@ Recommended restore flow from AWS S3:
 4. For dataset archives, stage into `/tmp` with [stage_runpod_data_archive.sh](/Users/simon/Code/parameter-golf/stage_runpod_data_archive.sh).
 5. Run [verify_runpod_data_ready.sh](/Users/simon/Code/parameter-golf/verify_runpod_data_ready.sh) before any `torchrun`.
 
+Important tar hygiene:
+- our locally built tarballs may contain macOS `._*` sidecar files and ownership metadata
+- extract with `tar --no-same-owner`
+- when needed, exclude `._*` and `.DS_Store`
+- warnings about unknown `LIBARCHIVE.xattr.*` keywords are expected and not fatal
+
 Example: download the leader-stack `sp1024` archive onto a pod:
 
 ```bash
@@ -280,6 +320,27 @@ Example: download and unpack the JEPA isolation bundle:
 ```bash
 curl -L --fail "$PRESIGNED_URL" -o /workspace/parameter-golf-jepa-iso-bundle.tar
 tar -xf /workspace/parameter-golf-jepa-iso-bundle.tar -C /workspace/parameter-golf
+```
+
+Example: Scylla-style fast `8xH100` restore:
+
+```bash
+curl -L --fail "$SCYLLA_BUNDLE_URL" -o /workspace/parameter-golf-scylla-bundle.tar
+curl -L --fail "$SCYLLA_ARCHIVE_URL" -o /workspace/parameter-golf/data/archives/scylla_v2_cap0_fullbyte.tar.zst
+
+cd /workspace/parameter-golf
+tar --no-same-owner --exclude='._*' -xf /workspace/parameter-golf-scylla-bundle.tar -C /workspace/parameter-golf
+
+rm -rf /tmp/parameter-golf-scylla-v2
+mkdir -p /tmp/parameter-golf-scylla-v2
+tar --no-same-owner --exclude='._*' --exclude='.DS_Store' -I zstd \
+  -xf /workspace/parameter-golf/data/archives/scylla_v2_cap0_fullbyte.tar.zst \
+  -C /tmp/parameter-golf-scylla-v2
+
+bash ./verify_runpod_data_ready.sh \
+  /tmp/parameter-golf-scylla-v2/datasets/fineweb10B_scylla_v2_cap0_fullbyte \
+  /tmp/parameter-golf-scylla-v2/tokenizers/scylla_v2_cap0_fullbyte.meta.npz \
+  11 1
 ```
 
 Verify `/tmp`:
@@ -307,14 +368,17 @@ ssh root@HOST -p PORT "cd /workspace/parameter-golf && DATA_ROOT_MODE=tmp bash .
 ## Rules
 
 - Prefer the standard template-backed pod flow over the suspended custom image path.
-- Never download data on an expensive pod by default.
 - Never trust `/tmp` as persistent storage.
 - Never launch before preflight passes.
-- For multi-GPU leader-stack runs, never launch until the local `sp1024` archive is already present on the pod.
+- For multi-GPU runs, never launch until the dataset archive and code bundle are already present on the pod and the staged `/tmp` paths have passed preflight.
 - Always pull logs and artifacts before stopping a pod.
 - If a new image/template repeatedly stays `RUNNING` without becoming SSH-ready, do not adopt it as the default path.
 - Use `DATA_ROOT_MODE=tmp` for serious throughput or record-style runs.
 - Use `USE_COMPILE=0` for cheap smoke/debug runs; keep compile on for real runs unless debugging compile itself.
+
+Practical note:
+- direct S3 -> expensive pod is acceptable when the archive is already staged in S3, the region has decent throughput, and the archive is modest enough to restore quickly
+- do not require a prep pod when it adds complexity without reducing launch risk
 
 ## Known Failure Modes
 

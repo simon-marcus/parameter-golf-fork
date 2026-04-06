@@ -1,0 +1,5 @@
+role	pod_name	pod_id	host	port	archive_key
+scylla_qk_xsa	pg-s1-scylla-qk-xsa-20260402T193225Z	fwsk8itvz65n4l	64.247.201.35	17745	data/archives/scylla_v2_cap0_fullbyte.tar.zst
+scylla_capacity	pg-s1-scylla-capacity-20260402T193225Z	xwxi1bgdojj8lh	87.120.211.209	11112	data/archives/scylla_v2_cap0_fullbyte.tar.zst
+scylla_combo	pg-s1-scylla-combo-20260402T193225Z	mplu4wieiey7w0	216.243.220.227	13746	data/archives/scylla_v2_cap0_fullbyte.tar.zst
+standard_control	pg-s1-standard-control-20260402T193225Z	xq0m5tbqvn786r	216.243.220.228	12917	data/archives/fineweb10B_sp1024__fineweb_1024_bpe.tar.zst

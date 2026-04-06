@@ -83,7 +83,12 @@ def main() -> None:
         byte_range = range(0x00, 0x100) if args.add_missing_byte_tokens else range(0x80, 0x100)
         missing_hex = [f"{byte:02x}" for byte in byte_range if f"{byte:02x}" not in existing_hex]
         if missing_hex:
-            insert_at = max(i for i, line in enumerate(yaml_lines) if "TokenMonsterHexEncode{" in line) + 4
+            last_hex_token_line = max(i for i, line in enumerate(yaml_lines) if "TokenMonsterHexEncode{" in line)
+            insert_at = len(yaml_lines)
+            for i in range(last_hex_token_line + 1, len(yaml_lines)):
+                if re.match(r"^\s*-\s+token:", yaml_lines[i]):
+                    insert_at = i
+                    break
             appended: list[str] = []
             next_id = max_id
             for hx in missing_hex:

@@ -1,0 +1,5 @@
+case	vocab	pod_name	pod_id	host	port	train_shards	val_shards	archive_key
+ladder_6144	6144	pg-scylla-v6144-20260406T153652Z	pz97m72jsjijkl	103.207.149.114	11625	9	1	data/archives/scylla_v2_v6144.tar.zst
+ladder_8192	8192	pg-scylla-v8192-20260406T153652Z	k0jrse3f4gu17v	64.247.201.49	13056	9	1	data/archives/scylla_v2_v8192.tar.zst
+ladder_12288	12288	pg-scylla-v12288-20260406T153652Z	huowizlm6sz5tm	64.247.201.34	17852	8	1	data/archives/scylla_v2_v12288.tar.zst
+ladder_16384	16384	pg-scylla-v16384-20260406T153652Z	prikgfc1hngzke	216.243.220.220	10176	8	1	data/archives/scylla_v2_v16384.tar.zst

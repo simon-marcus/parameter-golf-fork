@@ -1,0 +1,2 @@
+run_ts	pod_id	pod_name	host	port	case	seed	suite_root	iterations
+20260406T203530Z_full10m	qq0b5j0fu726ee	pg-scylla-12288-8x-20260406T203530Z	103.207.149.60	13525	ladder_12288	2027	/workspace/parameter-golf/records/scylla_2_claude/checkpoint_ttt_train_8x_full10m	12000

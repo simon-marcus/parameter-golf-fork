@@ -13,7 +13,7 @@ NPROC_PER_NODE="${NPROC_PER_NODE:-1}"
 SUITE_ROOT="${SUITE_ROOT:-$REPO_ROOT/records/scylla_2_claude/frontier_runs}"
 
 if [[ -z "$CASE" ]]; then
-  echo "Usage: $0 {phase1_all|phase2_all|phase3_all|control_1254_legacy|frontier_1254|frontier_1254_loop|ablate_1254_no_bigram|ablate_1254_no_ve|ablate_1254_no_bigram_no_ve|ladder_1254|ladder_1536|ladder_2048|ladder_3072}"
+  echo "Usage: $0 {phase1_all|phase2_all|phase3_all|phase4_all|phase5_all|control_1254_legacy|frontier_1254|frontier_1254_loop|ablate_1254_no_bigram|ablate_1254_no_ve|ablate_1254_no_bigram_no_ve|ladder_1254|ladder_1536|ladder_2048|ladder_3072|ladder_4096|ladder_6144|ladder_8192|ladder_10240|ladder_12288|ladder_14336|ladder_16384}"
   exit 1
 fi
 
@@ -137,17 +137,17 @@ apply_legacy_1254_defaults() {
   export MUON_MOMENTUM_WARMUP_START=0.92
   export MUON_MOMENTUM_WARMUP_STEPS=400
   export WARMDOWN_ITERS=600
-  export COMPRESSOR=lzma
-  export BYTE_SHUFFLE=0
-  export MATRIX_BITS=6
-  export EMBED_BITS=8
-  export MATRIX_CLIP_MODE=quantile
-  export EMBED_CLIP_MODE=quantile
-  export MATRIX_CLIP_SIGMAS=12.85
-  export EMBED_CLIP_SIGMAS=20.0
-  export TTT_LR=0.0015
-  export TTT_CHUNK_TOKENS=34304
-  export TTT_CHUNK_BYTES=0
+  export COMPRESSOR="${COMPRESSOR:-lzma}"
+  export BYTE_SHUFFLE="${BYTE_SHUFFLE:-0}"
+  export MATRIX_BITS="${MATRIX_BITS:-6}"
+  export EMBED_BITS="${EMBED_BITS:-8}"
+  export MATRIX_CLIP_MODE="${MATRIX_CLIP_MODE:-quantile}"
+  export EMBED_CLIP_MODE="${EMBED_CLIP_MODE:-quantile}"
+  export MATRIX_CLIP_SIGMAS="${MATRIX_CLIP_SIGMAS:-12.85}"
+  export EMBED_CLIP_SIGMAS="${EMBED_CLIP_SIGMAS:-20.0}"
+  export TTT_LR="${TTT_LR:-0.0015}"
+  export TTT_CHUNK_TOKENS="${TTT_CHUNK_TOKENS:-34304}"
+  export TTT_CHUNK_BYTES="${TTT_CHUNK_BYTES:-0}"
 }
 
 apply_frontier_defaults() {
@@ -177,17 +177,17 @@ apply_frontier_defaults() {
   export MUON_MOMENTUM_WARMUP_START=0.92
   export MUON_MOMENTUM_WARMUP_STEPS=400
   export WARMDOWN_ITERS=900
-  export COMPRESSOR=brotli
-  export BYTE_SHUFFLE=1
-  export MATRIX_BITS=6
-  export EMBED_BITS=8
-  export MATRIX_CLIP_MODE=std
-  export EMBED_CLIP_MODE=std
-  export MATRIX_CLIP_SIGMAS=12.85
-  export EMBED_CLIP_SIGMAS=20.0
-  export TTT_LR=0.0010
-  export TTT_CHUNK_TOKENS=0
-  export TTT_CHUNK_BYTES=131072
+  export COMPRESSOR="${COMPRESSOR:-brotli}"
+  export BYTE_SHUFFLE="${BYTE_SHUFFLE:-1}"
+  export MATRIX_BITS="${MATRIX_BITS:-6}"
+  export EMBED_BITS="${EMBED_BITS:-8}"
+  export MATRIX_CLIP_MODE="${MATRIX_CLIP_MODE:-std}"
+  export EMBED_CLIP_MODE="${EMBED_CLIP_MODE:-std}"
+  export MATRIX_CLIP_SIGMAS="${MATRIX_CLIP_SIGMAS:-12.85}"
+  export EMBED_CLIP_SIGMAS="${EMBED_CLIP_SIGMAS:-20.0}"
+  export TTT_LR="${TTT_LR:-0.0010}"
+  export TTT_CHUNK_TOKENS="${TTT_CHUNK_TOKENS:-0}"
+  export TTT_CHUNK_BYTES="${TTT_CHUNK_BYTES:-131072}"
 }
 
 apply_case() {
@@ -269,6 +269,69 @@ apply_case() {
       export VE_ENABLED=0
       export VOCAB_SIZE=3072
       ;;
+    ladder_4096)
+      PHASE="phase3"
+      DESCRIPTION="Vocab ladder candidate at 4096"
+      apply_frontier_defaults
+      export NUM_LOOPS=2
+      export BIGRAM_VOCAB_SIZE=0
+      export VE_ENABLED=0
+      export VOCAB_SIZE=4096
+      ;;
+    ladder_6144)
+      PHASE="phase4"
+      DESCRIPTION="Vocab ladder candidate at 6144"
+      apply_frontier_defaults
+      export NUM_LOOPS=2
+      export BIGRAM_VOCAB_SIZE=0
+      export VE_ENABLED=0
+      export VOCAB_SIZE=6144
+      ;;
+    ladder_8192)
+      PHASE="phase4"
+      DESCRIPTION="Vocab ladder candidate at 8192"
+      apply_frontier_defaults
+      export NUM_LOOPS=2
+      export BIGRAM_VOCAB_SIZE=0
+      export VE_ENABLED=0
+      export VOCAB_SIZE=8192
+      ;;
+    ladder_12288)
+      PHASE="phase4"
+      DESCRIPTION="Vocab ladder candidate at 12288"
+      apply_frontier_defaults
+      export NUM_LOOPS=2
+      export BIGRAM_VOCAB_SIZE=0
+      export VE_ENABLED=0
+      export VOCAB_SIZE=12288
+      ;;
+    ladder_10240)
+      PHASE="phase5"
+      DESCRIPTION="Vocab ladder candidate at 10240"
+      apply_frontier_defaults
+      export NUM_LOOPS=2
+      export BIGRAM_VOCAB_SIZE=0
+      export VE_ENABLED=0
+      export VOCAB_SIZE=10240
+      ;;
+    ladder_14336)
+      PHASE="phase5"
+      DESCRIPTION="Vocab ladder candidate at 14336"
+      apply_frontier_defaults
+      export NUM_LOOPS=2
+      export BIGRAM_VOCAB_SIZE=0
+      export VE_ENABLED=0
+      export VOCAB_SIZE=14336
+      ;;
+    ladder_16384)
+      PHASE="phase4"
+      DESCRIPTION="Vocab ladder candidate at 16384"
+      apply_frontier_defaults
+      export NUM_LOOPS=2
+      export BIGRAM_VOCAB_SIZE=0
+      export VE_ENABLED=0
+      export VOCAB_SIZE=16384
+      ;;
     *)
       echo "Unknown case: $case_name"
       exit 1
@@ -285,7 +348,13 @@ case_list() {
       echo "ablate_1254_no_bigram ablate_1254_no_ve ablate_1254_no_bigram_no_ve"
       ;;
     phase3_all)
-      echo "ladder_1254 ladder_1536 ladder_2048 ladder_3072"
+      echo "ladder_1254 ladder_1536 ladder_2048 ladder_3072 ladder_4096"
+      ;;
+    phase4_all)
+      echo "ladder_6144 ladder_8192 ladder_12288 ladder_16384"
+      ;;
+    phase5_all)
+      echo "ladder_6144 ladder_10240 ladder_12288 ladder_14336"
       ;;
     *)
       echo "$1"
@@ -312,6 +381,8 @@ run_case_seed() {
   "case_name": "$case_name",
   "description": "$DESCRIPTION",
   "seed": $seed,
+  "eval_only": ${EVAL_ONLY:-0},
+  "load_int6_path": "${LOAD_INT6_PATH:-}",
   "data_path": "$DATA_PATH",
   "tokenizer_path": "$TOKENIZER_PATH",
   "tokenizer_meta_path": "$TOKENIZER_META_PATH",

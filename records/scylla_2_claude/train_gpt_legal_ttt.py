@@ -42,12 +42,16 @@ class Hyperparameters:
     tokenizer_path = os.environ.get("TOKENIZER_PATH", "./data/tokenizers/fineweb_1024_bpe.model")
     tokenizer_meta_path = os.environ.get("TOKENIZER_META_PATH", "")
     tokenizer_meta_validate = bool(int(os.environ.get("TOKENIZER_META_VALIDATE", "0")))
+    eval_only = bool(int(os.environ.get("EVAL_ONLY", "0")))
+    load_int6_path = os.environ.get("LOAD_INT6_PATH", "")
+    load_fp32_path = os.environ.get("LOAD_FP32_PATH", "")
     run_id = os.environ.get("RUN_ID", str(uuid.uuid4()))
     seed = int(os.environ.get("SEED", 1337))
     val_batch_size = int(os.environ.get("VAL_BATCH_SIZE", 524_288))
     val_tokens_limit = int(os.environ.get("VAL_TOKENS_LIMIT", 0))
     val_loss_every = int(os.environ.get("VAL_LOSS_EVERY", 4000))
     train_log_every = int(os.environ.get("TRAIN_LOG_EVERY", 500))
+    use_compile = bool(int(os.environ.get("USE_COMPILE", "1")))
     iterations = int(os.environ.get("ITERATIONS", 20000))
     warmdown_iters = int(os.environ.get("WARMDOWN_ITERS", 3500))
     warmup_steps = int(os.environ.get("WARMUP_STEPS", 20))
@@ -1216,6 +1220,89 @@ class GPT(nn.Module):
         x = self.forward_features(input_ids)
         return self.project_logits(x)
 
+
+def build_gpt_model(
+    args: Hyperparameters,
+    device: torch.device,
+    *,
+    mtp_num_heads: int,
+    mtp_loss_weight: float,
+) -> GPT:
+    model = GPT(
+        vocab_size=args.vocab_size,
+        num_layers=args.num_layers,
+        model_dim=args.model_dim,
+        num_heads=args.num_heads,
+        num_kv_heads=args.num_kv_heads,
+        mlp_mult=args.mlp_mult,
+        tie_embeddings=args.tie_embeddings,
+        tied_embed_init_std=args.tied_embed_init_std,
+        logit_softcap=args.logit_softcap,
+        rope_base=args.rope_base,
+        qk_gain_init=args.qk_gain_init,
+        mtp_num_heads=mtp_num_heads,
+        mtp_loss_weight=mtp_loss_weight,
+        bigram_vocab_size=args.bigram_vocab_size,
+        bigram_dim=args.bigram_dim,
+        smear_enabled=args.smear_enabled,
+        xsa_last_n=args.xsa_last_n,
+        rope_dims=args.rope_dims,
+        ln_scale=args.ln_scale,
+        dtg=args.dtg_enabled,
+        ve_enabled=args.ve_enabled,
+        ve_dim=args.ve_dim,
+        ve_layers=args.ve_layers,
+        num_loops=args.num_loops,
+        loop_start=args.loop_start,
+        loop_end=args.loop_end,
+        gated_attention=args.gated_attention,
+        value_residual=args.value_residual,
+        activation_mode=args.activation_mode,
+        activation_neg_slope=args.activation_neg_slope,
+        asymmetric_square_init=args.asymmetric_square_init,
+        gated_square_beta_init=args.gated_square_beta_init,
+    ).to(device).bfloat16()
+    model.qo_bank.data = model.qo_bank.data.float()
+    model.kv_bank.data = model.kv_bank.data.float()
+    model.mlp_up_bank.data = model.mlp_up_bank.data.float()
+    model.mlp_down_bank.data = model.mlp_down_bank.data.float()
+    for mod in model.modules():
+        if isinstance(mod, CastedLinear):
+            mod.float()
+    restore_low_dim_params_to_fp32(model)
+    return model
+
+
+def load_dequantized_eval_state(
+    args: Hyperparameters,
+    quantized_path: str,
+    template_sd: dict[str, Tensor],
+) -> dict[str, Tensor]:
+    with open(quantized_path, "rb") as f:
+        quant_blob_disk = f.read()
+    quant_state = torch.load(
+        io.BytesIO(_decompress_blob(quant_blob_disk, args)),
+        map_location="cpu",
+    )
+    template_unbanked = _unbank_state_dict(template_sd, args.num_layers)
+    deq_unbanked = dequantize_mixed_int6(quant_state["w"], quant_state["m"], template_unbanked)
+    return _rebank_state_dict(deq_unbanked, args.num_layers, template_sd)
+
+
+def build_eval_model_from_quantized_path(
+    args: Hyperparameters,
+    device: torch.device,
+    quantized_path: str,
+) -> tuple[GPT, nn.Module]:
+    eval_model = build_gpt_model(args, device, mtp_num_heads=0, mtp_loss_weight=0.0)
+    if args.num_loops > 0:
+        eval_model.looping_active = True
+    template_sd = {k: v.detach().cpu() for k, v in eval_model.state_dict().items()}
+    deq_state = load_dequantized_eval_state(args, quantized_path, template_sd)
+    eval_model.load_state_dict(deq_state, strict=True)
+    compiled_eval = torch.compile(eval_model, dynamic=False, fullgraph=True) if args.use_compile else eval_model
+    return eval_model, compiled_eval
+
 # --- Sliding window evaluation ---
 
 def eval_val_sliding(
@@ -1245,7 +1332,7 @@ def eval_val_sliding(
     token_count = torch.zeros((), device=device, dtype=torch.float64)
     byte_count = torch.zeros((), device=device, dtype=torch.float64)
     base_model.eval()
-    compiled_logits = torch.compile(base_model.forward_logits, dynamic=False, fullgraph=True)
+    compiled_logits = torch.compile(base_model.forward_logits, dynamic=False, fullgraph=True) if args.use_compile else base_model.forward_logits
     with torch.inference_mode():
         for bi in range(0, len(my_windows), batch_seqs):
             batch_ws = my_windows[bi:bi + batch_seqs]
@@ -1355,8 +1442,8 @@ def _ttt_chunk_bounds(
             bounds.append(min(bounds[-1] + args.ttt_chunk_tokens, total_tokens))
         return bounds
 
-    prev_ids = val_tokens[:-1]
-    tgt_ids = val_tokens[1:]
+    prev_ids = val_tokens[:-1].to(dtype=torch.int64)
+    tgt_ids = val_tokens[1:].to(dtype=torch.int64)
     token_bytes = base_bytes_lut[tgt_ids].to(torch.int64)
     token_bytes += (has_leading_space_lut[tgt_ids] & ~is_boundary_token_lut[prev_ids]).to(torch.int64)
     prefix = torch.zeros(total_tokens + 1, dtype=torch.int64)
@@ -1931,7 +2018,7 @@ def eval_val_sliding_store(
     nll_list: list[np.ndarray] = []
 
     base_model.eval()
-    compiled_logits = torch.compile(base_model.forward_logits, dynamic=False, fullgraph=True)
+    compiled_logits = torch.compile(base_model.forward_logits, dynamic=False, fullgraph=True) if args.use_compile else base_model.forward_logits
     with torch.inference_mode():
         for bi in range(0, len(my_windows), batch_seqs):
             batch_ws = my_windows[bi:bi + batch_seqs]
@@ -2405,6 +2492,142 @@ def _decompress_blob(data: bytes, args: Hyperparameters) -> bytes:
         raise ValueError(f"Unknown COMPRESSOR={args.compressor!r}")
     return _byte_unshuffle(raw) if args.byte_shuffle else raw
 
+
+def run_quantized_eval_suite(
+    args: Hyperparameters,
+    eval_model: GPT,
+    compiled_eval: nn.Module,
+    rank: int,
+    world_size: int,
+    device: torch.device,
+    grad_accum_steps: int,
+    val_tokens: Tensor,
+    base_bytes_lut: Tensor,
+    has_leading_space_lut: Tensor,
+    is_boundary_token_lut: Tensor,
+    effective_eval_seq_len: int,
+    log0,
+) -> None:
+    torch.cuda.synchronize()
+    t_qeval = time.perf_counter()
+    q_val_loss, q_val_bpb = eval_val(
+        args, compiled_eval, rank, world_size, device, grad_accum_steps,
+        val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
+        eval_seq_len=effective_eval_seq_len,
+    )
+    torch.cuda.synchronize()
+    log0(
+        f"final_int6_roundtrip val_loss:{q_val_loss:.4f} val_bpb:{q_val_bpb:.4f} "
+        f"eval_time:{1000.0 * (time.perf_counter() - t_qeval):.0f}ms"
+    )
+    log0(f"final_int6_roundtrip_exact val_loss:{q_val_loss:.8f} val_bpb:{q_val_bpb:.8f}")
+    sw_seq_len = effective_eval_seq_len
+    if args.eval_stride > 0 and args.eval_stride < sw_seq_len:
+        torch.cuda.synchronize()
+        t_slide = time.perf_counter()
+        sw_val_loss, sw_val_bpb = eval_val_sliding(
+            args, eval_model, rank, world_size, device,
+            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
+            stride=args.eval_stride,
+            eval_seq_len=sw_seq_len,
+        )
+        torch.cuda.synchronize()
+        log0(
+            f"final_int6_sliding_window val_loss:{sw_val_loss:.4f} val_bpb:{sw_val_bpb:.4f} "
+            f"stride:{args.eval_stride} eval_time:{1000.0 * (time.perf_counter() - t_slide):.0f}ms"
+        )
+        log0(f"final_int6_sliding_window_exact val_loss:{sw_val_loss:.8f} val_bpb:{sw_val_bpb:.8f}")
+        log0(f"final_int8_zlib_roundtrip_exact val_loss:{sw_val_loss:.8f} val_bpb:{sw_val_bpb:.8f}")
+    if args.eval_stride != 64 and 64 < sw_seq_len:
+        torch.cuda.synchronize()
+        t_slide64 = time.perf_counter()
+        sw64_val_loss, sw64_val_bpb = eval_val_sliding(
+            args, eval_model, rank, world_size, device,
+            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
+            stride=64,
+            eval_seq_len=sw_seq_len,
+        )
+        torch.cuda.synchronize()
+        log0(
+            f"final_int6_sliding_window_s64 val_loss:{sw64_val_loss:.4f} val_bpb:{sw64_val_bpb:.4f} "
+            f"stride:64 eval_time:{1000.0 * (time.perf_counter() - t_slide64):.0f}ms"
+        )
+        log0(f"final_int6_sliding_window_s64_exact val_loss:{sw64_val_loss:.8f} val_bpb:{sw64_val_bpb:.8f}")
+        log0(f"final_int8_zlib_roundtrip_exact val_loss:{sw64_val_loss:.8f} val_bpb:{sw64_val_bpb:.8f}")
+    if args.ttt_enabled:
+        torch.cuda.synchronize()
+        t_ttt = time.perf_counter()
+        ttt_loss, ttt_bpb = eval_val_sliding_ttt(
+            args, eval_model, rank, world_size, device,
+            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
+            stride=args.eval_stride, log0=log0,
+        )
+        torch.cuda.synchronize()
+        log0(f"legal_ttt val_loss:{ttt_loss:.4f} val_bpb:{ttt_bpb:.4f} "
+             f"eval_time:{1000.0 * (time.perf_counter() - t_ttt):.0f}ms")
+        log0(f"legal_ttt_exact val_loss:{ttt_loss:.8f} val_bpb:{ttt_bpb:.8f}")
+    if args.causal_cache_enabled:
+        torch.cuda.synchronize()
+        t_cache = time.perf_counter()
+        cache_loss, cache_bpb = eval_val_sliding_causal_cache(
+            args, eval_model, rank, world_size, device,
+            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
+            stride=args.eval_stride, log0=log0,
+        )
+        torch.cuda.synchronize()
+        log0(f"legal_causal_cache val_loss:{cache_loss:.4f} val_bpb:{cache_bpb:.4f} "
+             f"eval_time:{1000.0 * (time.perf_counter() - t_cache):.0f}ms")
+        log0(f"legal_causal_cache_exact val_loss:{cache_loss:.8f} val_bpb:{cache_bpb:.8f}")
+    if args.ngram_enabled:
+        ngram_model = eval_model
+        torch.cuda.synchronize()
+        t_ngram = time.perf_counter()
+        ng_val_loss, ng_val_bpb = eval_ngram_two_pass(
+            args, ngram_model, rank, world_size, device,
+            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
+            stride=args.eval_stride, log0=log0,
+        )
+        torch.cuda.synchronize()
+        log0(f"ngram_two_pass val_loss:{ng_val_loss:.4f} val_bpb:{ng_val_bpb:.4f} "
+             f"eval_time:{1000.0 * (time.perf_counter() - t_ngram):.0f}ms")
+        log0(f"ngram_two_pass_exact val_loss:{ng_val_loss:.8f} val_bpb:{ng_val_bpb:.8f}")
+        log0(f"final_int8_zlib_roundtrip_exact val_loss:{ng_val_loss:.8f} val_bpb:{ng_val_bpb:.8f}")
+
+
+def export_submission_artifact(
+    args: Hyperparameters,
+    export_sd: dict[str, Tensor],
+    code: str,
+    master_process: bool,
+    distributed: bool,
+    log0=print,
+    artifact_stem: str = "final_model",
+) -> str:
+    if master_process:
+        torch.save(export_sd, f"{artifact_stem}.pt")
+        model_bytes = os.path.getsize(f"{artifact_stem}.pt")
+        code_bytes = len(code.encode("utf-8"))
+        log0(f"Serialized model: {model_bytes} bytes")
+        log0(f"Code size: {code_bytes} bytes")
+    sd_cpu = {k: v.detach().cpu() for k, v in export_sd.items()}
+    unbanked_sd = _unbank_state_dict(sd_cpu, args.num_layers)
+    quant_result, quant_meta = mixed_quantize_export(unbanked_sd, args)
+    quant_buf = io.BytesIO()
+    torch.save({"w": quant_result, "m": quant_meta}, quant_buf)
+    quant_raw = quant_buf.getvalue()
+    quant_blob = _compress_blob(quant_raw, args)
+    quantized_path = f"{artifact_stem}.int6.ptz"
+    if master_process:
+        with open(quantized_path, "wb") as f:
+            f.write(quant_blob)
+        quant_file_bytes = len(quant_blob)
+        code_bytes = len(code.encode("utf-8"))
+        log0(f"Serialized model quantized+{args.compressor}: {quant_file_bytes} bytes")
+        log0(f"Total submission size quantized+{args.compressor}: {quant_file_bytes + code_bytes} bytes")
+    if distributed:
+        dist.barrier()
+    return quantized_path
+
 # --- Training ---
 
 def main() -> None:
@@ -2482,55 +2705,18 @@ def main() -> None:
     log0(f"train_loader:dataset:{dataset_dir.name} train_shards:{actual_train_files}")
     log0(f"val_loader:shards pattern={args.val_files} tokens:{val_tokens.numel() - 1}")
     CastedLinear._qat_enabled = args.qat_enabled
-    base_model = GPT(
-        vocab_size=args.vocab_size,
-        num_layers=args.num_layers,
-        model_dim=args.model_dim,
-        num_heads=args.num_heads,
-        num_kv_heads=args.num_kv_heads,
-        mlp_mult=args.mlp_mult,
-        tie_embeddings=args.tie_embeddings,
-        tied_embed_init_std=args.tied_embed_init_std,
-        logit_softcap=args.logit_softcap,
-        rope_base=args.rope_base,
-        qk_gain_init=args.qk_gain_init,
+    base_model = build_gpt_model(
+        args,
+        device,
         mtp_num_heads=args.mtp_num_heads,
         mtp_loss_weight=args.mtp_loss_weight,
-        bigram_vocab_size=args.bigram_vocab_size,
-        bigram_dim=args.bigram_dim,
-        smear_enabled=args.smear_enabled,
-        xsa_last_n=args.xsa_last_n,
-        rope_dims=args.rope_dims,
-        ln_scale=args.ln_scale,
-        dtg=args.dtg_enabled,
-        ve_enabled=args.ve_enabled,
-        ve_dim=args.ve_dim,
-        ve_layers=args.ve_layers,
-        num_loops=args.num_loops,
-        loop_start=args.loop_start,
-        loop_end=args.loop_end,
-        gated_attention=args.gated_attention,
-        value_residual=args.value_residual,
-        activation_mode=args.activation_mode,
-        activation_neg_slope=args.activation_neg_slope,
-        asymmetric_square_init=args.asymmetric_square_init,
-        gated_square_beta_init=args.gated_square_beta_init,
-    ).to(device).bfloat16()
-    # Banks stay FP32 (like CastedLinear weights), cast to BF16 in forward
-    base_model.qo_bank.data = base_model.qo_bank.data.float()
-    base_model.kv_bank.data = base_model.kv_bank.data.float()
-    base_model.mlp_up_bank.data = base_model.mlp_up_bank.data.float()
-    base_model.mlp_down_bank.data = base_model.mlp_down_bank.data.float()
-    for module in base_model.modules():
-        if isinstance(module, CastedLinear):
-            module.float()
-    restore_low_dim_params_to_fp32(base_model)
+    )
     # No DDP -- Parallel Muon handles bank grad communication via reduce-scatter,
     # and non-bank grads are manually all-reduced before Adam steps.
-    compiled_model = torch.compile(base_model, dynamic=False, fullgraph=True)
+    compiled_model = torch.compile(base_model, dynamic=False, fullgraph=True) if args.use_compile else base_model
     model = compiled_model
     # Separate compile for forward_logits (used in complementary training)
-    compiled_forward_logits = torch.compile(base_model.forward_logits, dynamic=False, fullgraph=True)
+    compiled_forward_logits = torch.compile(base_model.forward_logits, dynamic=False, fullgraph=True) if args.use_compile else base_model.forward_logits
 
     # Optimizer split:
     # - 4 parameter banks -> Muon (batched Newton-Schulz)
@@ -2641,7 +2827,46 @@ def main() -> None:
         f"iterations:{args.iterations} warmup_steps:{args.warmup_steps} "
         f"max_wallclock_seconds:{args.max_wallclock_seconds:.3f}"
     )
+    log0(f"use_compile:{args.use_compile}")
     log0(f"seed:{args.seed}")
+    if args.eval_only:
+        if args.load_int6_path:
+            quantized_path = Path(args.load_int6_path).resolve()
+            if not quantized_path.is_file():
+                raise FileNotFoundError(f"LOAD_INT6_PATH not found: {quantized_path}")
+            log0(f"eval_only:True load_int6_path:{quantized_path}")
+            if args.load_fp32_path:
+                log0(f"eval_only:ignoring load_fp32_path:{Path(args.load_fp32_path).resolve()}")
+            eval_model, compiled_eval = build_eval_model_from_quantized_path(args, device, str(quantized_path))
+        elif args.load_fp32_path:
+            fp32_path = Path(args.load_fp32_path).resolve()
+            if not fp32_path.is_file():
+                raise FileNotFoundError(f"LOAD_FP32_PATH not found: {fp32_path}")
+            log0(f"eval_only:True load_fp32_path:{fp32_path}")
+            export_sd = torch.load(fp32_path, map_location="cpu")
+            if not isinstance(export_sd, dict):
+                raise TypeError(f"LOAD_FP32_PATH must contain a state_dict, got {type(export_sd)!r}")
+            base_model.load_state_dict(export_sd, strict=True)
+            quantized_artifact = export_submission_artifact(
+                args,
+                export_sd,
+                code,
+                master_process,
+                distributed,
+                log0=log0,
+                artifact_stem="final_model",
+            )
+            eval_model, compiled_eval = build_eval_model_from_quantized_path(args, device, quantized_artifact)
+        else:
+            raise ValueError("EVAL_ONLY=1 requires LOAD_INT6_PATH or LOAD_FP32_PATH")
+        run_quantized_eval_suite(
+            args, eval_model, compiled_eval, rank, world_size, device, grad_accum_steps,
+            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
+            effective_eval_seq_len, log0,
+        )
+        if distributed:
+            dist.destroy_process_group()
+        return
     train_loader = DistributedTokenLoader(args.train_files, rank, world_size, device)
     def zero_grad_all() -> None:
         for opt in optimizers:
@@ -2851,155 +3076,21 @@ def main() -> None:
     excluded_mtp = sum(int(t.numel()) for k, t in full_state_dict.items() if "mtp_heads" in k)
     if excluded_mtp > 0:
         log0(f"export_excluding_mtp_params:{excluded_mtp}")
-    if master_process:
-        torch.save(export_sd, "final_model.pt")
-        model_bytes = os.path.getsize("final_model.pt")
-        code_bytes = len(code.encode("utf-8"))
-        log0(f"Serialized model: {model_bytes} bytes")
-        log0(f"Code size: {code_bytes} bytes")
-    # Unbank 3D tensors into individual 2D tensors for quantization
-    sd_cpu = {k: v.detach().cpu() for k, v in export_sd.items()}
-    unbanked_sd = _unbank_state_dict(sd_cpu, args.num_layers)
-    quant_result, quant_meta = mixed_quantize_export(unbanked_sd, args)
-    quant_buf = io.BytesIO()
-    torch.save({"w": quant_result, "m": quant_meta}, quant_buf)
-    quant_raw = quant_buf.getvalue()
-    quant_blob = _compress_blob(quant_raw, args)
-    if master_process:
-        with open("final_model.int6.ptz", "wb") as f:
-            f.write(quant_blob)
-        quant_file_bytes = len(quant_blob)
-        code_bytes = len(code.encode("utf-8"))
-        log0(f"Serialized model quantized+{args.compressor}: {quant_file_bytes} bytes")
-        log0(f"Total submission size quantized+{args.compressor}: {quant_file_bytes + code_bytes} bytes")
-    if distributed:
-        dist.barrier()
-    with open("final_model.int6.ptz", "rb") as f:
-        quant_blob_disk = f.read()
-    quant_state = torch.load(
-        io.BytesIO(_decompress_blob(quant_blob_disk, args)),
-        map_location="cpu",
+    quantized_artifact = export_submission_artifact(
+        args,
+        export_sd,
+        code,
+        master_process,
+        distributed,
+        log0=log0,
+        artifact_stem="final_model",
     )
-    deq_unbanked = dequantize_mixed_int6(quant_state["w"], quant_state["m"], unbanked_sd)
-    # Re-bank the dequantized tensors
-    deq_state = _rebank_state_dict(deq_unbanked, args.num_layers, sd_cpu)
-    eval_model = GPT(
-        vocab_size=args.vocab_size, num_layers=args.num_layers, model_dim=args.model_dim,
-        num_heads=args.num_heads, num_kv_heads=args.num_kv_heads, mlp_mult=args.mlp_mult,
-        tie_embeddings=args.tie_embeddings, tied_embed_init_std=args.tied_embed_init_std,
-        logit_softcap=args.logit_softcap, rope_base=args.rope_base, qk_gain_init=args.qk_gain_init,
-        mtp_num_heads=0, mtp_loss_weight=0.0,
-        bigram_vocab_size=args.bigram_vocab_size, bigram_dim=args.bigram_dim,
-        smear_enabled=args.smear_enabled,
-        xsa_last_n=args.xsa_last_n,
-        rope_dims=args.rope_dims, ln_scale=args.ln_scale, dtg=args.dtg_enabled,
-        ve_enabled=args.ve_enabled, ve_dim=args.ve_dim, ve_layers=args.ve_layers,
-        num_loops=args.num_loops, loop_start=args.loop_start, loop_end=args.loop_end,
-        gated_attention=args.gated_attention, value_residual=args.value_residual,
-        activation_mode=args.activation_mode,
-        activation_neg_slope=args.activation_neg_slope,
-        asymmetric_square_init=args.asymmetric_square_init,
-        gated_square_beta_init=args.gated_square_beta_init,
-    ).to(device).bfloat16()
-    eval_model.qo_bank.data = eval_model.qo_bank.data.float()
-    eval_model.kv_bank.data = eval_model.kv_bank.data.float()
-    eval_model.mlp_up_bank.data = eval_model.mlp_up_bank.data.float()
-    eval_model.mlp_down_bank.data = eval_model.mlp_down_bank.data.float()
-    for m in eval_model.modules():
-        if isinstance(m, CastedLinear):
-            m.float()
-    restore_low_dim_params_to_fp32(eval_model)
-    if args.num_loops > 0:
-        eval_model.looping_active = True
-    eval_model.load_state_dict(deq_state, strict=True)
-    compiled_eval = torch.compile(eval_model, dynamic=False, fullgraph=True)
-    torch.cuda.synchronize()
-    t_qeval = time.perf_counter()
-    q_val_loss, q_val_bpb = eval_val(
-        args, compiled_eval, rank, world_size, device, grad_accum_steps,
+    eval_model, compiled_eval = build_eval_model_from_quantized_path(args, device, quantized_artifact)
+    run_quantized_eval_suite(
+        args, eval_model, compiled_eval, rank, world_size, device, grad_accum_steps,
         val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
-        eval_seq_len=effective_eval_seq_len,
+        effective_eval_seq_len, log0,
     )
-    torch.cuda.synchronize()
-    log0(
-        f"final_int6_roundtrip val_loss:{q_val_loss:.4f} val_bpb:{q_val_bpb:.4f} "
-        f"eval_time:{1000.0 * (time.perf_counter() - t_qeval):.0f}ms"
-    )
-    log0(f"final_int6_roundtrip_exact val_loss:{q_val_loss:.8f} val_bpb:{q_val_bpb:.8f}")
-    sw_seq_len = effective_eval_seq_len
-    if args.eval_stride > 0 and args.eval_stride < sw_seq_len:
-        torch.cuda.synchronize()
-        t_slide = time.perf_counter()
-        sw_val_loss, sw_val_bpb = eval_val_sliding(
-            args, eval_model, rank, world_size, device,
-            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
-            stride=args.eval_stride,
-            eval_seq_len=sw_seq_len,
-        )
-        torch.cuda.synchronize()
-        log0(
-            f"final_int6_sliding_window val_loss:{sw_val_loss:.4f} val_bpb:{sw_val_bpb:.4f} "
-            f"stride:{args.eval_stride} eval_time:{1000.0 * (time.perf_counter() - t_slide):.0f}ms"
-        )
-        log0(f"final_int6_sliding_window_exact val_loss:{sw_val_loss:.8f} val_bpb:{sw_val_bpb:.8f}")
-        log0(f"final_int8_zlib_roundtrip_exact val_loss:{sw_val_loss:.8f} val_bpb:{sw_val_bpb:.8f}")
-    if args.eval_stride != 64 and 64 < sw_seq_len:
-        torch.cuda.synchronize()
-        t_slide64 = time.perf_counter()
-        sw64_val_loss, sw64_val_bpb = eval_val_sliding(
-            args, eval_model, rank, world_size, device,
-            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
-            stride=64,
-            eval_seq_len=sw_seq_len,
-        )
-        torch.cuda.synchronize()
-        log0(
-            f"final_int6_sliding_window_s64 val_loss:{sw64_val_loss:.4f} val_bpb:{sw64_val_bpb:.4f} "
-            f"stride:64 eval_time:{1000.0 * (time.perf_counter() - t_slide64):.0f}ms"
-        )
-        log0(f"final_int6_sliding_window_s64_exact val_loss:{sw64_val_loss:.8f} val_bpb:{sw64_val_bpb:.8f}")
-        log0(f"final_int8_zlib_roundtrip_exact val_loss:{sw64_val_loss:.8f} val_bpb:{sw64_val_bpb:.8f}")
-    # Legal score-first TTT (PR #461 recipe)
-    if args.ttt_enabled:
-        torch.cuda.synchronize()
-        t_ttt = time.perf_counter()
-        ttt_loss, ttt_bpb = eval_val_sliding_ttt(
-            args, eval_model, rank, world_size, device,
-            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
-            stride=args.eval_stride, log0=log0,
-        )
-        torch.cuda.synchronize()
-        log0(f"legal_ttt val_loss:{ttt_loss:.4f} val_bpb:{ttt_bpb:.4f} "
-             f"eval_time:{1000.0 * (time.perf_counter() - t_ttt):.0f}ms")
-        log0(f"legal_ttt_exact val_loss:{ttt_loss:.8f} val_bpb:{ttt_bpb:.8f}")
-    if args.causal_cache_enabled:
-        torch.cuda.synchronize()
-        t_cache = time.perf_counter()
-        cache_loss, cache_bpb = eval_val_sliding_causal_cache(
-            args, eval_model, rank, world_size, device,
-            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
-            stride=args.eval_stride, log0=log0,
-        )
-        torch.cuda.synchronize()
-        log0(f"legal_causal_cache val_loss:{cache_loss:.4f} val_bpb:{cache_bpb:.4f} "
-             f"eval_time:{1000.0 * (time.perf_counter() - t_cache):.0f}ms")
-        log0(f"legal_causal_cache_exact val_loss:{cache_loss:.8f} val_bpb:{cache_bpb:.8f}")
-    # --- N-gram two-pass rescore ---
-    if args.ngram_enabled:
-        # Use TTT-adapted model if available, otherwise use quantized eval model
-        ngram_model = eval_model
-        torch.cuda.synchronize()
-        t_ngram = time.perf_counter()
-        ng_val_loss, ng_val_bpb = eval_ngram_two_pass(
-            args, ngram_model, rank, world_size, device,
-            val_tokens, base_bytes_lut, has_leading_space_lut, is_boundary_token_lut,
-            stride=args.eval_stride, log0=log0,
-        )
-        torch.cuda.synchronize()
-        log0(f"ngram_two_pass val_loss:{ng_val_loss:.4f} val_bpb:{ng_val_bpb:.4f} "
-             f"eval_time:{1000.0 * (time.perf_counter() - t_ngram):.0f}ms")
-        log0(f"ngram_two_pass_exact val_loss:{ng_val_loss:.8f} val_bpb:{ng_val_bpb:.8f}")
-        log0(f"final_int8_zlib_roundtrip_exact val_loss:{ng_val_loss:.8f} val_bpb:{ng_val_bpb:.8f}")
     if distributed:
         dist.destroy_process_group()
 if __name__ == "__main__":
