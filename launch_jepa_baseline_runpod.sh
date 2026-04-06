@@ -42,32 +42,85 @@ export MODEL_EMA_ENABLED="${MODEL_EMA_ENABLED:-1}"
 export MODEL_EMA_DECAY="${MODEL_EMA_DECAY:-0.997}"
 export SWA_ENABLED="${SWA_ENABLED:-0}"
 export SWA_EVERY="${SWA_EVERY:-50}"
+export XSA_ALL="${XSA_ALL:-0}"
 
 case "$VARIANT" in
   control)
     export RUN_ID="${RUN_ID:-jepa_iso_control_runpod}"
     export JEPA_LOSS_WEIGHT=0.0
+    export NUM_LAYERS="${NUM_LAYERS:-9}"
+    export MODEL_DIM="${MODEL_DIM:-512}"
     OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_control"
     ;;
   jepa01)
     export RUN_ID="${RUN_ID:-jepa_iso_jepa01_runpod}"
     export JEPA_LOSS_WEIGHT=0.1
+    export NUM_LAYERS="${NUM_LAYERS:-9}"
+    export MODEL_DIM="${MODEL_DIM:-512}"
     OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_jepa01"
     ;;
   jepa02)
     export RUN_ID="${RUN_ID:-jepa_iso_jepa02_runpod}"
     export JEPA_LOSS_WEIGHT=0.2
+    export NUM_LAYERS="${NUM_LAYERS:-9}"
+    export MODEL_DIM="${MODEL_DIM:-512}"
     OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_jepa02"
+    ;;
+  xsa_control)
+    export RUN_ID="${RUN_ID:-jepa_iso_xsa_control_runpod}"
+    export JEPA_LOSS_WEIGHT=0.0
+    export NUM_LAYERS="${NUM_LAYERS:-9}"
+    export MODEL_DIM="${MODEL_DIM:-512}"
+    export XSA_ALL=1
+    OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_xsa_control"
+    ;;
+  xsa_jepa01)
+    export RUN_ID="${RUN_ID:-jepa_iso_xsa_jepa01_runpod}"
+    export JEPA_LOSS_WEIGHT=0.1
+    export NUM_LAYERS="${NUM_LAYERS:-9}"
+    export MODEL_DIM="${MODEL_DIM:-512}"
+    export XSA_ALL=1
+    OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_xsa_jepa01"
+    ;;
+  depth12_control)
+    export RUN_ID="${RUN_ID:-jepa_iso_depth12_control_runpod}"
+    export JEPA_LOSS_WEIGHT=0.0
+    export NUM_LAYERS="${NUM_LAYERS:-12}"
+    export MODEL_DIM="${MODEL_DIM:-512}"
+    OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_depth12_control"
+    ;;
+  depth12_jepa01)
+    export RUN_ID="${RUN_ID:-jepa_iso_depth12_jepa01_runpod}"
+    export JEPA_LOSS_WEIGHT=0.1
+    export NUM_LAYERS="${NUM_LAYERS:-12}"
+    export MODEL_DIM="${MODEL_DIM:-512}"
+    OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_depth12_jepa01"
+    ;;
+  depth12wide_control)
+    export RUN_ID="${RUN_ID:-jepa_iso_depth12wide_control_runpod}"
+    export JEPA_LOSS_WEIGHT=0.0
+    export NUM_LAYERS="${NUM_LAYERS:-12}"
+    export MODEL_DIM="${MODEL_DIM:-576}"
+    OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_depth12wide_control"
+    ;;
+  depth12wide_jepa01)
+    export RUN_ID="${RUN_ID:-jepa_iso_depth12wide_jepa01_runpod}"
+    export JEPA_LOSS_WEIGHT=0.1
+    export NUM_LAYERS="${NUM_LAYERS:-12}"
+    export MODEL_DIM="${MODEL_DIM:-576}"
+    OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_depth12wide_jepa01"
     ;;
   weight:*)
     WEIGHT_VALUE="${VARIANT#weight:}"
     WEIGHT_TAG="${WEIGHT_VALUE//./p}"
     export RUN_ID="${RUN_ID:-jepa_iso_w${WEIGHT_TAG}_runpod}"
     export JEPA_LOSS_WEIGHT="$WEIGHT_VALUE"
+    export NUM_LAYERS="${NUM_LAYERS:-9}"
+    export MODEL_DIM="${MODEL_DIM:-512}"
     OUT_DIR="$RECORD_ROOT/${DATA_ROOT_MODE}_w${WEIGHT_TAG}"
     ;;
   *)
-    echo "usage: $0 {control|jepa01|jepa02|weight:<float>}" >&2
+    echo "usage: $0 {control|jepa01|jepa02|xsa_control|xsa_jepa01|depth12_control|depth12_jepa01|depth12wide_control|depth12wide_jepa01|weight:<float>}" >&2
     exit 1
     ;;
 esac
@@ -86,6 +139,9 @@ LOG_PATH="$OUT_DIR/train.log"
   echo "TRAIN_BATCH_TOKENS=$TRAIN_BATCH_TOKENS"
   echo "TRAIN_SEQ_LEN=$TRAIN_SEQ_LEN"
   echo "VAL_BATCH_SIZE=$VAL_BATCH_SIZE"
+  echo "NUM_LAYERS=$NUM_LAYERS"
+  echo "MODEL_DIM=$MODEL_DIM"
+  echo "XSA_ALL=$XSA_ALL"
   echo "USE_COMPILE=$USE_COMPILE"
   echo "MODEL_EMA_ENABLED=$MODEL_EMA_ENABLED"
   echo "MODEL_EMA_DECAY=$MODEL_EMA_DECAY"

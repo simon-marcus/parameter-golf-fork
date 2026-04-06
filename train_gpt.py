@@ -20,6 +20,7 @@ import zlib
 from pathlib import Path
 
 import numpy as np
+import sentencepiece as spm
 import torch
 import torch.distributed as dist
 import torch.nn.functional as F
@@ -41,8 +42,6 @@ class Hyperparameters:
     train_files = os.path.join(data_path, "fineweb_train_*.bin")
     val_files = os.path.join(data_path, "fineweb_val_*.bin")
     tokenizer_path = os.environ.get("TOKENIZER_PATH", "./data/tokenizers/fineweb_1024_bpe.model")
-    tokenizer_meta_path = os.environ.get("TOKENIZER_META_PATH", "")
-    tokenizer_meta_validate = bool(int(os.environ.get("TOKENIZER_META_VALIDATE", "0")))
     run_id = os.environ.get("RUN_ID", str(uuid.uuid4()))
     seed = int(os.environ.get("SEED", 1337))
 
@@ -62,11 +61,11 @@ class Hyperparameters:
 
     # Model shape.
     vocab_size = int(os.environ.get("VOCAB_SIZE", 1024))
-    num_layers = int(os.environ.get("NUM_LAYERS", 9))
+    num_layers = int(os.environ.get("NUM_LAYERS", 12))
     num_kv_heads = int(os.environ.get("NUM_KV_HEADS", 4))
     model_dim = int(os.environ.get("MODEL_DIM", 512))
     num_heads = int(os.environ.get("NUM_HEADS", 8))
-    mlp_mult = int(os.environ.get("MLP_MULT", 2))
+    mlp_mult = int(os.environ.get("MLP_MULT", 3))
     tie_embeddings = bool(int(os.environ.get("TIE_EMBEDDINGS", "1")))
     rope_base = float(os.environ.get("ROPE_BASE", 10000.0))
     logit_softcap = float(os.environ.get("LOGIT_SOFTCAP", 30.0))
@@ -76,7 +75,7 @@ class Hyperparameters:
     head_lr = float(os.environ.get("HEAD_LR", 0.008))
     tied_embed_lr = float(os.environ.get("TIED_EMBED_LR", 0.05))
     tied_embed_init_std = float(os.environ.get("TIED_EMBED_INIT_STD", 0.005))
-    matrix_lr = float(os.environ.get("MATRIX_LR", 0.04))
+    matrix_lr = float(os.environ.get("MATRIX_LR", 0.07))
     scalar_lr = float(os.environ.get("SCALAR_LR", 0.04))
     muon_momentum = float(os.environ.get("MUON_MOMENTUM", 0.95))
     muon_backend_steps = int(os.environ.get("MUON_BACKEND_STEPS", 5))
@@ -178,32 +177,9 @@ class Muon(torch.optim.Optimizer):
 # We calculate BPB (bits-per-byte) instead of validation loss, so we need methods to count the number of bits per token in the tokenizer.
 # Note: Submissions that edit the tokenizer will be examined more carefully, since screwing this up might unjustly improve your score.
 
-TOKENIZER_META_FORMAT_VERSION = 1
-TOKENIZER_META_SUFFIX = ".meta.npz"
-
-
-def _derive_tokenizer_meta_path(tokenizer_path: str) -> Path:
-    tokenizer = Path(tokenizer_path)
-    if tokenizer.suffix == ".model":
-        return tokenizer.with_suffix(TOKENIZER_META_SUFFIX)
-    return tokenizer.with_name(tokenizer.name + TOKENIZER_META_SUFFIX)
-
-
-def _torch_luts_from_numpy(
-    base_bytes_np: np.ndarray,
-    has_leading_space_np: np.ndarray,
-    is_boundary_token_np: np.ndarray,
-    *,
-    device: torch.device,
+def build_sentencepiece_luts(
+    sp: spm.SentencePieceProcessor, vocab_size: int, device: torch.device
 ) -> tuple[Tensor, Tensor, Tensor]:
-    return (
-        torch.tensor(base_bytes_np, dtype=torch.int16, device=device),
-        torch.tensor(has_leading_space_np, dtype=torch.bool, device=device),
-        torch.tensor(is_boundary_token_np, dtype=torch.bool, device=device),
-    )
-
-
-def build_sentencepiece_luts_np(sp, vocab_size: int) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     sp_vocab_size = int(sp.vocab_size())
     table_size = max(sp_vocab_size, vocab_size)
     base_bytes_np = np.zeros((table_size,), dtype=np.int16)
@@ -221,108 +197,11 @@ def build_sentencepiece_luts_np(sp, vocab_size: int) -> tuple[np.ndarray, np.nda
             has_leading_space_np[token_id] = True
             piece = piece[1:]
         base_bytes_np[token_id] = len(piece.encode("utf-8"))
-    return base_bytes_np, has_leading_space_np, is_boundary_token_np
-
-
-def build_sentencepiece_luts(sp, vocab_size: int, device: torch.device) -> tuple[Tensor, Tensor, Tensor]:
-    return _torch_luts_from_numpy(*build_sentencepiece_luts_np(sp, vocab_size), device=device)
-
-
-def load_tokenizer_meta_luts_np(meta_path: Path, vocab_size: int) -> tuple[np.ndarray, np.ndarray, np.ndarray, dict[str, object]]:
-    with np.load(meta_path, allow_pickle=False) as data:
-        format_version = int(data["format_version"])
-        if format_version != TOKENIZER_META_FORMAT_VERSION:
-            raise ValueError(
-                f"Unsupported tokenizer metadata format_version={format_version} in {meta_path}; "
-                f"expected {TOKENIZER_META_FORMAT_VERSION}"
-            )
-        meta_vocab_size = int(data["vocab_size"])
-        table_size = max(meta_vocab_size, vocab_size)
-        base_bytes_np = np.zeros((table_size,), dtype=np.int16)
-        has_leading_space_np = np.zeros((table_size,), dtype=np.bool_)
-        is_boundary_token_np = np.ones((table_size,), dtype=np.bool_)
-        base_src = np.asarray(data["base_bytes"], dtype=np.int16)
-        lead_src = np.asarray(data["has_leading_space"], dtype=np.bool_)
-        boundary_src = np.asarray(data["is_boundary_token"], dtype=np.bool_)
-        if not (len(base_src) == len(lead_src) == len(boundary_src) == meta_vocab_size):
-            raise ValueError(f"Tokenizer metadata arrays in {meta_path} do not match vocab_size={meta_vocab_size}")
-        base_bytes_np[:meta_vocab_size] = base_src
-        has_leading_space_np[:meta_vocab_size] = lead_src
-        is_boundary_token_np[:meta_vocab_size] = boundary_src
-        metadata = {
-            "format_version": format_version,
-            "tokenizer_kind": str(data["tokenizer_kind"].item()),
-            "source_model_name": str(data["source_model_name"].item()),
-            "vocab_size": meta_vocab_size,
-        }
-    return base_bytes_np, has_leading_space_np, is_boundary_token_np, metadata
-
-
-def load_tokenizer_luts(
-    *,
-    tokenizer_path: str,
-    tokenizer_meta_path: str,
-    vocab_size: int,
-    device: torch.device,
-    validate_meta: bool,
-) -> tuple[tuple[Tensor, Tensor, Tensor], dict[str, object]]:
-    explicit_meta = Path(tokenizer_meta_path).expanduser() if tokenizer_meta_path else None
-    meta_path = explicit_meta if explicit_meta is not None else _derive_tokenizer_meta_path(tokenizer_path)
-    meta_path = meta_path.resolve()
-    tokenizer = Path(tokenizer_path).expanduser().resolve()
-    if meta_path.is_file():
-        base_bytes_np, has_leading_space_np, is_boundary_token_np, metadata = load_tokenizer_meta_luts_np(
-            meta_path, vocab_size
-        )
-        if validate_meta:
-            sp_luts = load_tokenizer_luts_from_sentencepiece_np(tokenizer, vocab_size)
-            if not (
-                np.array_equal(base_bytes_np, sp_luts[0])
-                and np.array_equal(has_leading_space_np, sp_luts[1])
-                and np.array_equal(is_boundary_token_np, sp_luts[2])
-            ):
-                raise ValueError(
-                    f"Tokenizer metadata parity check failed for meta_path={meta_path} tokenizer_path={tokenizer}"
-                )
-        metadata.update(
-            {
-                "meta_path": str(meta_path),
-                "tokenizer_path": str(tokenizer),
-                "source": "meta",
-            }
-        )
-        return _torch_luts_from_numpy(base_bytes_np, has_leading_space_np, is_boundary_token_np, device=device), metadata
-    if explicit_meta is not None:
-        raise FileNotFoundError(f"TOKENIZER_META_PATH does not exist: {meta_path}")
-    luts = load_tokenizer_luts_from_sentencepiece_np(tokenizer, vocab_size)
-    metadata = {
-        "format_version": None,
-        "tokenizer_kind": "sentencepiece",
-        "source_model_name": tokenizer.name,
-        "vocab_size": max(vocab_size, len(luts[0])),
-        "meta_path": str(meta_path),
-        "tokenizer_path": str(tokenizer),
-        "source": "sentencepiece-fallback",
-    }
-    return _torch_luts_from_numpy(*luts, device=device), metadata
-
-
-def load_tokenizer_luts_from_sentencepiece_np(
-    tokenizer_path: Path, vocab_size: int
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    try:
-        import sentencepiece as spm
-    except ImportError as exc:
-        raise RuntimeError(
-            f"Tokenizer metadata not found at { _derive_tokenizer_meta_path(str(tokenizer_path)) } and "
-            "sentencepiece is unavailable for compatibility fallback"
-        ) from exc
-    sp = spm.SentencePieceProcessor(model_file=str(tokenizer_path))
-    if int(sp.vocab_size()) != vocab_size:
-        raise ValueError(
-            f"VOCAB_SIZE={vocab_size} does not match tokenizer vocab_size={int(sp.vocab_size())}"
-        )
-    return build_sentencepiece_luts_np(sp, vocab_size)
+    return (
+        torch.tensor(base_bytes_np, dtype=torch.int16, device=device),
+        torch.tensor(has_leading_space_np, dtype=torch.bool, device=device),
+        torch.tensor(is_boundary_token_np, dtype=torch.bool, device=device),
+    )
 
 
 def load_validation_tokens(pattern: str, seq_len: int) -> Tensor:
@@ -842,7 +721,10 @@ class GPT(nn.Module):
                 raise RuntimeError("lm_head is required when tie_embeddings=False")
             logits_proj = self.lm_head(x)
         logits = self.logit_softcap * torch.tanh(logits_proj / self.logit_softcap)
-        return F.cross_entropy(logits.float(), targets, reduction="mean")
+        loss = F.cross_entropy(logits.float(), targets, reduction="mean")
+        if self.training:
+            loss = loss + 1e-4 * torch.logsumexp(logits.float(), dim=-1).square().mean()
+        return loss
 
 
 # -----------------------------
@@ -923,24 +805,20 @@ def main() -> None:
     torch.manual_seed(args.seed)
     torch.cuda.manual_seed_all(args.seed)
 
+    if not args.tokenizer_path.endswith(".model"):
+        raise ValueError(f"Script only setup for SentencePiece .model file: {args.tokenizer_path}")
+    sp = spm.SentencePieceProcessor(model_file=args.tokenizer_path)
+    if int(sp.vocab_size()) != args.vocab_size:
+        raise ValueError(
+            f"VOCAB_SIZE={args.vocab_size} does not match tokenizer vocab_size={int(sp.vocab_size())}"
+        )
     dataset_dir = Path(args.data_path).resolve()
     actual_train_files = len(list(dataset_dir.glob("fineweb_train_*.bin")))
     val_tokens = load_validation_tokens(args.val_files, args.train_seq_len)
-    (base_bytes_lut, has_leading_space_lut, is_boundary_token_lut), tokenizer_meta = load_tokenizer_luts(
-        tokenizer_path=args.tokenizer_path,
-        tokenizer_meta_path=args.tokenizer_meta_path,
-        vocab_size=args.vocab_size,
-        device=device,
-        validate_meta=args.tokenizer_meta_validate,
+    base_bytes_lut, has_leading_space_lut, is_boundary_token_lut = build_sentencepiece_luts(
+        sp, args.vocab_size, device
     )
-    meta_path = tokenizer_meta.get("meta_path")
-    log0(
-        "val_bpb:enabled "
-        f"tokenizer_kind={tokenizer_meta['tokenizer_kind']} "
-        f"tokenizer_path={tokenizer_meta['tokenizer_path']} "
-        f"tokenizer_source={tokenizer_meta['source']} "
-        f"tokenizer_meta_path={meta_path}"
-    )
+    log0(f"val_bpb:enabled tokenizer_kind=sentencepiece tokenizer_path={args.tokenizer_path}")
     log0(f"train_loader:dataset:{dataset_dir.name} train_shards:{actual_train_files}")
     log0(f"val_loader:shards pattern={args.val_files} tokens:{val_tokens.numel() - 1}")
 
