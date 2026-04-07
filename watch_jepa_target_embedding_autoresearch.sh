@@ -81,7 +81,7 @@ def get_live_processes():
         )
     except subprocess.CalledProcessError:
         return []
-    needles = ("autoresearch.py", "claude -p", "target_embedding_probe.py")
+    needles = ("jepa_target_embedding_autoresearch_simple.py", "autoresearch.py", "claude -p", "target_embedding_probe.py")
     lines = []
     for line in out.splitlines():
         if any(n in line for n in needles) and "watch_jepa_target_embedding_autoresearch.sh" not in line:

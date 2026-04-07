@@ -189,7 +189,9 @@ This should be a late-stage multiplier, not the first rescue attempt.
 - [train_jepa_patched.py](/Users/simon/Code/parameter-golf/train_jepa_patched.py)
 - [records/byte-level-jepa/target-embedding-autoresearch/JEPA_TARGET_EMBEDDING_AUTORESEARCH.md](/Users/simon/Code/parameter-golf/records/byte-level-jepa/target-embedding-autoresearch/JEPA_TARGET_EMBEDDING_AUTORESEARCH.md)
 - [records/byte-level-jepa/target-embedding-autoresearch/program.md](/Users/simon/Code/parameter-golf/records/byte-level-jepa/target-embedding-autoresearch/program.md)
+- [records/byte-level-jepa/target-embedding-autoresearch/program_freecode.md](/Users/simon/Code/parameter-golf/records/byte-level-jepa/target-embedding-autoresearch/program_freecode.md)
 - [run_jepa_target_embedding_autoresearch.sh](/Users/simon/Code/parameter-golf/run_jepa_target_embedding_autoresearch.sh)
+- [run_jepa_target_embedding_dual_lanes.sh](/Users/simon/Code/parameter-golf/run_jepa_target_embedding_dual_lanes.sh)
 - [PLAN_AND_PROGRESS.md](/Users/simon/Code/parameter-golf/PLAN_AND_PROGRESS.md)
 
 ## Goal
@@ -204,4 +206,6 @@ We now have a dedicated target-embedding autoresearch lane focused on one specif
 
 Entry points:
 - [records/byte-level-jepa/target-embedding-autoresearch/JEPA_TARGET_EMBEDDING_AUTORESEARCH.md](/Users/simon/Code/parameter-golf/records/byte-level-jepa/target-embedding-autoresearch/JEPA_TARGET_EMBEDDING_AUTORESEARCH.md)
-- [run_jepa_target_embedding_autoresearch.sh](/Users/simon/Code/parameter-golf/run_jepa_target_embedding_autoresearch.sh)
+- [run_jepa_target_embedding_autoresearch.sh](/Users/simon/Code/parameter-golf/run_jepa_target_embedding_autoresearch.sh) (`constrained` or `freecode` mode)
+- [jepa_target_embedding_autoresearch_simple.py](/Users/simon/Code/parameter-golf/jepa_target_embedding_autoresearch_simple.py) (minimal non-pipelined loop used by the launcher)
+- [run_jepa_target_embedding_dual_lanes.sh](/Users/simon/Code/parameter-golf/run_jepa_target_embedding_dual_lanes.sh) (launch both lanes in parallel)

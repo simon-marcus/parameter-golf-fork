@@ -49,6 +49,12 @@ MAX_EXPERIMENTS = int(os.environ.get("MAX_EXPERIMENTS", "100"))
 GPUS = int(os.environ.get("GPUS", "1"))
 CLAUDE_MODEL = os.environ.get("AUTORESEARCH_MODEL", "opus")
 CLAUDE_EFFORT = os.environ.get("CLAUDE_EFFORT", "high")
+CLAUDE_TOOLS = os.environ.get("AUTORESEARCH_TOOLS", "default").strip() or "default"
+CLAUDE_ALLOWED_TOOLS = os.environ.get("AUTORESEARCH_ALLOWED_TOOLS", "").strip()
+# Backward-compatibility: earlier configs set AUTORESEARCH_ALLOWED_TOOLS=default,
+# but Claude CLI expects "--tools default" for the built-in toolset.
+if CLAUDE_ALLOWED_TOOLS.lower() == "default":
+    CLAUDE_ALLOWED_TOOLS = ""
 LANE = os.environ.get("AUTORESEARCH_LANE", "core").strip().lower()
 STAGE = os.environ.get("AUTORESEARCH_STAGE", "discovery").strip().lower()
 NAMESPACE = os.environ.get("AUTORESEARCH_NAMESPACE", "").strip()
@@ -434,37 +440,14 @@ def build_proposal_prompt(program: str, history: list[dict], best_bpb: float | N
     policy = lane_policy()
     lane_guidance = "\n".join(f"- {line}" for line in policy.prompt_guidance)
     editable_path = f"./{TRAIN_SCRIPT.name}"
-    is_probe = TRAIN_SCRIPT.name == "target_embedding_probe.py"
-    task_line = (
-        f"Your job: make ONE specific modification to {TRAIN_SCRIPT.name} to try to improve the held-out proxy score."
-        if is_probe
-        else f"Your job: make ONE specific modification to {TRAIN_SCRIPT.name} to try to improve validation BPB."
-    )
+    task_line = f"Your job: make ONE specific modification to {TRAIN_SCRIPT.name} to try to improve validation BPB."
     metric_block = (
-        "The primary metric is the final lower-is-better proxy score emitted as "
-        "`final_int8_zlib_roundtrip_exact ... val_bpb:<score>`.\n"
-        "Do not optimize for artifact size here; optimize for the probe score while keeping the loop cheap and stable."
-        if is_probe
-        else (
-            "The final metric is post-int8-quantization roundtrip val_bpb (lower is better)\n"
-            f"- Total artifact (compressed weights + code) must stay under {MAX_ARTIFACT_BYTES:,} bytes"
-        )
+        "The final metric is post-int8-quantization roundtrip val_bpb (lower is better)\n"
+        f"- Total artifact (compressed weights + code) must stay under {MAX_ARTIFACT_BYTES:,} bytes"
     )
-    general_guidance = (
-        "- This is a focused probe loop. Prefer small target-embedding changes over broad model changes."
-        if is_probe
-        else "- This is a 1xH100 short-horizon proxy. Prefer changes that improve convergence in the first ~300 steps and do not materially slow step time"
-    )
-    size_guidance = (
-        ""
-        if is_probe
-        else "\n- The current best is already close to the size ceiling, so avoid parameter increases unless you also have a concrete compression hypothesis"
-    )
-    final_focus = (
-        "- Focus on changes likely to improve the held-out proxy score through better target/predictor behavior."
-        if is_probe
-        else "- Focus on changes likely to improve BPB: architecture, hyperparameters, training tricks, compression"
-    )
+    general_guidance = "- This is a 1xH100 short-horizon proxy. Prefer changes that improve convergence in the first ~300 steps and do not materially slow step time"
+    size_guidance = "\n- The current best is already close to the size ceiling, so avoid parameter increases unless you also have a concrete compression hypothesis"
+    final_focus = "- Focus on changes likely to improve BPB: architecture, hyperparameters, training tricks, compression"
 
     return f"""You are an autonomous ML researcher running experiments for the parameter-golf challenge.
 {task_line}
@@ -510,17 +493,22 @@ Lane-specific guidance:
 
 def run_claude_proposal(prompt: str) -> str | None:
     """Run claude -p and return the description. Claude edits the target train script in place."""
+    cmd = [
+        "claude",
+        "-p", prompt,
+        "--model", CLAUDE_MODEL,
+        "--effort", CLAUDE_EFFORT,
+        "--tools", CLAUDE_TOOLS,
+    ]
+    if CLAUDE_ALLOWED_TOOLS:
+        cmd.extend(["--allowedTools", CLAUDE_ALLOWED_TOOLS])
+    cmd.extend([
+        "--permission-mode", "bypassPermissions",
+        "--output-format", "text",
+    ])
     try:
         result = subprocess.run(
-            [
-                "claude",
-                "-p", prompt,
-                "--model", CLAUDE_MODEL,
-                "--effort", CLAUDE_EFFORT,
-                "--allowedTools", "default",
-                "--permission-mode", "bypassPermissions",
-                "--output-format", "text",
-            ],
+            cmd,
             capture_output=True,
             text=True,
             cwd=str(TRAIN_SCRIPT.parent),
@@ -562,15 +550,12 @@ def run_training(experiment_id: int) -> tuple[str, int]:
     if VAL_LOSS_EVERY > 0:
         env["VAL_LOSS_EVERY"] = str(VAL_LOSS_EVERY)
 
-    if TRAIN_SCRIPT.name == "target_embedding_probe.py":
-        cmd = [sys.executable, str(TRAIN_SCRIPT)]
-    else:
-        cmd = [
-            "torchrun",
-            "--standalone",
-            f"--nproc_per_node={GPUS}",
-            str(TRAIN_SCRIPT),
-        ]
+    cmd = [
+        "torchrun",
+        "--standalone",
+        f"--nproc_per_node={GPUS}",
+        str(TRAIN_SCRIPT),
+    ]
 
     timeout = EXPERIMENT_SECONDS + TRAIN_TIMEOUT_PADDING_SECONDS
 
@@ -721,7 +706,7 @@ def main():
     ensure_dirs()
 
     if not TRAIN_SCRIPT.exists():
-        print(f"Error: {TRAIN_SCRIPT} not found. Run from the parameter-golf directory.")
+        print(f"Error: {TRAIN_SCRIPT} not found.")
         sys.exit(1)
 
     if not PROGRAM_FILE.exists():
@@ -738,14 +723,15 @@ def main():
     program = PROGRAM_FILE.read_text()
     history = load_history()
 
-    if not TRAIN_SCRIPT_BEST.exists():
-        shutil.copy2(TRAIN_SCRIPT, TRAIN_SCRIPT_BEST)
-    else:
+    if TRAIN_SCRIPT_BEST.exists():
         # On restarts, resume from the seeded/best code rather than whatever
         # happens to be at repo root. Claude always edits TRAIN_SCRIPT.
         best_code = TRAIN_SCRIPT_BEST.read_text()
-        if TRAIN_SCRIPT.read_text() != best_code:
+        current_code = TRAIN_SCRIPT.read_text()
+        if current_code != best_code:
             TRAIN_SCRIPT.write_text(best_code)
+    else:
+        shutil.copy2(TRAIN_SCRIPT, TRAIN_SCRIPT_BEST)
 
     best = best_entry_for_lane(history)
     best_bpb: float | None = best["val_bpb"] if best is not None else None
@@ -766,6 +752,8 @@ def main():
     print(f"  Claude model:     {CLAUDE_MODEL} (effort: {CLAUDE_EFFORT})")
     print(f"  Max experiments:  {MAX_EXPERIMENTS}")
     print(f"  Mode:             pipelined (speculative proposals)")
+    print(f"  Claude tools:     {CLAUDE_TOOLS}")
+    print(f"  Allowed filter:   {CLAUDE_ALLOWED_TOOLS or '(none)'}")
     print("=" * 70)
 
     # Speculative proposal state
@@ -856,10 +844,7 @@ def main():
         if VAL_LOSS_EVERY > 0:
             env["VAL_LOSS_EVERY"] = str(VAL_LOSS_EVERY)
 
-        if TRAIN_SCRIPT.name == "target_embedding_probe.py":
-            cmd = [sys.executable, str(TRAIN_SCRIPT)]
-        else:
-            cmd = ["torchrun", "--standalone", f"--nproc_per_node={GPUS}", str(TRAIN_SCRIPT)]
+        cmd = ["torchrun", "--standalone", f"--nproc_per_node={GPUS}", str(TRAIN_SCRIPT)]
         train_timeout = EXPERIMENT_SECONDS + TRAIN_TIMEOUT_PADDING_SECONDS
         print(f"  Command: {' '.join(cmd)}")
         print(f"  Time budget: {EXPERIMENT_SECONDS}s, timeout: {train_timeout}s")
@@ -871,28 +856,23 @@ def main():
 
         # Once training has started and loaded the file, revert the target script
         # to the current best so Claude can work on it for the next proposal.
-        time.sleep(1 if TRAIN_SCRIPT.name == "target_embedding_probe.py" else 5)
+        time.sleep(5)
         TRAIN_SCRIPT.write_text(prev_code)
 
-        is_probe = TRAIN_SCRIPT.name == "target_embedding_probe.py"
-        if not is_probe:
-            # Speculatively propose the next experiment while training runs.
-            print("  Speculatively proposing next experiment while training...")
-            spec_prompt = build_proposal_prompt(program, history, best_bpb)
+        # Speculatively propose the next experiment while training runs.
+        print("  Speculatively proposing next experiment while training...")
+        spec_prompt = build_proposal_prompt(program, history, best_bpb)
 
-            def speculative_propose():
-                return run_claude_proposal(spec_prompt)
+        def speculative_propose():
+            return run_claude_proposal(spec_prompt)
 
-            spec_thread_result: list[str | None] = [None]
+        spec_thread_result: list[str | None] = [None]
 
-            def spec_worker():
-                spec_thread_result[0] = speculative_propose()
+        def spec_worker():
+            spec_thread_result[0] = speculative_propose()
 
-            spec_thread = threading.Thread(target=spec_worker)
-            spec_thread.start()
-        else:
-            spec_thread_result = [None]
-            spec_thread = None
+        spec_thread = threading.Thread(target=spec_worker)
+        spec_thread.start()
 
         # Wait for training to complete
         try:
@@ -908,30 +888,24 @@ def main():
         train_time = time.time() - t_train
         print(f"  Training took {train_time:.1f}s (exit code {returncode})")
 
-        if spec_thread is not None:
-            # Wait for speculative proposal to finish too.
-            spec_thread.join(timeout=max(600 - train_time, 30))
-            spec_desc = spec_thread_result[0]
-            if spec_desc:
-                # Save the speculative proposal's code (Claude edited the target script).
-                speculative_code = TRAIN_SCRIPT.read_text()
-                speculative_description = spec_desc
-                speculative_base_bpb = best_bpb
-                # Revert the target script again so evaluate_and_record can work cleanly
-                TRAIN_SCRIPT.write_text(prev_code)
-                print(f"  Speculative proposal ready: {spec_desc[:80]}...")
-            else:
-                speculative_code = None
-                speculative_description = None
-                speculative_base_bpb = None
-                # Make sure the target script is in the right state
-                TRAIN_SCRIPT.write_text(prev_code)
-                print("  Speculative proposal failed (will propose fresh next iteration)")
+        # Wait for speculative proposal to finish too.
+        spec_thread.join(timeout=max(600 - train_time, 30))
+        spec_desc = spec_thread_result[0]
+        if spec_desc:
+            # Save the speculative proposal's code (Claude edited the target script).
+            speculative_code = TRAIN_SCRIPT.read_text()
+            speculative_description = spec_desc
+            speculative_base_bpb = best_bpb
+            # Revert the target script again so evaluate_and_record can work cleanly
+            TRAIN_SCRIPT.write_text(prev_code)
+            print(f"  Speculative proposal ready: {spec_desc[:80]}...")
         else:
             speculative_code = None
             speculative_description = None
             speculative_base_bpb = None
+            # Make sure the target script is in the right state
             TRAIN_SCRIPT.write_text(prev_code)
+            print("  Speculative proposal failed (will propose fresh next iteration)")
 
         # Now put the experiment's code back for evaluation
         TRAIN_SCRIPT.write_text(new_code)
