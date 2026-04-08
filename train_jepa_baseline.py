@@ -93,6 +93,8 @@ class Hyperparameters:
     jepa_var_weight = float(os.environ.get("JEPA_VAR_WEIGHT", 0.02))
     jepa_std_target = float(os.environ.get("JEPA_STD_TARGET", 0.5))
     target_ema = float(os.environ.get("TARGET_EMA", 0.995))
+    target_encoder_mode = os.environ.get("TARGET_ENCODER_MODE", "patch_trainable").strip().lower()
+    target_encoder_ema = float(os.environ.get("TARGET_ENCODER_EMA", os.environ.get("TARGET_EMA", "0.995")))
     model_ema_enabled = bool(int(os.environ.get("MODEL_EMA_ENABLED", "1")))
     model_ema_decay = float(os.environ.get("MODEL_EMA_DECAY", 0.997))
     swa_enabled = bool(int(os.environ.get("SWA_ENABLED", "0")))
@@ -177,6 +179,64 @@ class XSACausalSelfAttention(naivebaseline.CausalSelfAttention):
         return self.proj(y)
 
 
+class TargetPatchEncoder(nn.Module):
+    def __init__(self, model_dim: int, patch_size: int):
+        super().__init__()
+        if model_dim % 4 != 0:
+            raise ValueError(f"model_dim={model_dim} must be divisible by 4 for TargetPatchEncoder")
+        self.local_pos = nn.Parameter(torch.zeros(patch_size, model_dim, dtype=torch.float32))
+        self.in_proj = naivebaseline.CastedLinear(model_dim, model_dim, bias=False)
+        self.gate_proj = naivebaseline.CastedLinear(model_dim, model_dim, bias=False)
+        self.local_conv = nn.Conv1d(model_dim, model_dim, kernel_size=5, padding=4, groups=model_dim, bias=False)
+        self.intra_num_heads = 4
+        self.intra_head_dim = model_dim // self.intra_num_heads
+        self.intra_qkv = naivebaseline.CastedLinear(model_dim, 3 * model_dim, bias=False)
+        self.intra_out = naivebaseline.CastedLinear(model_dim, model_dim, bias=False)
+        self.num_pool_heads = 4
+        self.attn_pool = naivebaseline.CastedLinear(model_dim, self.num_pool_heads, bias=False)
+        self.attn_temperature = nn.Parameter(torch.ones(1, dtype=torch.float32))
+        self.post_mlp_up = naivebaseline.CastedLinear(model_dim, model_dim, bias=False)
+        self.post_mlp_down = naivebaseline.CastedLinear(model_dim, model_dim, bias=False)
+        self.out_proj = naivebaseline.CastedLinear(model_dim, model_dim, bias=False)
+        nn.init.normal_(self.local_pos, mean=0.0, std=0.01)
+
+    def forward(self, patch_byte_emb: Tensor) -> Tensor:
+        x = patch_byte_emb + self.local_pos[None, None, :, :].to(dtype=patch_byte_emb.dtype)
+        x = F.rms_norm(x, (x.size(-1),))
+        x = F.silu(self.gate_proj(x)) * self.in_proj(x)
+        bsz, num_patches, patch_size, model_dim = x.shape
+        x_flat = x.reshape(bsz * num_patches, patch_size, model_dim).transpose(1, 2)
+        conv_out = self.local_conv(x_flat)[:, :, :patch_size]
+        x = x + conv_out.transpose(1, 2).reshape(bsz, num_patches, patch_size, model_dim)
+        x_sa = F.rms_norm(x, (x.size(-1),))
+        x_flat_sa = x_sa.reshape(bsz * num_patches, patch_size, model_dim)
+        qkv = self.intra_qkv(x_flat_sa).reshape(
+            bsz * num_patches,
+            patch_size,
+            3,
+            self.intra_num_heads,
+            self.intra_head_dim,
+        )
+        q, k, v = qkv.unbind(dim=2)
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
+        attn = (q @ k.transpose(-2, -1)) * (self.intra_head_dim ** -0.5)
+        attn = F.softmax(attn, dim=-1)
+        sa_out = (attn @ v).transpose(1, 2).reshape(bsz * num_patches, patch_size, model_dim)
+        x = x + self.intra_out(sa_out).reshape(bsz, num_patches, patch_size, model_dim)
+        x = F.rms_norm(x, (x.size(-1),))
+        head_dim = model_dim // self.num_pool_heads
+        temp = self.attn_temperature.clamp(min=0.01).to(dtype=x.dtype)
+        attn_logits = self.attn_pool(x) / temp
+        attn_weights = F.softmax(attn_logits.permute(0, 1, 3, 2), dim=-1)
+        x_heads = x.view(bsz, num_patches, patch_size, self.num_pool_heads, head_dim).permute(0, 1, 3, 2, 4)
+        x = (attn_weights.unsqueeze(-1) * x_heads).sum(dim=3).reshape(bsz, num_patches, model_dim)
+        x = x + self.post_mlp_down(F.silu(self.post_mlp_up(F.rms_norm(x, (x.size(-1),)))))
+        x = self.out_proj(x)
+        return F.rms_norm(x, (x.size(-1),))
+
+
 class GPTBaselineJEPA(naivebaseline.GPT):
     def __init__(
         self,
@@ -184,6 +244,7 @@ class GPTBaselineJEPA(naivebaseline.GPT):
         patch_size: int,
         jepa_var_weight: float,
         jepa_std_target: float,
+        target_encoder_mode: str,
         activation_neg_slope: float,
         xsa_all: bool,
         **kwargs,
@@ -194,8 +255,17 @@ class GPTBaselineJEPA(naivebaseline.GPT):
         self.patch_size = patch_size
         self.jepa_var_weight = jepa_var_weight
         self.jepa_std_target = jepa_std_target
+        self.target_encoder_mode = target_encoder_mode
         self.jepa_in = naivebaseline.CastedLinear(self.tok_emb.embedding_dim, self.tok_emb.embedding_dim, bias=False)
         self.jepa_out = naivebaseline.CastedLinear(self.tok_emb.embedding_dim, self.tok_emb.embedding_dim, bias=False)
+        self.target_patch_encoder = (
+            TargetPatchEncoder(self.tok_emb.embedding_dim, patch_size)
+            if target_encoder_mode in {"patch_trainable", "patch_nograd", "patch_ema"}
+            else None
+        )
+        self.target_patch_encoder_ema = (
+            TargetPatchEncoder(self.tok_emb.embedding_dim, patch_size) if target_encoder_mode == "patch_ema" else None
+        )
         self.activation_neg_slope = activation_neg_slope
         for block in self.blocks:
             block.mlp = LeakyReluSquaredMLP(self.tok_emb.embedding_dim, kwargs["mlp_mult"], self.activation_neg_slope)
@@ -241,7 +311,12 @@ class GPTBaselineJEPA(naivebaseline.GPT):
         x = torch.relu(self.jepa_in(x))
         return self.jepa_out(x.square())
 
-    def compute_jepa_loss(self, input_ids: Tensor, hidden: Tensor, target_tok_emb: nn.Embedding) -> tuple[Tensor, Tensor, Tensor]:
+    def compute_jepa_loss(
+        self,
+        input_ids: Tensor,
+        hidden: Tensor,
+        target_tok_emb: nn.Embedding,
+    ) -> tuple[Tensor, Tensor, Tensor, Tensor]:
         if hidden.size(1) % self.patch_size != 0:
             raise ValueError(
                 f"sequence length {hidden.size(1)} must be divisible by PATCH_SIZE={self.patch_size}"
@@ -249,18 +324,49 @@ class GPTBaselineJEPA(naivebaseline.GPT):
         patch_states = hidden[:, self.patch_size - 1 :: self.patch_size, :]
         if patch_states.size(1) < 2:
             zero = hidden.new_zeros(())
-            return zero, zero, zero
+            return zero, zero, zero, zero
         pred = self.predict_patch_latents(patch_states[:, :-1, :]).float()
         target_patches = input_ids.reshape(input_ids.size(0), -1, self.patch_size)[:, 1:, :]
-        with torch.no_grad():
-            target = target_tok_emb(target_patches).mean(dim=2)
-            target = F.rms_norm(target.float(), (target.size(-1),))
         pred_n = F.normalize(pred, dim=-1)
-        target_n = F.normalize(target, dim=-1)
-        jepa_loss = F.mse_loss(pred_n, target_n, reduction="mean")
+        if self.target_encoder_mode == "meanpool":
+            with torch.no_grad():
+                target = target_tok_emb(target_patches).mean(dim=2)
+                target = F.rms_norm(target.float(), (target.size(-1),))
+            target_n = F.normalize(target, dim=-1)
+            jepa_loss = F.mse_loss(pred_n, target_n, reduction="mean")
+        else:
+            if self.target_patch_encoder is None:
+                raise RuntimeError(f"target_patch_encoder is required for mode={self.target_encoder_mode}")
+            target_patch_emb = target_tok_emb(target_patches).to(dtype=hidden.dtype)
+            if self.target_encoder_mode == "patch_nograd":
+                with torch.no_grad():
+                    target = self.target_patch_encoder(target_patch_emb).float()
+                    target = F.rms_norm(target, (target.size(-1),))
+                target_n = F.normalize(target, dim=-1)
+                jepa_loss = F.mse_loss(pred_n, target_n, reduction="mean")
+            elif self.target_encoder_mode == "patch_ema":
+                if self.target_patch_encoder_ema is None:
+                    raise RuntimeError("target_patch_encoder_ema is required for TARGET_ENCODER_MODE=patch_ema")
+                online_target = self.target_patch_encoder(target_patch_emb).float()
+                online_target = F.rms_norm(online_target, (online_target.size(-1),))
+                online_target_n = F.normalize(online_target, dim=-1)
+                with torch.no_grad():
+                    target = self.target_patch_encoder_ema(target_patch_emb).float()
+                    target = F.rms_norm(target, (target.size(-1),))
+                target_n = F.normalize(target, dim=-1)
+                jepa_loss = 0.5 * F.mse_loss(pred_n, target_n, reduction="mean")
+                jepa_loss = jepa_loss + 0.5 * F.mse_loss(pred_n, online_target_n, reduction="mean")
+            elif self.target_encoder_mode == "patch_trainable":
+                target = self.target_patch_encoder(target_patch_emb).float()
+                target = F.rms_norm(target, (target.size(-1),))
+                target_n = F.normalize(target, dim=-1)
+                jepa_loss = F.mse_loss(pred_n, target_n, reduction="mean")
+            else:
+                raise ValueError(f"Unknown TARGET_ENCODER_MODE={self.target_encoder_mode}")
         pred_std = pred.std(dim=(0, 1), correction=0)
+        target_std = target.float().std(dim=(0, 1), correction=0)
         var_loss = torch.relu(self.jepa_std_target - pred_std).mean()
-        return jepa_loss, var_loss, pred_std.mean()
+        return jepa_loss, var_loss, pred_std.mean(), target_std.mean()
 
     def forward(
         self,
@@ -280,11 +386,23 @@ class GPTBaselineJEPA(naivebaseline.GPT):
         jepa_loss = hidden.new_zeros(())
         var_loss = hidden.new_zeros(())
         pred_std_mean = hidden.new_zeros(())
+        target_std_mean = hidden.new_zeros(())
         if compute_jepa and target_tok_emb is not None and jepa_loss_weight > 0.0:
-            jepa_loss, var_loss, pred_std_mean = self.compute_jepa_loss(input_ids, hidden, target_tok_emb)
+            jepa_loss, var_loss, pred_std_mean, target_std_mean = self.compute_jepa_loss(
+                input_ids,
+                hidden,
+                target_tok_emb,
+            )
             total_loss = total_loss + jepa_loss_weight * jepa_loss + self.jepa_var_weight * var_loss
         if return_aux:
-            return total_loss, ce_loss.detach(), jepa_loss.detach(), var_loss.detach(), pred_std_mean.detach()
+            return (
+                total_loss,
+                ce_loss.detach(),
+                jepa_loss.detach(),
+                var_loss.detach(),
+                pred_std_mean.detach(),
+                target_std_mean.detach(),
+            )
         return total_loss
 
 
@@ -296,6 +414,23 @@ def sync_target_embedding(target_tok_emb: nn.Embedding, online_tok_emb: nn.Embed
 @torch.no_grad()
 def update_target_embedding_ema(target_tok_emb: nn.Embedding, online_tok_emb: nn.Embedding, decay: float) -> None:
     target_tok_emb.weight.mul_(decay).add_(online_tok_emb.weight.detach().float(), alpha=1.0 - decay)
+
+
+@torch.no_grad()
+def sync_module_state(target_module: nn.Module | None, online_module: nn.Module | None) -> None:
+    if target_module is None or online_module is None:
+        return
+    target_module.load_state_dict(online_module.state_dict(), strict=True)
+
+
+@torch.no_grad()
+def update_module_ema(target_module: nn.Module | None, online_module: nn.Module | None, decay: float) -> None:
+    if target_module is None or online_module is None:
+        return
+    for target_param, online_param in zip(target_module.parameters(), online_module.parameters(), strict=True):
+        target_param.data.mul_(decay).add_(online_param.detach().float(), alpha=1.0 - decay)
+    for target_buf, online_buf in zip(target_module.buffers(), online_module.buffers(), strict=True):
+        target_buf.copy_(online_buf.detach())
 
 
 def main() -> None:
@@ -373,6 +508,11 @@ def main() -> None:
         raise ValueError(
             f"TRAIN_SEQ_LEN={args.train_seq_len} must be divisible by PATCH_SIZE={args.patch_size}"
         )
+    valid_target_encoder_modes = {"meanpool", "patch_trainable", "patch_nograd", "patch_ema"}
+    if args.target_encoder_mode not in valid_target_encoder_modes:
+        raise ValueError(
+            f"TARGET_ENCODER_MODE must be one of {sorted(valid_target_encoder_modes)}, got {args.target_encoder_mode}"
+        )
 
     base_model = GPTBaselineJEPA(
         vocab_size=args.vocab_size,
@@ -391,11 +531,13 @@ def main() -> None:
         patch_size=args.patch_size,
         jepa_var_weight=args.jepa_var_weight,
         jepa_std_target=args.jepa_std_target,
+        target_encoder_mode=args.target_encoder_mode,
     ).to(device).bfloat16()
     for module in base_model.modules():
         if isinstance(module, naivebaseline.CastedLinear):
             module.float()
     naivebaseline.restore_low_dim_params_to_fp32(base_model)
+    sync_module_state(base_model.target_patch_encoder_ema, base_model.target_patch_encoder)
     target_tok_emb = nn.Embedding(args.vocab_size, args.model_dim, device=device, dtype=torch.float32)
     sync_target_embedding(target_tok_emb, base_model.tok_emb)
     target_tok_emb.requires_grad_(False)
@@ -417,12 +559,18 @@ def main() -> None:
         for name, p in block_named_params
         if p.ndim == 2 and not any(pattern in name for pattern in naivebaseline.CONTROL_TENSOR_NAME_PATTERNS)
     ]
-    matrix_params.extend([base_model.jepa_in.weight, base_model.jepa_out.weight])
+    target_encoder_matrix_params = []
+    target_encoder_scalar_params = []
+    if base_model.target_patch_encoder is not None:
+        target_encoder_matrix_params = [p for p in base_model.target_patch_encoder.parameters() if p.ndim == 2]
+        target_encoder_scalar_params = [p for p in base_model.target_patch_encoder.parameters() if p.ndim != 2]
+    matrix_params.extend([base_model.jepa_in.weight, base_model.jepa_out.weight, *target_encoder_matrix_params])
     scalar_params = [
         p
         for name, p in block_named_params
         if p.ndim < 2 or any(pattern in name for pattern in naivebaseline.CONTROL_TENSOR_NAME_PATTERNS)
     ]
+    scalar_params.extend(target_encoder_scalar_params)
     if base_model.skip_weights.numel() > 0:
         scalar_params.append(base_model.skip_weights)
     token_lr = args.tied_embed_lr if args.tie_embeddings else args.embed_lr
@@ -462,6 +610,7 @@ def main() -> None:
     log0(
         f"model_family:naivebaseline_jepa patch_size:{args.patch_size} "
         f"jepa_loss_weight:{args.jepa_loss_weight} target_ema:{args.target_ema} "
+        f"target_encoder_mode:{args.target_encoder_mode} target_encoder_ema:{args.target_encoder_ema} "
         f"use_compile:{args.use_compile}"
     )
     xsa_layers = list(range(args.num_layers)) if args.xsa_all else []
@@ -532,6 +681,7 @@ def main() -> None:
             for opt in optimizers:
                 opt.step()
             update_target_embedding_ema(target_tok_emb, base_model.tok_emb, args.target_ema)
+            update_module_ema(base_model.target_patch_encoder_ema, base_model.target_patch_encoder, args.target_encoder_ema)
             zero_grad_all()
             if args.warmup_steps <= 20 or (warmup_step + 1) % 10 == 0 or warmup_step + 1 == args.warmup_steps:
                 log0(f"warmup_step:{warmup_step + 1}/{args.warmup_steps}")
@@ -590,12 +740,13 @@ def main() -> None:
         jepa_loss_sum = torch.zeros((), device=device)
         jepa_var_sum = torch.zeros((), device=device)
         jepa_pred_std_sum = torch.zeros((), device=device)
+        jepa_target_std_sum = torch.zeros((), device=device)
         for micro_step in range(grad_accum_steps):
             if distributed:
                 model.require_backward_grad_sync = micro_step == grad_accum_steps - 1
             x, y = train_loader.next_batch(args.train_batch_tokens, args.train_seq_len, grad_accum_steps)
             with torch.autocast(device_type="cuda", dtype=torch.bfloat16, enabled=True):
-                loss, ce_loss, jepa_loss, var_loss, pred_std_mean = model(
+                loss, ce_loss, jepa_loss, var_loss, pred_std_mean, target_std_mean = model(
                     x,
                     y,
                     compute_jepa=args.jepa_loss_weight > 0.0,
@@ -608,12 +759,14 @@ def main() -> None:
             jepa_loss_sum += jepa_loss
             jepa_var_sum += var_loss
             jepa_pred_std_sum += pred_std_mean
+            jepa_target_std_sum += target_std_mean
             (loss * grad_scale).backward()
         train_loss /= grad_accum_steps
         ce_loss_sum /= grad_accum_steps
         jepa_loss_sum /= grad_accum_steps
         jepa_var_sum /= grad_accum_steps
         jepa_pred_std_sum /= grad_accum_steps
+        jepa_target_std_sum /= grad_accum_steps
 
         frac = min(step / args.muon_momentum_warmup_steps, 1.0) if args.muon_momentum_warmup_steps > 0 else 1.0
         muon_momentum = (1 - frac) * args.muon_momentum_warmup_start + frac * args.muon_momentum
@@ -627,6 +780,7 @@ def main() -> None:
         for opt in optimizers:
             opt.step()
         update_target_embedding_ema(target_tok_emb, base_model.tok_emb, args.target_ema)
+        update_module_ema(base_model.target_patch_encoder_ema, base_model.target_patch_encoder, args.target_encoder_ema)
         if model_ema_state is not None:
             with torch.no_grad():
                 for name, tensor in base_model.state_dict().items():
@@ -655,6 +809,7 @@ def main() -> None:
                 f"step:{step}/{args.iterations} train_loss:{train_loss.item():.4f} "
                 f"ce_loss:{ce_loss_sum.item():.4f} jepa_loss:{jepa_loss_sum.item():.4f} "
                 f"jepa_var:{jepa_var_sum.item():.4f} jepa_pred_std:{jepa_pred_std_sum.item():.4f} "
+                f"target_std:{jepa_target_std_sum.item():.4f} "
                 f"train_time:{approx_training_time_ms:.0f}ms step_avg:{approx_training_time_ms / step:.2f}ms"
             )
 
