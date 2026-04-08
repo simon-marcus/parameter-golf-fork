@@ -802,6 +802,64 @@ class Block(nn.Module):
         return x
 
 
+class TargetPatchEncoder(nn.Module):
+    def __init__(self, model_dim: int, patch_size: int):
+        super().__init__()
+        if model_dim % 4 != 0:
+            raise ValueError(f"model_dim={model_dim} must be divisible by 4 for TargetPatchEncoder")
+        self.local_pos = nn.Parameter(torch.zeros(patch_size, model_dim, dtype=torch.float32))
+        self.in_proj = CastedLinear(model_dim, model_dim, bias=False)
+        self.gate_proj = CastedLinear(model_dim, model_dim, bias=False)
+        self.local_conv = nn.Conv1d(model_dim, model_dim, kernel_size=5, padding=4, groups=model_dim, bias=False)
+        self.intra_num_heads = 4
+        self.intra_head_dim = model_dim // self.intra_num_heads
+        self.intra_qkv = CastedLinear(model_dim, 3 * model_dim, bias=False)
+        self.intra_out = CastedLinear(model_dim, model_dim, bias=False)
+        self.num_pool_heads = 4
+        self.attn_pool = CastedLinear(model_dim, self.num_pool_heads, bias=False)
+        self.attn_temperature = nn.Parameter(torch.ones(1, dtype=torch.float32))
+        self.post_mlp_up = CastedLinear(model_dim, model_dim, bias=False)
+        self.post_mlp_down = CastedLinear(model_dim, model_dim, bias=False)
+        self.out_proj = CastedLinear(model_dim, model_dim, bias=False)
+        nn.init.normal_(self.local_pos, mean=0.0, std=0.01)
+
+    def forward(self, patch_byte_emb: Tensor) -> Tensor:
+        x = patch_byte_emb + self.local_pos[None, None, :, :].to(dtype=patch_byte_emb.dtype)
+        x = F.rms_norm(x, (x.size(-1),))
+        x = F.silu(self.gate_proj(x)) * self.in_proj(x)
+        bsz, num_patches, patch_size, model_dim = x.shape
+        x_flat = x.reshape(bsz * num_patches, patch_size, model_dim).transpose(1, 2)
+        conv_out = self.local_conv(x_flat)[:, :, :patch_size]
+        x = x + conv_out.transpose(1, 2).reshape(bsz, num_patches, patch_size, model_dim)
+        x_sa = F.rms_norm(x, (x.size(-1),))
+        x_flat_sa = x_sa.reshape(bsz * num_patches, patch_size, model_dim)
+        qkv = self.intra_qkv(x_flat_sa).reshape(
+            bsz * num_patches,
+            patch_size,
+            3,
+            self.intra_num_heads,
+            self.intra_head_dim,
+        )
+        q, k, v = qkv.unbind(dim=2)
+        q = q.transpose(1, 2)
+        k = k.transpose(1, 2)
+        v = v.transpose(1, 2)
+        attn = (q @ k.transpose(-2, -1)) * (self.intra_head_dim ** -0.5)
+        attn = F.softmax(attn, dim=-1)
+        sa_out = (attn @ v).transpose(1, 2).reshape(bsz * num_patches, patch_size, model_dim)
+        x = x + self.intra_out(sa_out).reshape(bsz, num_patches, patch_size, model_dim)
+        x = F.rms_norm(x, (x.size(-1),))
+        head_dim = model_dim // self.num_pool_heads
+        temp = self.attn_temperature.clamp(min=0.01).to(dtype=x.dtype)
+        attn_logits = self.attn_pool(x) / temp
+        attn_weights = F.softmax(attn_logits.permute(0, 1, 3, 2), dim=-1)
+        x_heads = x.view(bsz, num_patches, patch_size, self.num_pool_heads, head_dim).permute(0, 1, 3, 2, 4)
+        x = (attn_weights.unsqueeze(-1) * x_heads).sum(dim=3).reshape(bsz, num_patches, model_dim)
+        x = x + self.post_mlp_down(F.silu(self.post_mlp_up(F.rms_norm(x, (x.size(-1),)))))
+        x = self.out_proj(x)
+        return F.rms_norm(x, (x.size(-1),))
+
+
 class ByteJEPA(nn.Module):
     def __init__(
         self,
@@ -832,6 +890,7 @@ class ByteJEPA(nn.Module):
         self.jepa_var_weight = jepa_var_weight
         self.jepa_std_target = jepa_std_target
         self.tok_emb = nn.Embedding(vocab_size, model_dim)
+        self.target_patch_encoder = TargetPatchEncoder(model_dim, patch_size)
         self.num_encoder_layers = num_layers // 2
         self.num_decoder_layers = num_layers - self.num_encoder_layers
         self.num_skip_weights = min(self.num_encoder_layers, self.num_decoder_layers)
@@ -910,9 +969,9 @@ class ByteJEPA(nn.Module):
             return zero, zero, zero
         pred = self.predict_future_patch_latents(patch_states[:, :-1, :]).float()
         target_patches = input_ids.reshape(input_ids.size(0), -1, self.patch_size)[:, 1:, :]
-        with torch.no_grad():
-            target = target_tok_emb(target_patches).mean(dim=2)
-            target = F.rms_norm(target.float(), (target.size(-1),))
+        target_patch_emb = target_tok_emb(target_patches).to(dtype=hidden.dtype)
+        target = self.target_patch_encoder(target_patch_emb)
+        target = F.rms_norm(target.float(), (target.size(-1),))
         pred_n = F.normalize(pred, dim=-1)
         target_n = F.normalize(target, dim=-1)
         jepa_loss = F.mse_loss(pred_n, target_n, reduction="mean")
@@ -1134,12 +1193,15 @@ def main() -> None:
         for name, p in block_named_params
         if p.ndim == 2 and not any(pattern in name for pattern in CONTROL_TENSOR_NAME_PATTERNS)
     ]
-    matrix_params.extend([base_model.jepa_in.weight, base_model.jepa_out.weight])
+    target_encoder_matrix_params = [p for p in base_model.target_patch_encoder.parameters() if p.ndim == 2]
+    target_encoder_scalar_params = [p for p in base_model.target_patch_encoder.parameters() if p.ndim != 2]
+    matrix_params.extend([base_model.jepa_in.weight, base_model.jepa_out.weight, *target_encoder_matrix_params])
     scalar_params = [
         p
         for name, p in block_named_params
         if p.ndim < 2 or any(pattern in name for pattern in CONTROL_TENSOR_NAME_PATTERNS)
     ]
+    scalar_params.extend(target_encoder_scalar_params)
     if base_model.skip_weights.numel() > 0:
         scalar_params.append(base_model.skip_weights)
     token_lr = args.tied_embed_lr if args.tie_embeddings else args.embed_lr

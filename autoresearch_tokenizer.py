@@ -93,7 +93,7 @@ def run_claude_json(prompt: str, *, timeout: int, phase: str) -> dict:
         "--model",
         CLAUDE_MODEL,
         "--output-format",
-        "text",
+        "json",
     ]
     if CLAUDE_EFFORT:
         cmd.extend(["--effort", CLAUDE_EFFORT])
@@ -104,10 +104,10 @@ def run_claude_json(prompt: str, *, timeout: int, phase: str) -> dict:
             if result.returncode != 0:
                 raise RuntimeError(f"Claude {phase} failed:\n{result.stdout}\n{result.stderr}")
             text = result.stdout.strip()
-            match = re.search(r"\{.*\}", text, re.DOTALL)
-            if not match:
-                raise RuntimeError(f"Could not parse {phase} JSON:\n{text}")
-            return json.loads(match.group(0))
+            payload = json.loads(text)
+            if payload.get("is_error"):
+                raise RuntimeError(f"Claude {phase} returned error payload:\n{text}")
+            return payload
         except Exception as exc:
             last_error = exc
             log_line(f"{phase}:error attempt={attempt}/{CLAUDE_RETRIES} error={exc}")

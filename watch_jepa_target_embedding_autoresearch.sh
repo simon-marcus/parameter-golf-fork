@@ -4,7 +4,22 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT_DIR"
 
-NAMESPACE="${AUTORESEARCH_NAMESPACE:-jepa_target_embedding_discovery}"
+normalize_namespace() {
+  case "$1" in
+    jepa_target_embedding_discovery_freecode)
+      printf '%s' "jepa_target_embedding_freecode_discovery"
+      ;;
+    *)
+      printf '%s' "$1"
+      ;;
+  esac
+}
+
+RAW_NAMESPACE="${AUTORESEARCH_NAMESPACE:-jepa_target_embedding_discovery}"
+NAMESPACE="$(normalize_namespace "$RAW_NAMESPACE")"
+if [ "$RAW_NAMESPACE" != "$NAMESPACE" ]; then
+  echo "Normalizing legacy namespace '$RAW_NAMESPACE' -> '$NAMESPACE'" >&2
+fi
 NS_DIR="$ROOT_DIR/autoresearch/$NAMESPACE"
 WORK_FILE="$NS_DIR/work/target_embedding_probe.py"
 BEST_FILE="$NS_DIR/target_embedding_probe.best.py"

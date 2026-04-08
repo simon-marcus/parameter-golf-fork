@@ -201,14 +201,17 @@ def run_claude(prompt: str) -> str:
         "--model",
         CLAUDE_MODEL,
         "--output-format",
-        "text",
+        "json",
     ]
     if CLAUDE_EFFORT:
         cmd.extend(["--effort", CLAUDE_EFFORT])
     result = subprocess.run(cmd, capture_output=True, text=True)
     if result.returncode != 0:
         raise RuntimeError(f"Claude failed:\n{result.stdout}\n{result.stderr}")
-    report = result.stdout.strip()
+    payload = json.loads(result.stdout.strip())
+    if payload.get("is_error"):
+        raise RuntimeError(f"Claude returned error payload:\n{result.stdout}\n{result.stderr}")
+    report = str(payload.get("result") or "").strip()
     log_line(f"claude:done chars={len(report)}")
     return report
 

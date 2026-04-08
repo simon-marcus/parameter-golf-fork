@@ -87,13 +87,13 @@ def run_agent(
         model,
         "--effort",
         effort,
-        "--allowedTools",
-        allowed_tools,
         "--permission-mode",
         permission_mode,
         "--output-format",
-        "text",
+        "json",
     ]
+    if allowed_tools:
+        cmd.append(f"--allowedTools={allowed_tools}")
     started = time.time()
     try:
         result = subprocess.run(
@@ -104,7 +104,10 @@ def run_agent(
             timeout=timeout_s,
         )
         elapsed = time.time() - started
-        return result.returncode, (result.stdout + "\n" + result.stderr), elapsed
+        stdout = (result.stdout or "").strip()
+        stderr = (result.stderr or "").strip()
+        output = ((stdout + "\n") if stdout else "") + stderr
+        return result.returncode, output, elapsed
     except subprocess.TimeoutExpired as exc:
         elapsed = time.time() - started
         output = (exc.stdout or "") + "\n" + (exc.stderr or "") + "\n[TIMEOUT]"
@@ -171,7 +174,7 @@ def main() -> int:
     print(f"  workspace:           {workspace}")
     print(f"  guess file:          {guess_file}")
     print(f"  max steps:           {args.max_steps}")
-    print(f"  agent cmd:           claude -p ... --allowedTools \"{args.allowed_tools}\"")
+    print(f"  agent cmd:           claude -p ... --allowedTools={args.allowed_tools}")
     print("")
 
     for step in range(1, args.max_steps + 1):

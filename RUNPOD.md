@@ -380,6 +380,22 @@ Practical note:
 - direct S3 -> expensive pod is acceptable when the archive is already staged in S3, the region has decent throughput, and the archive is modest enough to restore quickly
 - do not require a prep pod when it adds complexity without reducing launch risk
 
+## Automated 8xH100 Pod Hunting
+
+[`watch_runpod_8xh100_launch.sh`](/Users/simon/Code/parameter-golf/watch_runpod_8xh100_launch.sh) polls the RunPod REST API to grab an 8×H100 pod as soon as capacity appears. It uses an explicit datacenter allowlist that excludes `AP-IN-1` (and all other `AP-IN-*` regions) due to the poor S3 download throughput measured above (~5 MB/s vs ~35–57 MB/s in US regions).
+
+Key behavior:
+- Retries every `INTERVAL_SECONDS` (default 30s) until a pod is successfully created
+- Uses `dataCenterPriority: "availability"` so it takes the first available slot in any allowed region
+- Logs attempts and the success response to `runpod_artifacts/launch_watch/`
+
+Customizable env vars:
+- `POD_NAME` — pod name (default `pg-leader-jepa-8x`)
+- `IMAGE_NAME` — container image (default `runpod/parameter-golf:latest`)
+- `GPU_COUNT` — number of GPUs (default 8)
+- `GPU_TYPE` — GPU type (default `NVIDIA H100 80GB HBM3`)
+- `INTERVAL_SECONDS` — polling interval (default 30)
+
 ## Known Failure Modes
 
 - Missing `zstandard` causing `zlib` fallback and oversized artifacts

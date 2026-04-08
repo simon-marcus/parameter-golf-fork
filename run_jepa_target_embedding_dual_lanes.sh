@@ -4,8 +4,19 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$ROOT_DIR"
 
-CONSTRAINED_NAMESPACE="${CONSTRAINED_NAMESPACE:-jepa_target_embedding_discovery_constrained}"
-FREECODE_NAMESPACE="${FREECODE_NAMESPACE:-jepa_target_embedding_discovery_freecode}"
+normalize_namespace() {
+  case "$1" in
+    jepa_target_embedding_discovery_freecode)
+      printf '%s' "jepa_target_embedding_freecode_discovery"
+      ;;
+    *)
+      printf '%s' "$1"
+      ;;
+  esac
+}
+
+CONSTRAINED_NAMESPACE="$(normalize_namespace "${CONSTRAINED_NAMESPACE:-jepa_target_embedding_discovery_constrained}")"
+FREECODE_NAMESPACE="$(normalize_namespace "${FREECODE_NAMESPACE:-jepa_target_embedding_freecode_discovery}")"
 
 echo "Launching JEPA target-embedding dual lanes"
 echo "  constrained namespace: $CONSTRAINED_NAMESPACE"
