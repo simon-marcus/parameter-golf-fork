@@ -62,6 +62,7 @@ export VE_DIM=128
 export VE_LAYERS=9,10
 export MUON_WD=0.04
 export ADAM_WD=0.04
+export QK_GAIN_INIT="${QK_GAIN_INIT:-1.5}"
 export MATRIX_LR=0.025
 export SCALAR_LR=0.025
 export EMBED_LR=0.6
@@ -85,24 +86,26 @@ export MAX_WALLCLOCK_SECONDS="${MAX_WALLCLOCK_SECONDS:-180}"
 export SEED="${SEED:-1337}"
 
 # Format:
-# NAME CHUNK_TOKENS LR EPOCHS FREEZE_BLOCKS FREEZE_EMBEDDINGS BATCH_SEQS PREQUANT_TTT XSA_LAST_N WARMDOWN_ITERS
+# NAME CHUNK_TOKENS LR EPOCHS FREEZE_BLOCKS FREEZE_EMBEDDINGS BATCH_SEQS PREQUANT_TTT XSA_LAST_N WARMDOWN_ITERS QK_GAIN_INIT
 declare -A CONFIGS
-CONFIGS[C0]="34304 0.0015 3 2 0 32 0 4 3500"
-CONFIGS[C1]="34304 0.0015 3 2 1 32 0 4 3500"
-CONFIGS[C2]="65536 0.0015 3 2 1 32 0 4 3500"
-CONFIGS[C3]="65536 0.0010 2 4 1 32 0 4 3500"
-CONFIGS[C4]="98304 0.0010 2 4 1 32 0 4 3500"
-CONFIGS[C5]="65536 0.0010 2 6 1 64 0 4 3500"
-CONFIGS[P0]="34304 0.0015 3 2 0 32 1 4 3500"
-CONFIGS[P1]="34304 0.0010 3 2 0 32 1 4 3500"
-CONFIGS[P2]="34304 0.0007 3 2 0 32 1 4 3500"
-CONFIGS[T0]="34304 0.0010 3 2 0 32 1 4 3500"
-CONFIGS[T1]="34304 0.0010 3 2 0 32 1 11 4000"
+CONFIGS[C0]="34304 0.0015 3 2 0 32 0 4 3500 1.5"
+CONFIGS[C1]="34304 0.0015 3 2 1 32 0 4 3500 1.5"
+CONFIGS[C2]="65536 0.0015 3 2 1 32 0 4 3500 1.5"
+CONFIGS[C3]="65536 0.0010 2 4 1 32 0 4 3500 1.5"
+CONFIGS[C4]="98304 0.0010 2 4 1 32 0 4 3500 1.5"
+CONFIGS[C5]="65536 0.0010 2 6 1 64 0 4 3500 1.5"
+CONFIGS[P0]="34304 0.0015 3 2 0 32 1 4 3500 1.5"
+CONFIGS[P1]="34304 0.0010 3 2 0 32 1 4 3500 1.5"
+CONFIGS[P2]="34304 0.0007 3 2 0 32 1 4 3500 1.5"
+CONFIGS[T0]="34304 0.0010 3 2 0 32 1 4 3500 1.5"
+CONFIGS[T1]="34304 0.0010 3 2 0 32 1 11 4000 1.5"
+CONFIGS[R0]="34304 0.0010 3 2 0 32 1 11 4000 1.5"
+CONFIGS[R1]="34304 0.0010 3 2 0 32 1 11 4000 5.0"
 
 run_config() {
   local NAME="$1"
   local CFG="${CONFIGS[$NAME]}"
-  read -r CHUNK LR EPOCHS FREEZE_BLOCKS FREEZE_EMB BATCH_SEQS PREQUANT_TTT CFG_XSA_LAST_N CFG_WARMDOWN_ITERS <<< "$CFG"
+  read -r CHUNK LR EPOCHS FREEZE_BLOCKS FREEZE_EMB BATCH_SEQS PREQUANT_TTT CFG_XSA_LAST_N CFG_WARMDOWN_ITERS CFG_QK_GAIN_INIT <<< "$CFG"
 
   export TTT_CHUNK_TOKENS="$CHUNK"
   export TTT_LR="$LR"
@@ -113,6 +116,7 @@ run_config() {
   export TTT_USE_PREQUANT="$PREQUANT_TTT"
   export XSA_LAST_N="$CFG_XSA_LAST_N"
   export WARMDOWN_ITERS="$CFG_WARMDOWN_ITERS"
+  export QK_GAIN_INIT="$CFG_QK_GAIN_INIT"
   export RUN_ID="codex_scylla_2_${NAME}"
 
   local OUT_DIR="$SWEEP_ROOT/$NAME"
@@ -130,13 +134,14 @@ run_config() {
   "ttt_use_prequant": $PREQUANT_TTT,
   "xsa_last_n": $CFG_XSA_LAST_N,
   "warmdown_iters": $CFG_WARMDOWN_ITERS,
+  "qk_gain_init": $CFG_QK_GAIN_INIT,
   "nproc_per_node": $NPROC_PER_NODE,
   "max_wallclock_seconds": $MAX_WALLCLOCK_SECONDS,
   "seed": $SEED
 }
 EOCFG
 
-  echo "=== $NAME: chunk=$CHUNK lr=$LR epochs=$EPOCHS freeze_blocks=$FREEZE_BLOCKS freeze_emb=$FREEZE_EMB batch_seqs=$BATCH_SEQS prequant_ttt=$PREQUANT_TTT xsa_last_n=$CFG_XSA_LAST_N warmdown_iters=$CFG_WARMDOWN_ITERS ==="
+  echo "=== $NAME: chunk=$CHUNK lr=$LR epochs=$EPOCHS freeze_blocks=$FREEZE_BLOCKS freeze_emb=$FREEZE_EMB batch_seqs=$BATCH_SEQS prequant_ttt=$PREQUANT_TTT xsa_last_n=$CFG_XSA_LAST_N warmdown_iters=$CFG_WARMDOWN_ITERS qk_gain_init=$CFG_QK_GAIN_INIT ==="
   echo "  output: $OUT_DIR/train.log"
 
   python3 -m torch.distributed.run \
@@ -145,6 +150,10 @@ EOCFG
     > "$OUT_DIR/train.log" 2>&1
 
   local EXIT_CODE=$?
+  if [[ $EXIT_CODE -eq 0 ]]; then
+    [[ -f "final_model.pt" ]] && cp -f "final_model.pt" "$OUT_DIR/final_model.pt"
+    [[ -f "final_model.int6.ptz" ]] && cp -f "final_model.int6.ptz" "$OUT_DIR/final_model.int6.ptz"
+  fi
   echo "  $NAME finished (exit=$EXIT_CODE)"
   return $EXIT_CODE
 }
@@ -157,7 +166,7 @@ if [[ -z "$TARGET" ]]; then
 fi
 
 if [[ "$TARGET" == "ALL" ]]; then
-  for NAME in C0 C1 C2 C3 C4 C5 P0 P1 P2 T0 T1; do
+  for NAME in C0 C1 C2 C3 C4 C5 P0 P1 P2 T0 T1 R0 R1; do
     run_config "$NAME" || echo "WARNING: $NAME failed"
   done
   echo "=== All runs complete ==="

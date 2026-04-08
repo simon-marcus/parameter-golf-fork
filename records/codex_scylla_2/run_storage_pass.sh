@@ -13,6 +13,21 @@ export CHECKPOINT_PATH="${CHECKPOINT_PATH:-final_model.pt}"
 export RUN_LEGAL_TTT="${RUN_LEGAL_TTT:-1}"
 export NPROC_PER_NODE="${NPROC_PER_NODE:-8}"
 
+# Match the old Scylla P-lane architecture unless the caller overrides it.
+export VOCAB_SIZE="${VOCAB_SIZE:-1254}"
+export TRAIN_SEQ_LEN="${TRAIN_SEQ_LEN:-2048}"
+export EVAL_SEQ_LEN="${EVAL_SEQ_LEN:-2048}"
+export TRAIN_BATCH_TOKENS="${TRAIN_BATCH_TOKENS:-786432}"
+export NUM_LAYERS="${NUM_LAYERS:-11}"
+export MLP_MULT="${MLP_MULT:-3}"
+export BIGRAM_VOCAB_SIZE="${BIGRAM_VOCAB_SIZE:-6400}"
+export XSA_LAST_N="${XSA_LAST_N:-4}"
+export ROPE_DIMS="${ROPE_DIMS:-16}"
+export LN_SCALE="${LN_SCALE:-1}"
+export VE_ENABLED="${VE_ENABLED:-1}"
+export VE_DIM="${VE_DIM:-128}"
+export VE_LAYERS="${VE_LAYERS:-9,10}"
+
 case "$variant" in
   S0)
     # Broadest low-risk storage-only pass: all major categories at int6.

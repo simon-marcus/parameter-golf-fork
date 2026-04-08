@@ -206,3 +206,42 @@ Current code inspection:
 Operational note:
 - we do not yet have the Scylla `final_model.pt` checkpoint locally
 - when the paused pod is resumed, pull `final_model.pt` from the best run and execute the storage-pass ladder there or locally
+
+## April 7 Comparison Against High-Vocab Scylla-V2
+
+Recent `scylla_2_claude` work established something useful but narrower than we first hoped:
+- larger Scylla vocab is real
+- the best corrected high-vocab path we found was `12288 bridge S1`
+- but it still did not beat the old `P1` Scylla line
+
+Best relevant numbers:
+- old `P1`: `legal_ttt_exact = 1.12466737`
+- `12288 bridge S1`: `storage_pass_legal_ttt_exact = 1.14725027`
+- `8192 bridge S1`: `storage_pass_legal_ttt_exact = 1.15145267`
+
+What this demonstrates:
+- `12288` is the best new-stack vocab point we validated under the corrected pre-quant, full-val, storage-pass path
+- but the old `P1` lane still leads by about `0.02258` BPB
+- the remaining gap is mostly upstream of TTT rather than a missing eval-time trick
+
+The most important lesson is that the new high-vocab stack drifted too far from the proven Scylla submission path:
+- larger vocab helped
+- but the rest of the stack never became as compression-compatible as `P1`
+
+## April 7 Low-Risk Revival Branch
+
+The lower-risk branch now is to revive the old `P1` lane and port frontier ideas one at a time instead of replacing the whole stack at once.
+
+Prepared revival configs in `launch_sweep.sh`:
+- `R0`: `P1`-style pre-quant TTT plus `XSA_LAST_N=11`
+- `R1`: same as `R0`, but with `QK_GAIN_INIT=5.0`
+
+These are intentionally conservative:
+- keep the old winning Scylla legal path
+- add the cheapest frontier attention changes first
+- only consider moderate vocab increases after we know whether `R0`/`R1` help
+
+Current recommended next run order:
+1. `R0`
+2. `R1`
+3. only if promising, port a moderate vocab increase into this old legal path
