@@ -501,10 +501,10 @@ def run_claude_proposal(prompt: str) -> str | None:
         "--tools", CLAUDE_TOOLS,
     ]
     if CLAUDE_ALLOWED_TOOLS:
-        cmd.extend(["--allowedTools", CLAUDE_ALLOWED_TOOLS])
+        cmd.append(f"--allowedTools={CLAUDE_ALLOWED_TOOLS}")
     cmd.extend([
         "--permission-mode", "bypassPermissions",
-        "--output-format", "text",
+        "--output-format", "json",
     ])
     try:
         result = subprocess.run(
@@ -517,9 +517,22 @@ def run_claude_proposal(prompt: str) -> str | None:
     except subprocess.TimeoutExpired:
         return None
 
-    output = result.stdout + "\n" + result.stderr
+    stdout = result.stdout.strip()
+    stderr = result.stderr.strip()
+    output = ((stdout + "\n") if stdout else "") + stderr
+    if result.returncode != 0 or not stdout:
+        return None
 
-    desc_match = re.search(r"DESCRIPTION:\s*(.+)", output)
+    try:
+        payload = json.loads(stdout)
+    except json.JSONDecodeError:
+        return None
+    if payload.get("is_error"):
+        return None
+
+    text = str(payload.get("result") or "")
+
+    desc_match = re.search(r"DESCRIPTION:\s*(.+)", text)
     if not desc_match:
         return None
 

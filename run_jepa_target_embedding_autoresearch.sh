@@ -12,6 +12,18 @@ PYTHON_BIN="${PYTHON_BIN:-python3}"
 
 MODE_RAW="${1:-${AUTORESEARCH_MUTATION_MODE:-constrained}}"
 MODE="$(printf '%s' "$MODE_RAW" | tr '[:upper:]' '[:lower:]')"
+
+normalize_namespace() {
+  case "$1" in
+    jepa_target_embedding_discovery_freecode)
+      printf '%s' "jepa_target_embedding_freecode_discovery"
+      ;;
+    *)
+      printf '%s' "$1"
+      ;;
+  esac
+}
+
 case "$MODE" in
   constrained|strict)
     MUTATION_MODE="constrained"
@@ -31,7 +43,11 @@ case "$MODE" in
     ;;
 esac
 
-NAMESPACE="${AUTORESEARCH_NAMESPACE:-$DEFAULT_NAMESPACE}"
+RAW_NAMESPACE="${AUTORESEARCH_NAMESPACE:-$DEFAULT_NAMESPACE}"
+NAMESPACE="$(normalize_namespace "$RAW_NAMESPACE")"
+if [ "$RAW_NAMESPACE" != "$NAMESPACE" ]; then
+  echo "Normalizing legacy namespace '$RAW_NAMESPACE' -> '$NAMESPACE'"
+fi
 WORK_DIR="$ROOT_DIR/autoresearch/$NAMESPACE/work"
 WORK_TRAIN_SCRIPT="$WORK_DIR/target_embedding_probe.py"
 PROGRAM_PATH="${AUTORESEARCH_PROGRAM_FILE:-$DEFAULT_PROGRAM_PATH}"
@@ -61,11 +77,13 @@ COMMON_ENV=(
   "GPUS=${GPUS:-1}"
   "EXPERIMENT_SECONDS=${EXPERIMENT_SECONDS:-180}"
   "MAX_EXPERIMENTS=${MAX_EXPERIMENTS:-20}"
-  "AUTORESEARCH_MODEL=${AUTORESEARCH_MODEL:-claude-sonnet-4-6}"
+  "AUTORESEARCH_MODEL=${AUTORESEARCH_MODEL:-opus}"
   "CLAUDE_EFFORT=${CLAUDE_EFFORT:-medium}"
+  "AUTORESEARCH_TOOLS=${AUTORESEARCH_TOOLS:-default}"
   "AUTORESEARCH_ALLOWED_TOOLS=${AUTORESEARCH_ALLOWED_TOOLS:-Bash,Read,Edit}"
+  "AUTORESEARCH_CLAUDE_SETTINGS=${AUTORESEARCH_CLAUDE_SETTINGS:-{\"alwaysThinkingEnabled\":false}}"
   "AUTORESEARCH_PERMISSION_MODE=${AUTORESEARCH_PERMISSION_MODE:-bypassPermissions}"
-  "PROPOSAL_TIMEOUT_SECONDS=${PROPOSAL_TIMEOUT_SECONDS:-240}"
+  "PROPOSAL_TIMEOUT_SECONDS=${PROPOSAL_TIMEOUT_SECONDS:-300}"
   "TRAIN_TIMEOUT_PADDING_SECONDS=${TRAIN_TIMEOUT_PADDING_SECONDS:-300}"
   "VAL_LOSS_EVERY=${VAL_LOSS_EVERY:-0}"
   "DATA_PATH=${DATA_PATH:-./data/datasets/fineweb10B_byte260}"
