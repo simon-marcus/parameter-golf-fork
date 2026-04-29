@@ -1,19 +1,21 @@
 # Record candidate: CaseOps + Matrix-LR 0.028 + Phased TTT 3500
 
-**val_bpb: 1.06109** (3-seed mean, std 0.00130) | **15.90 MB max** | 8xH100 SXM | 600s train | score-first TTT eval
+**val_bpb: 1.06049** (seed-matched 3-seed mean vs #1855, std 0.00112) | **15.90 MB max** | 8xH100 SXM | 600s train | score-first TTT eval
 
 This is a small final-push stack on the modern CaseOps/LQER/SmearGate line: keep the strong #1855 architecture intact, nudge `MATRIX_LR` from `0.026` to `0.028`, and spend more of the still-available eval budget by raising `PHASED_TTT_PREFIX_DOCS` to `3500`. Not a philosophical reinvention; more like finding one last clean turn of the screw before the clock hits zero.
 
-## 3-Seed Results
+## Seed-Matched 3-Seed Results
 
-| Seed | Steps | Pre-quant BPB | Quantized BPB | TTT BPB | Artifact bytes | Eval time |
-|---:|---:|---:|---:|---:|---:|---:|
-| 42 | 4,994 | 1.06350701 | 1.07204922 | **1.05925746** | 15,896,241 | 410.7s |
-| 1337 | 4,987 | 1.06629011 | 1.07475931 | **1.06193899** | 15,897,721 | 407.4s |
-| 2026 | 4,989 | 1.06659353 | 1.07490342 | **1.06208636** | 15,893,558 | 460.7s |
-| **Mean** | **4,990** | **1.06546355** | **1.07390398** | **1.06109427** | **15,895,840** | **426.3s** |
+Primary score report uses the exact seed set from #1855 (`42`, `0`, `1234`) for a direct paired comparison.
 
-Std over the three TTT BPBs is `0.00130`. The best seed reached `1.05925746` BPB with the same legal TTT path.
+| Seed | Steps | Pre-quant BPB | Quantized BPB | TTT BPB | Artifact bytes | Eval time | Delta vs #1855 |
+|---:|---:|---:|---:|---:|---:|---:|---:|
+| 42 | 4,994 | 1.06350701 | 1.07204922 | **1.05925746** | 15,896,241 | 410.7s | -0.00063708 |
+| 0 | 4,975 | 1.06523234 | 1.07359331 | **1.06077210** | 15,898,523 | 513.0s | -0.00047403 |
+| 1234 | 4,965 | 1.06571315 | 1.07432062 | **1.06144340** | 15,902,776 | 455.6s | -0.00064355 |
+| **Mean** | **4,978** | **1.06481750** | **1.07332105** | **1.06049099** | **15,899,180** | **459.8s** | **-0.00058489** |
+
+Seed-matched std over the three TTT BPBs is `0.00112`. The matched #1855 mean is `1.06107587`, so this run improves the paired comparison by `0.00058489` BPB.
 
 ## Key Techniques
 
@@ -25,9 +27,9 @@ Std over the three TTT BPBs is `0.00130`. The best seed reached `1.05925746` BPB
 
 ## Compliance / Legality
 
-- [x] Training is capped at 600s on 8xH100; logs show `599.55s` to `599.64s`.
-- [x] Eval including TTT is under 600s; observed range `407.4s` to `460.7s`.
-- [x] All artifacts are under 16,000,000 bytes; max observed `15,897,721`.
+- [x] Training is capped at 600s on 8xH100; seed-matched logs show `599.45s` to `599.64s`.
+- [x] Eval including TTT is under 600s; seed-matched observed range `410.7s` to `513.0s`.
+- [x] All artifacts are under 16,000,000 bytes; seed-matched max observed `15,902,776`.
 - [x] TTT is score-first and single-pass: each chunk is evaluated before adaptation and not rescored.
 - [x] No validation tokens are used for training or pre-quant adaptation.
 - [x] No SLOT.
@@ -91,8 +93,12 @@ torchrun --standalone --nproc_per_node=8 train_gpt.py
 
 ## Test Plan
 
-- 3-seed validation on 8xH100 SXM: seeds `42`, `1337`, `2026`.
+- Seed-matched 3-seed validation on 8xH100 SXM: seeds `42`, `0`, `1234`.
 - Confirmed all train runs stop under the 600s wallclock cap.
 - Confirmed all TTT eval runs finish under the 600s eval budget.
 - Confirmed all compressed artifacts are below 16 MB.
 - Confirmed score-first TTT ordering and no SLOT / n-gram cache / ETLB.
+
+## Additional Seeds
+
+The headline numbers above intentionally use seeds `42`, `0`, and `1234` because that is the seed set reported by #1855, making the comparison directly paired. For transparency and completeness, two additional valid logs are included for the original unmatched seed set: `train_seed1337.log` (`1.06193899` TTT BPB) and `train_seed2026.log` (`1.06208636` TTT BPB). Including those extra logs explains why the earlier unmatched mean was slightly different, but the seed-matched table is the comparison to use against #1855.

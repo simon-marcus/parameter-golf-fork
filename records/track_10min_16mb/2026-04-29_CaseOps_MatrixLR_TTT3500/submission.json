@@ -1,15 +1,19 @@
 {
   "author": "Simon Marcus",
   "github_id": "simon-marcus",
-  "name": "CaseOps + Matrix-LR 0.028 + Phased TTT 3500",
-  "blurb": "CaseOps SP8192 stack with LQER, SparseAttnGate, BOS-fixed SmearGate, Polar-Express Newton-Schulz Muon, per-group lrzip+brotli compression, MATRIX_LR=0.028, and score-first phased TTT with PHASED_TTT_PREFIX_DOCS=3500. Built directly on the #1855 line with a final Matrix-LR / TTT-prefix validation pass.",
+  "name": "CaseOps + Matrix-LR 0.028 + Phased TTT 3500 (1.06049 seed-matched)",
+  "blurb": "CaseOps SP8192 stack with LQER, SparseAttnGate, BOS-fixed SmearGate, Polar-Express Newton-Schulz Muon, per-group lrzip+brotli compression, MATRIX_LR=0.028, and score-first phased TTT with PHASED_TTT_PREFIX_DOCS=3500. Built directly on the #1855 line with a final Matrix-LR / TTT-prefix validation pass. Headline score is the seed-matched 42/0/1234 mean for direct comparison to #1855.",
   "date": "2026-04-29",
   "track": "10min_16mb",
-  "val_loss": 2.32206758,
-  "val_bpb": 1.06109427,
-  "val_loss_std": 0.00284535,
-  "val_bpb_std": 0.00130021,
-  "seeds": [42, 1337, 2026],
+  "val_loss": 2.32074738,
+  "val_bpb": 1.06049099,
+  "val_loss_std": 0.00245044,
+  "val_bpb_std": 0.00111976,
+  "seeds": [
+    42,
+    0,
+    1234
+  ],
   "seed_results": {
     "42": {
       "val_loss": 2.31804796,
@@ -19,8 +23,54 @@
       "artifact_bytes": 15896241,
       "steps": 4994,
       "train_time_ms": 599641,
-      "eval_time_s": 410.7
+      "eval_time_s": 410.7,
+      "delta_vs_1855_bpb": -0.00063708
     },
+    "0": {
+      "val_loss": 2.32136257,
+      "val_bpb": 1.0607721,
+      "prequant_bpb": 1.06523234,
+      "quantized_bpb": 1.07359331,
+      "artifact_bytes": 15898523,
+      "steps": 4975,
+      "train_time_ms": 599555,
+      "eval_time_s": 513.0,
+      "delta_vs_1855_bpb": -0.00047403
+    },
+    "1234": {
+      "val_loss": 2.32283161,
+      "val_bpb": 1.0614434,
+      "prequant_bpb": 1.06571315,
+      "quantized_bpb": 1.07432062,
+      "artifact_bytes": 15902776,
+      "steps": 4965,
+      "train_time_ms": 599446,
+      "eval_time_s": 455.6,
+      "delta_vs_1855_bpb": -0.00064355
+    }
+  },
+  "comparison_baseline_bpb": 1.081,
+  "delta_vs_leaderboard_bpb": -0.02050901,
+  "artifact_bytes_mean": 15899180,
+  "artifact_bytes_max": 15902776,
+  "bytes_total": 15902776,
+  "train_steps_mean": 4978,
+  "hardware": "8xH100 80GB SXM",
+  "pytorch_version": "2.9.1+cu128",
+  "cuda_version": "12.8",
+  "technique_summary": "CaseOps SP8192 + LQER + SparseAttnGate + BOS-fixed SmearGate + Polar-Express Muon + per-group lrzip compression + MATRIX_LR=0.028 + PHASED_TTT_PREFIX_DOCS=3500",
+  "seed_matched_comparison": {
+    "baseline_pr": 1855,
+    "baseline_seeds": [
+      42,
+      0,
+      1234
+    ],
+    "baseline_mean_bpb": 1.06107587,
+    "this_mean_bpb": 1.06049099,
+    "delta_bpb": -0.00058489
+  },
+  "additional_seed_results": {
     "1337": {
       "val_loss": 2.32391614,
       "val_bpb": 1.06193899,
@@ -41,15 +91,5 @@
       "train_time_ms": 599569,
       "eval_time_s": 460.7
     }
-  },
-  "comparison_baseline_bpb": 1.0810,
-  "delta_vs_leaderboard_bpb": -0.01990573,
-  "artifact_bytes_mean": 15895840,
-  "artifact_bytes_max": 15897721,
-  "bytes_total": 15897721,
-  "train_steps_mean": 4990,
-  "hardware": "8xH100 80GB SXM",
-  "pytorch_version": "2.9.1+cu128",
-  "cuda_version": "12.8",
-  "technique_summary": "CaseOps SP8192 + LQER + SparseAttnGate + BOS-fixed SmearGate + Polar-Express Muon + per-group lrzip compression + MATRIX_LR=0.028 + PHASED_TTT_PREFIX_DOCS=3500"
+  }
 }
