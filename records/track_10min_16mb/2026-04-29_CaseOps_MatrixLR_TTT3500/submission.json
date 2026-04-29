@@ -1,0 +1,55 @@
+{
+  "author": "Simon Marcus",
+  "github_id": "simon-marcus",
+  "name": "CaseOps + Matrix-LR 0.028 + Phased TTT 3500",
+  "blurb": "CaseOps SP8192 stack with LQER, SparseAttnGate, BOS-fixed SmearGate, Polar-Express Newton-Schulz Muon, per-group lrzip+brotli compression, MATRIX_LR=0.028, and score-first phased TTT with PHASED_TTT_PREFIX_DOCS=3500. Built directly on the #1855 line with a final Matrix-LR / TTT-prefix validation pass.",
+  "date": "2026-04-29",
+  "track": "10min_16mb",
+  "val_loss": 2.32206758,
+  "val_bpb": 1.06109427,
+  "val_loss_std": 0.00284535,
+  "val_bpb_std": 0.00130021,
+  "seeds": [42, 1337, 2026],
+  "seed_results": {
+    "42": {
+      "val_loss": 2.31804796,
+      "val_bpb": 1.05925746,
+      "prequant_bpb": 1.06350701,
+      "quantized_bpb": 1.07204922,
+      "artifact_bytes": 15896241,
+      "steps": 4994,
+      "train_time_ms": 599641,
+      "eval_time_s": 410.7
+    },
+    "1337": {
+      "val_loss": 2.32391614,
+      "val_bpb": 1.06193899,
+      "prequant_bpb": 1.06629011,
+      "quantized_bpb": 1.07475931,
+      "artifact_bytes": 15897721,
+      "steps": 4987,
+      "train_time_ms": 599547,
+      "eval_time_s": 407.4
+    },
+    "2026": {
+      "val_loss": 2.32423863,
+      "val_bpb": 1.06208636,
+      "prequant_bpb": 1.06659353,
+      "quantized_bpb": 1.07490342,
+      "artifact_bytes": 15893558,
+      "steps": 4989,
+      "train_time_ms": 599569,
+      "eval_time_s": 460.7
+    }
+  },
+  "comparison_baseline_bpb": 1.0810,
+  "delta_vs_leaderboard_bpb": -0.01990573,
+  "artifact_bytes_mean": 15895840,
+  "artifact_bytes_max": 15897721,
+  "bytes_total": 15897721,
+  "train_steps_mean": 4990,
+  "hardware": "8xH100 80GB SXM",
+  "pytorch_version": "2.9.1+cu128",
+  "cuda_version": "12.8",
+  "technique_summary": "CaseOps SP8192 + LQER + SparseAttnGate + BOS-fixed SmearGate + Polar-Express Muon + per-group lrzip compression + MATRIX_LR=0.028 + PHASED_TTT_PREFIX_DOCS=3500"
+}
